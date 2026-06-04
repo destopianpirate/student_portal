@@ -4,6 +4,10 @@
   padding: 0
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   background: var(--bg);
   color: var(--text);
@@ -271,6 +275,13 @@ body:after {
 .btn-outline:hover {
   background: var(--input-bg);
   transform: translateY(-1px)
+}
+
+.btn-outline:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+  transform: none;
+  background: transparent
 }
 
 .btn-danger {
@@ -586,7 +597,7 @@ body:after {
   justify-content: center;
   align-items: center;
   padding: 1.5rem;
-  transition: all .4s cubic-bezier(.4, 0, .2, 1);
+  transition: background .4s cubic-bezier(.4, 0, .2, 1), border-color .4s cubic-bezier(.4, 0, .2, 1), box-shadow .4s cubic-bezier(.4, 0, .2, 1), transform .4s cubic-bezier(.4, 0, .2, 1);
   animation: .6s both slideInLeft;
   display: flex;
   position: relative;
@@ -661,7 +672,7 @@ body:after {
   border-radius: 1rem;
   flex-direction: column;
   padding: 1.5rem;
-  transition: all .4s cubic-bezier(.4, 0, .2, 1);
+  transition: background .4s cubic-bezier(.4, 0, .2, 1), border-color .4s cubic-bezier(.4, 0, .2, 1), box-shadow .4s cubic-bezier(.4, 0, .2, 1), transform .4s cubic-bezier(.4, 0, .2, 1);
   animation: .6s both slideInRight;
   display: flex
 }

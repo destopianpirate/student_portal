@@ -1059,6 +1059,31 @@
   border-radius: 50%;
 }
 
+.cal-dot.holiday {
+  background: #ef4444;
+  box-shadow: 0 0 4px rgba(239,68,68,0.5);
+}
+
+.cal-dot.academic {
+  background: #6366f1;
+  box-shadow: 0 0 4px rgba(99,102,241,0.5);
+}
+
+.cal-dot.deadline {
+  background: #f59e0b;
+  box-shadow: 0 0 4px rgba(245,158,11,0.5);
+}
+
+.cal-dot.exam {
+  background: #ef4444;
+  box-shadow: 0 0 4px rgba(239,68,68,0.5);
+}
+
+.cal-dot.custom {
+  background: #22c55e;
+  box-shadow: 0 0 4px rgba(34,197,94,0.5);
+}
+
 .cal-detail-item-content {
   flex: 1;
 }
@@ -1290,6 +1315,10 @@
   .home-top {
     gap: 1rem !important;
     margin-bottom: 1.25rem !important;
+    /* Prevent horizontal overflow when contact dropdown expands */
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+    box-sizing: border-box !important;
   }
 
   .profile-left {
@@ -1300,6 +1329,10 @@
     text-align: left !important;
     justify-content: flex-start !important;
     align-items: center !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
   }
 
   .profile-left .profile-username {
@@ -1334,15 +1367,22 @@
   .profile-right {
     min-height: auto !important;
     padding: 1.25rem !important;
+    /* Stay within parent width — prevents overflow from child expansion */
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+    min-width: 0 !important;
   }
 
   .profile-details-grid {
-    grid-template-columns: 1fr 1fr !important;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
     gap: 0.5rem !important;
   }
 
   .profile-detail-item {
     padding: 0.5rem 0.7rem !important;
+    min-width: 0 !important;
   }
 
   .detail-label {
@@ -1351,6 +1391,9 @@
 
   .detail-value {
     font-size: 0.78rem !important;
+    word-break: break-all !important;
+    overflow-wrap: break-word !important;
+    white-space: normal !important;
   }
 }
 
@@ -1396,15 +1439,33 @@
 
 .profile-contact-items {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 0.5rem;
   padding: 0.75rem;
   border-top: 1px solid var(--border);
   animation: fadeIn 0.2s ease;
+  /* Prevent grid from expanding beyond card width */
+  max-width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .profile-contact-items .profile-detail-item {
   animation: none;
+  min-width: 0;
+}
+
+.profile-contact-items .detail-value {
+  word-break: break-all;
+  overflow-wrap: break-word;
+  white-space: normal;
+}
+
+.profile-contact-items .detail-value a {
+  word-break: break-all;
+  overflow-wrap: break-word;
+  display: inline-block;
+  max-width: 100%;
 }
 
 /* =====================================================================
@@ -1803,6 +1864,18 @@
   width: 100%;
 }
 
+@media (min-width: 1025px) {
+  .calendar-bottom-widgets .bottom-widget-card:nth-child(1) {
+    grid-column: span 2;
+  }
+  .calendar-bottom-widgets .bottom-widget-card:nth-child(3):last-child {
+    grid-column: span 3;
+  }
+  .calendar-bottom-widgets .bottom-widget-card:nth-child(4) {
+    grid-column: span 2;
+  }
+}
+
 .bottom-widget-card {
   padding: 1.25rem;
   border-radius: 12px;
@@ -1872,12 +1945,139 @@
   .calendar-bottom-widgets {
     grid-template-columns: repeat(2, 1fr);
   }
+  .calendar-bottom-widgets .bottom-widget-card:nth-child(1) {
+    grid-column: span 2;
+  }
+  .calendar-bottom-widgets .bottom-widget-card:nth-child(4) {
+    grid-column: span 2;
+  }
 }
 
 @media (max-width: 768px) {
   .calendar-bottom-widgets {
     grid-template-columns: 1fr;
   }
+  .calendar-bottom-widgets .bottom-widget-card:nth-child(1) {
+    grid-column: span 1;
+  }
+  .calendar-bottom-widgets .bottom-widget-card:nth-child(4) {
+    grid-column: span 1;
+  }
+}
+
+/* Settings Page Form Revamp Grouping */
+.settings-form-group {
+  background: var(--card-bg-glass);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme=dark] .settings-form-group {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+}
+
+.settings-form-subtitle {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--primary);
+  margin-top: 0;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* UI Theme Accent presets selection styles */
+.accent-presets-container {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  margin-top: 0.25rem;
+}
+
+.accent-preset-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 550;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.accent-preset-btn:hover {
+  border-color: var(--preset-color);
+  transform: translateY(-1px);
+  background: var(--card-bg-glass);
+}
+
+.accent-preset-btn.active {
+  border-color: var(--preset-color);
+  box-shadow: 0 0 0 2px var(--preset-color);
+  background: var(--input-bg);
+}
+
+.accent-color-bubble {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+}
+
+.accent-check-icon {
+  stroke-width: 3.5px;
+}
+
+.accent-color-name {
+  font-size: 0.7rem;
+}
+
+/* External iCal feed subscription copy layout */
+.ical-sync-wrapper {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+  align-items: center;
+}
+
+.ical-sync-input {
+  flex: 1;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.75rem;
+  background: var(--input-bg) !important;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem;
+  height: 34px;
+  outline: none;
+  cursor: text;
+}
+
+.ical-copy-btn {
+  white-space: nowrap;
+  padding: 0 1rem;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 8px;
 }
 
 

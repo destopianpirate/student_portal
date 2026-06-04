@@ -1543,7 +1543,11 @@
 @media (width<=768px) {
   .profile-left {
     min-height: auto;
-    padding: 1.25rem
+    padding: 1.25rem;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
   }
   .profile-avatar-large {
     width: 90px;
@@ -1551,10 +1555,14 @@
   }
   .profile-right {
     min-height: auto;
-    padding: 1.25rem
+    padding: 1.25rem;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
   }
   .profile-details-grid {
-    grid-template-columns: 1fr 1fr
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr)
   }
   @media (width<=600px) {
     .profile-left {
@@ -1586,7 +1594,7 @@
       margin: 0!important;
       font-size: .8rem!important
     }
-    .qr-id-dropdown {
+    .qr-id-dropdown, .qr-id-upload-prompt {
       grid-area: dropdown!important;
       width: 100%!important;
       margin-top: .4rem!important
@@ -1709,3 +1717,23 @@
     max-width: 100%
   }
 }
+
+.semester-synced-badge {
+  background: rgba(3, 105, 161, 0.1);
+  color: #0284c7;
+  border: 1px solid rgba(2, 132, 199, 0.2);
+  border-radius: .5rem;
+  padding: .15rem .5rem;
+  font-size: .7rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+[data-theme=dark] .semester-synced-badge {
+  background: rgba(14, 165, 233, 0.15);
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.3);
+}
+

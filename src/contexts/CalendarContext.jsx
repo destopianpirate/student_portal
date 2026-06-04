@@ -142,17 +142,28 @@ export const CalendarProvider = ({ children }) => {
 
   const filteredAcademicEvents = useMemo(() => {
     if (!userProfile) {
-      return ACADEMIC_EVENTS.filter(e => !e.name.toLowerCase().includes('foundation prog'));
+      return ACADEMIC_EVENTS.filter(e =>
+        !e.name.toLowerCase().includes('foundation prog') &&
+        !e.name.toLowerCase().includes('aarohan')
+      );
     }
     const prog = (userProfile.programme || '').toLowerCase();
     const sem = String(userProfile.semester || '').toLowerCase();
+
     const isBTech = prog.includes('btech') || prog.includes('b.tech');
+    const isPG = !isBTech; // MTech, MSc, MA, MDes, PhD, etc.
     const isSem1 = sem === '1' || sem === 'i' || sem === 'sem 1' || sem === 'semester 1' || sem.includes('first');
     const isBTechSem1 = isBTech && isSem1;
+    const isPGSem1 = isPG && isSem1;
 
     return ACADEMIC_EVENTS.filter(e => {
+      // Foundation Programme → only for BTech Semester 1 students
       if (e.name.toLowerCase().includes('foundation prog')) {
         return isBTechSem1;
+      }
+      // Aarohan orientation → only for new PG students in Semester 1
+      if (e.name.toLowerCase().includes('aarohan')) {
+        return isPGSem1;
       }
       return true;
     });
@@ -172,15 +183,30 @@ export const CalendarProvider = ({ children }) => {
     setCustomEvents(prev => prev.map(e => e.id === id ? { ...e, ...updates } : e));
   }, []);
 
+  // Helper: calculate number of days between two date strings
+  const daysBetween = (startStr, endStr) => {
+    if (!endStr) return 0;
+    const start = new Date(startStr + 'T00:00');
+    const end = new Date(endStr + 'T00:00');
+    return Math.round((end - start) / (1000 * 60 * 60 * 24));
+  };
+
   const getEventsForDate = useCallback((dateStr) => {
     const holidays = ALL_HOLIDAYS.filter(h => h.date === dateStr);
+    // For calendar dot display: exclude multi-day (>=4 days) academic events
     const academic = filteredAcademicEvents.filter(e => {
+      const span = daysBetween(e.date, e.endDate);
+      if (span >= 4) return false; // long-duration events don't mark calendar
       if (e.date === dateStr) return true;
       if (e.endDate && dateStr >= e.date && dateStr <= e.endDate) return true;
       return false;
     });
     const custom = customEvents.filter(e => e.date === dateStr);
-    return { holidays, academic, custom, all: [...holidays, ...academic, ...custom] };
+    // Deadlines: academic deadlines on their exact date, custom deadlines on their date
+    const academicDeadlines = filteredAcademicEvents.filter(e =>
+      e.category === 'deadline' && e.date === dateStr
+    );
+    return { holidays, academic, custom, academicDeadlines, all: [...holidays, ...academic, ...custom] };
   }, [customEvents, filteredAcademicEvents]);
 
   const getUpcomingEvents = useCallback((count = 5) => {
@@ -203,7 +229,17 @@ export const CalendarProvider = ({ children }) => {
 
   const hasEventsOnDate = useCallback((dateStr) => {
     if (ALL_HOLIDAYS.some(h => h.date === dateStr)) return 'holiday';
-    if (filteredAcademicEvents.some(e => e.date === dateStr || (e.endDate && dateStr >= e.date && dateStr <= e.endDate))) return 'academic';
+    // Academic deadlines always get a dot (they're single-day)
+    if (filteredAcademicEvents.some(e => e.category === 'deadline' && e.date === dateStr)) return 'deadline';
+    if (filteredAcademicEvents.some(e => {
+      const span = daysBetween(e.date, e.endDate);
+      if (span >= 4) return false; // long multi-day events (4+ days) don't dot the calendar
+      return e.date === dateStr || (e.endDate && dateStr >= e.date && dateStr <= e.endDate);
+    })) return 'academic';
+    // Custom deadlines get a deadline dot
+    if (customEvents.some(e => e.date === dateStr && e.category === 'deadline')) return 'deadline';
+    // Custom exams/quizzes get a custom (exam) dot
+    if (customEvents.some(e => e.date === dateStr && (e.category === 'exam' || e.category === 'quiz'))) return 'exam';
     if (customEvents.some(e => e.date === dateStr)) return 'custom';
     return null;
   }, [customEvents, filteredAcademicEvents]);

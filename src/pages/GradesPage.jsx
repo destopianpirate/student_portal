@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
 import { motion } from 'framer-motion';
 import { Award, Plus, Trash2, TrendingUp, BookOpen, BarChart3, Download, ChevronDown, ChevronUp } from 'lucide-react';
+import { fetchAndParseTimetable, isEvenSemester } from '../utils/parser';
 
 const GRADE_POINTS = {
   'A+': 10, 'A': 10, 'A-': 9, 'B+': 8, 'B': 8, 'B-': 7,
@@ -30,19 +31,116 @@ const GradesPage = () => {
   const [showAddSem, setShowAddSem] = useState(false);
   const [newSemName, setNewSemName] = useState('');
 
+  // Course autocomplete Active Field state
+  const [activeSearch, setActiveSearch] = useState({ semIdx: null, courseIdx: null, query: '' });
+
+  // Odd/even course lists for suggestions
+  const [oddCourses, setOddCourses] = useState([]);
+  const [evenCourses, setEvenCourses] = useState([]);
+
+  // Load catalogs on mount
+  useEffect(() => {
+    const loadCatalogs = async () => {
+      try {
+        const oddData = await fetchAndParseTimetable('Semester 1');
+        setOddCourses(oddData.courses || []);
+        
+        const evenData = await fetchAndParseTimetable('Semester 2');
+        setEvenCourses(evenData.courses || []);
+      } catch (e) {
+        console.error('Error loading course catalogs:', e);
+      }
+    };
+    loadCatalogs();
+  }, []);
+
+  // Sync timetable registered courses into the running semester card automatically
+  useEffect(() => {
+    if (!currentUser || !userProfile?.semester) return;
+    const runningSem = userProfile.semester;
+    
+    // Retrieve current registered courses from timetable page
+    const savedCoursesJSON = localStorage.getItem(`courses_${currentUser.uid}`);
+    const timetableCourses = savedCoursesJSON ? JSON.parse(savedCoursesJSON) : (userProfile?.selectedCourses || []);
+    
+    setSemesters(prev => {
+      // Check if running semester card exists
+      const exists = prev.some(sem => sem.name === runningSem);
+      
+      let updatedSemesters = [...prev];
+      if (!exists) {
+        // Create it
+        updatedSemesters.push({ id: Date.now(), name: runningSem, courses: [], isSynced: true });
+      }
+      
+      updatedSemesters = updatedSemesters.map(sem => {
+        if (sem.name === runningSem) {
+          // Reconcile courses
+          const syncedCourses = timetableCourses.map(tc => {
+            const fullName = `${tc.code} - ${tc.title}`;
+            // Find if it was already in our card to preserve grade
+            const existing = sem.courses?.find(c => c.name === fullName || c.name.startsWith(tc.code));
+            return {
+              id: existing?.id || tc.id || Date.now() + Math.random(),
+              name: fullName,
+              credits: parseInt(tc.credits) || 0,
+              grade: existing?.grade || ''
+            };
+          });
+          return { ...sem, courses: syncedCourses, isSynced: true };
+        }
+        return sem;
+      });
+      
+      // Sort semesters by name to keep them in ascending order
+      updatedSemesters.sort((a, b) => {
+        const numA = parseInt(a.name.match(/\d+/)?.[0] || 0);
+        const numB = parseInt(b.name.match(/\d+/)?.[0] || 0);
+        return numA - numB;
+      });
+
+      if (JSON.stringify(prev) !== JSON.stringify(updatedSemesters)) {
+        return updatedSemesters;
+      }
+      return prev;
+    });
+  }, [userProfile?.semester, currentUser, userProfile?.selectedCourses]);
+
   useEffect(() => {
     if (currentUser) {
       localStorage.setItem(`grades_${currentUser.uid}`, JSON.stringify(semesters));
     }
   }, [semesters, currentUser]);
 
+  // Compute available previous semesters for the gating list
+  const availableSemesters = useMemo(() => {
+    if (!userProfile?.semester) return [];
+    const runningSemNum = parseInt(userProfile.semester.match(/\d+/)?.[0] || 1);
+    const list = [];
+    for (let i = 1; i < runningSemNum; i++) {
+      const name = `Semester ${i}`;
+      const alreadyExists = semesters.some(sem => sem.name === name);
+      if (!alreadyExists) {
+        list.push(name);
+      }
+    }
+    return list;
+  }, [userProfile?.semester, semesters]);
+
   const addSemester = () => {
-    const name = newSemName.trim() || `Semester ${semesters.length + 1}`;
-    setSemesters(prev => [...prev, { id: Date.now(), name, courses: [] }]);
+    if (!newSemName) return;
+    setSemesters(prev => {
+      const updated = [...prev, { id: Date.now(), name: newSemName, courses: [] }];
+      updated.sort((a, b) => {
+        const numA = parseInt(a.name.match(/\d+/)?.[0] || 0);
+        const numB = parseInt(b.name.match(/\d+/)?.[0] || 0);
+        return numA - numB;
+      });
+      return updated;
+    });
     setNewSemName('');
     setShowAddSem(false);
-    setExpandedSem(semesters.length);
-    addNotification('success', 'Semester Added', `${name} created successfully`);
+    addNotification('success', 'Semester Added', `${newSemName} created successfully`);
   };
 
   const removeSemester = (idx) => {
@@ -127,6 +225,29 @@ const GradesPage = () => {
 
   const maxSGPA = Math.max(...sgpaTrend.map(s => s.sgpa), 10);
 
+  const filteredSuggestions = useMemo(() => {
+    if (activeSearch.semIdx === null || activeSearch.courseIdx === null) return [];
+    const sem = semesters[activeSearch.semIdx];
+    if (!sem) return [];
+    const isEven = isEvenSemester(sem.name);
+    const catalog = isEven ? evenCourses : oddCourses;
+    const q = (activeSearch.query || '').trim().toLowerCase();
+    if (!q) {
+      return catalog.slice(0, 10);
+    }
+    return catalog.filter(c =>
+      c.code.toLowerCase().includes(q) ||
+      c.title.toLowerCase().includes(q)
+    ).slice(0, 10);
+  }, [activeSearch, semesters, oddCourses, evenCourses]);
+
+  const handleSelectSuggestion = (semIdx, courseIdx, suggestedCourse) => {
+    const fullName = `${suggestedCourse.code} - ${suggestedCourse.title}`;
+    updateCourse(semIdx, courseIdx, 'name', fullName);
+    updateCourse(semIdx, courseIdx, 'credits', parseInt(suggestedCourse.credits) || 0);
+    setActiveSearch({ semIdx: null, courseIdx: null, query: '' });
+  };
+
   const handleSave = async () => {
     try {
       await saveProfile({ grades: semesters });
@@ -149,7 +270,7 @@ const GradesPage = () => {
     <motion.div className="page-container" variants={containerVariants} initial="hidden" animate="visible">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
         <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '.5rem' }}>
-          <Award size={24} style={{ color: 'var(--primary)' }} /> GPA Calculator & Tracker
+          <Award size={24} style={{ color: 'var(--primary)' }} /> Academic Summary & GPA Tracker
         </h2>
         <div style={{ display: 'flex', gap: '.5rem' }}>
           <button className="btn btn-outline btn-sm" onClick={handleSave}><Download size={14} /> Save to Cloud</button>
@@ -222,11 +343,22 @@ const GradesPage = () => {
             <div className="semester-header" onClick={() => setExpandedSem(isExpanded ? null : semIdx)}>
               <div className="semester-header-left">
                 <h3>{sem.name}</h3>
+                {sem.isSynced && (
+                  <span className="semester-synced-badge">
+                    Synced with Timetable
+                  </span>
+                )}
                 <span className="semester-sgpa-badge">SGPA: {sgpa}</span>
                 <span className="semester-course-count">{sem.courses.length} courses</span>
               </div>
               <div style={{ display: 'flex', gap: '.5rem', alignItems: 'center' }}>
-                <button className="btn-icon-sm danger" onClick={(e) => { e.stopPropagation(); removeSemester(semIdx); }} title="Delete semester">
+                <button 
+                  className="btn-icon-sm danger" 
+                  onClick={(e) => { e.stopPropagation(); removeSemester(semIdx); }} 
+                  title={sem.isSynced ? "Synced semester cannot be deleted" : "Delete semester"}
+                  disabled={sem.isSynced}
+                  style={{ opacity: sem.isSynced ? 0.5 : 1, cursor: sem.isSynced ? 'not-allowed' : 'pointer' }}
+                >
                   <Trash2 size={14} />
                 </button>
                 {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
@@ -245,12 +377,44 @@ const GradesPage = () => {
                 )}
                 {sem.courses.map((course, cIdx) => (
                   <div key={course.id} className="grade-course-row">
-                    <input
-                      className="grade-course-input name"
-                      placeholder="Course name"
-                      value={course.name}
-                      onChange={e => updateCourse(semIdx, cIdx, 'name', e.target.value)}
-                    />
+                    <div className="course-input-wrapper" style={{ flex: 3 }}>
+                      <input
+                        className="grade-course-input name"
+                        placeholder="Course name"
+                        value={course.name}
+                        onChange={e => {
+                          updateCourse(semIdx, cIdx, 'name', e.target.value);
+                          setActiveSearch({ semIdx, courseIdx: cIdx, query: e.target.value });
+                        }}
+                        onFocus={() => setActiveSearch({ semIdx, courseIdx: cIdx, query: course.name })}
+                        onBlur={() => {
+                          setTimeout(() => {
+                            setActiveSearch(prev => prev.semIdx === semIdx && prev.courseIdx === cIdx ? { semIdx: null, courseIdx: null, query: '' } : prev);
+                          }, 200);
+                        }}
+                        disabled={sem.isSynced}
+                        style={{ width: '100%' }}
+                      />
+                      {activeSearch.semIdx === semIdx && activeSearch.courseIdx === cIdx && filteredSuggestions.length > 0 && (
+                        <div className="course-suggestions-dropdown">
+                          {filteredSuggestions.map((sugCourse) => (
+                            <button
+                              key={sugCourse.code}
+                              className="course-suggestion-item"
+                              type="button"
+                              onMouseDown={(e) => {
+                                e.preventDefault();
+                                handleSelectSuggestion(semIdx, cIdx, sugCourse);
+                              }}
+                            >
+                              <span className="course-sug-code">{sugCourse.code}</span>
+                              <span className="course-sug-title">{sugCourse.title}</span>
+                              <span className="course-sug-credits">{sugCourse.credits} Cr</span>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                     <input
                       className="grade-course-input credits"
                       type="number"
@@ -259,6 +423,7 @@ const GradesPage = () => {
                       placeholder="Cr"
                       value={course.credits}
                       onChange={e => updateCourse(semIdx, cIdx, 'credits', parseInt(e.target.value) || 0)}
+                      disabled={sem.isSynced}
                     />
                     <select
                       className="grade-course-input grade"
@@ -270,14 +435,21 @@ const GradesPage = () => {
                         <option key={g} value={g}>{g}</option>
                       ))}
                     </select>
-                    <button className="btn-icon-sm danger" onClick={() => removeCourse(semIdx, cIdx)}>
+                    <button 
+                      className="btn-icon-sm danger" 
+                      onClick={() => removeCourse(semIdx, cIdx)}
+                      disabled={sem.isSynced}
+                      style={{ opacity: sem.isSynced ? 0.5 : 1, cursor: sem.isSynced ? 'not-allowed' : 'pointer' }}
+                    >
                       <Trash2 size={13} />
                     </button>
                   </div>
                 ))}
-                <button className="btn btn-outline btn-sm" style={{ marginTop: '.75rem' }} onClick={() => addCourse(semIdx)}>
-                  <Plus size={14} /> Add Course
-                </button>
+                {!sem.isSynced && (
+                  <button className="btn btn-outline btn-sm" style={{ marginTop: '.75rem' }} onClick={() => addCourse(semIdx)}>
+                    <Plus size={14} /> Add Course
+                  </button>
+                )}
               </motion.div>
             )}
           </motion.div>
@@ -287,19 +459,33 @@ const GradesPage = () => {
       {/* Add Semester */}
       {showAddSem ? (
         <motion.div className="add-semester-form" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-          <input
-            className="grade-course-input name"
-            placeholder="Semester name (e.g. Semester 3)"
-            value={newSemName}
-            onChange={e => setNewSemName(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && addSemester()}
-            autoFocus
-          />
-          <button className="btn btn-primary btn-sm" onClick={addSemester}>Add</button>
-          <button className="btn btn-outline btn-sm" onClick={() => setShowAddSem(false)}>Cancel</button>
+          {availableSemesters.length > 0 ? (
+            <>
+              <select
+                className="grade-course-input name"
+                value={newSemName}
+                onChange={e => setNewSemName(e.target.value)}
+                autoFocus
+                style={{ minWidth: '200px' }}
+              >
+                <option value="">Select Semester</option>
+                {availableSemesters.map(sem => (
+                  <option key={sem} value={sem}>{sem}</option>
+                ))}
+              </select>
+              <button className="btn btn-primary btn-sm" onClick={addSemester} disabled={!newSemName}>Add</button>
+            </>
+          ) : (
+            <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No more previous semesters available to add.</span>
+          )}
+          <button className="btn btn-outline btn-sm" onClick={() => { setShowAddSem(false); setNewSemName(''); }}>Cancel</button>
         </motion.div>
       ) : (
-        <motion.button className="btn btn-primary add-semester-btn" onClick={() => setShowAddSem(true)} variants={itemVariants}>
+        <motion.button 
+          className="btn btn-primary add-semester-btn" 
+          onClick={() => { setShowAddSem(true); setNewSemName(''); }} 
+          variants={itemVariants}
+        >
           <Plus size={16} /> Add Semester
         </motion.button>
       )}

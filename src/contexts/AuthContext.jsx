@@ -72,11 +72,10 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem(`profile_${currentUser.uid}`, JSON.stringify(updatedProfile));
     setUserProfile(updatedProfile);
     if (currentUser.isDemo) return;
-    try {
-      await setDoc(doc(db, 'users', currentUser.uid), data, { merge: true });
-    } catch (e) {
+    // Run Firestore save in background so it doesn't block UI state changes
+    setDoc(doc(db, 'users', currentUser.uid), data, { merge: true }).catch(e => {
       console.warn('Firestore save failed, using local:', e.message);
-    }
+    });
   };
 
   const saveTimetable = async (timetableData, selectedCourses) => {
@@ -86,11 +85,10 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem(`profile_${currentUser.uid}`, JSON.stringify(updatedProfile));
     setUserProfile(updatedProfile);
     if (currentUser.isDemo) return;
-    try {
-      await setDoc(doc(db, 'users', currentUser.uid), { timetable: timetableData, selectedCourses: courses, timetableUpdatedAt: new Date().toISOString() }, { merge: true });
-    } catch (e) {
+    // Run Firestore save in background so it doesn't block UI state changes
+    setDoc(doc(db, 'users', currentUser.uid), { timetable: timetableData, selectedCourses: courses, timetableUpdatedAt: new Date().toISOString() }, { merge: true }).catch(e => {
       console.warn('Firestore timetable save failed:', e.message);
-    }
+    });
   };
 
   const lookupEmailByUsername = async (username) => {

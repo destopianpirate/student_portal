@@ -200,7 +200,7 @@ const AcademicsPage = () => {
   const [activeTab, setActiveTab] = useState('grades');
 
   const tabs = [
-    { key: 'grades', label: 'Grades', icon: Award },
+    { key: 'grades', label: 'Academic Summary', icon: Award },
     { key: 'attendance', label: 'Attendance', icon: CalendarDays },
     { key: 'goals', label: 'Goals', icon: Target },
     { key: 'courses', label: 'Course Policy', icon: BookOpen },

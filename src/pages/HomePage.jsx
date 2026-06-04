@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { getDailyQuote } from '../data/quotes';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, User, BookOpen, MapPin, Edit2, Link as LinkIcon, Book, Clock, AlertCircle, Phone, Globe, Sun, Moon, Sunrise, Sunset, Coffee, Sparkles, Eye, X, QrCode, CreditCard, ChevronDown, ChevronLeft, ChevronRight, Home, Award } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -6,6 +7,7 @@ import { useCalendar } from '../contexts/CalendarContext';
 import { fetchAndParseMessMenu } from '../utils/messParser';
 import { getAvatarUrl, getPhotoPosition } from '../utils/avatarUtils';
 import { motion, AnimatePresence } from 'framer-motion';
+import { createPortal } from 'react-dom';
 
 const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
@@ -122,6 +124,26 @@ const getDateForWeekday = (targetDayName, referenceDate = new Date()) => {
   const targetDate = new Date(referenceDate);
   targetDate.setDate(referenceDate.getDate() + diff);
   return getLocalDateString(targetDate);
+};
+
+const checkIsNoClassPeriod = (dateStr, holidaysList) => {
+  if (!dateStr) return false;
+  
+  // 1. Is it a holiday?
+  const isHoliday = holidaysList && holidaysList.some(h => h.date === dateStr);
+  if (isHoliday) return true;
+  
+  // 2. Is it mid-semester recess?
+  const isRecess = (dateStr >= '2026-10-17' && dateStr <= '2026-10-25') || 
+                  (dateStr >= '2027-03-20' && dateStr <= '2027-03-28');
+  if (isRecess) return true;
+  
+  // 3. After last day of classes to classes commence of next semester
+  const isVacation = (dateStr > '2026-11-19' && dateStr < '2027-01-04') || 
+                     (dateStr > '2027-04-22');
+  if (isVacation) return true;
+  
+  return false;
 };
 
 const HOLIDAY_CREATIVES = {
@@ -277,7 +299,7 @@ const getDefaultHolidayCreative = (holidayName) => {
 
 const HomePage = () => {
   const { currentUser, userProfile } = useAuth();
-  const { holidays, customEvents, getEventsForDate } = useCalendar();
+  const { holidays, academicEvents, customEvents, getEventsForDate } = useCalendar();
   const navigate = useNavigate();
   const [messMenu, setMessMenu] = useState(null);
   const [messLoading, setMessLoading] = useState(true);
@@ -447,9 +469,65 @@ const HomePage = () => {
     let countdownText = 'Relax, no classes today!';
     let countdownBadgeClass = 'status-badge-relax';
     
-    if (isHolidayToday && holidayCreative) {
-      countdownText = holidayCreative.hudText;
-      countdownBadgeClass = 'status-badge-relax';
+    // Check if there are extra academic/class events scheduled for today
+    const todayExtraClasses = customEvents ? customEvents.filter(e => {
+      if (e.date !== todayDateStr) return false;
+      return e.category === 'academic' || e.title.toLowerCase().includes('class');
+    }) : [];
+    const hasExtraClassToday = todayExtraClasses.length > 0;
+
+    // Check if there are exams scheduled for today
+    const todayExams = academicEvents ? academicEvents.filter(e => {
+      const matchesDate = e.date === todayDateStr || (e.endDate && todayDateStr >= e.date && todayDateStr <= e.endDate);
+      return matchesDate && (e.category === 'exam' || e.name.toLowerCase().includes('exam'));
+    }) : [];
+    const hasExamToday = todayExams.length > 0;
+
+    const isNoClassToday = checkIsNoClassPeriod(todayDateStr, holidays);
+
+    if (isNoClassToday) {
+      if (isHolidayToday && holidayCreative) {
+        if (hasExtraClassToday) {
+          const GEMINI_REPLIES = [
+            "Wait, an extra class on a holiday? The grind never stops! 📚🔥",
+            "Holiday logic: 404. Extra class: Active. Let's do this! 💻✨",
+            "No sleeping in today—knowledge doesn't take holidays! 🧠⚡",
+            "A holiday class? You're officially in the elite student tier now! 🎓🚀",
+            "Even the campus is quiet, but our ambition is loud! 🏫💪",
+            "Holiday vibe check: Cancelled by an extra class. Let's conquer it anyway! 📝🔥",
+            "Who needs a day off when you can master the code? 💻✨",
+            "Sacrificing holiday sleep for academic glory. Respect! 🫡🎓",
+            "Class on a holiday? That's what we call a power move. ⚡🔥",
+            "The professor said: 'Holiday? I think you mean Study-day!' 📚😅",
+            "No holidays for future leaders. Your dedication is inspiring! 🚀🌟",
+            "Just think of this extra class as your holiday bonus round! 🎁🎮",
+            "Holiday classes: building character, one slide at a time. 📊💪",
+            "Class is in session, even if the calendar says otherwise! 📅⚡",
+            "Making history by studying while everyone else is sleeping! 📖✨"
+          ];
+          const stableIndex = (hudTime.getDate() + hudTime.getMonth()) % GEMINI_REPLIES.length;
+          countdownText = GEMINI_REPLIES[stableIndex];
+          countdownBadgeClass = 'status-badge-upcoming';
+        } else if (hasExamToday) {
+          countdownText = `Holiday Exam: ${todayExams[0].name} is ongoing! ✍️🎓`;
+          countdownBadgeClass = 'status-badge-active';
+        } else {
+          countdownText = holidayCreative.hudText;
+          countdownBadgeClass = 'status-badge-relax';
+        }
+      } else {
+        // Recess or vacation
+        if (hasExamToday) {
+          countdownText = `Exams Ongoing: ${todayExams[0].name} ✍️🎓`;
+          countdownBadgeClass = 'status-badge-active';
+        } else if (hasExtraClassToday) {
+          countdownText = `Extra Class Today: ${todayExtraClasses[0].title} 📚⚡`;
+          countdownBadgeClass = 'status-badge-upcoming';
+        } else {
+          countdownText = 'Relax, campus recess/vacation is ongoing! 🏕️🌴';
+          countdownBadgeClass = 'status-badge-relax';
+        }
+      }
     } else {
       const realTodayName = DAY_NAMES[hudTime.getDay()];
       const realTodaySchedule = (() => {
@@ -528,7 +606,7 @@ const HomePage = () => {
       countdownText,
       countdownBadgeClass
     };
-  }, [hudTime, savedTimetable, holidays]);
+  }, [hudTime, savedTimetable, holidays, customEvents]);
 
   const selectedDayDateStr = useMemo(() => {
     return getDateForWeekday(selectedScheduleDay, hudTime);
@@ -548,6 +626,82 @@ const HomePage = () => {
   }, [selectedDayDateStr, customEvents]);
 
   const todaySchedule = useMemo(() => {
+    const isNoClass = checkIsNoClassPeriod(selectedDayDateStr, holidays);
+    const todayName = DAY_NAMES[new Date().getDay()];
+    const isToday = selectedScheduleDay === todayName;
+
+    if (isNoClass) {
+      // Return only exams and extra classes for this date
+      const dayExams = academicEvents ? academicEvents.filter(e => {
+        const matchesDate = e.date === selectedDayDateStr || (e.endDate && selectedDayDateStr >= e.date && selectedDayDateStr <= e.endDate);
+        return matchesDate && (e.category === 'exam' || e.name.toLowerCase().includes('exam'));
+      }) : [];
+      
+      const dayExtraClasses = customEvents ? customEvents.filter(e => {
+        return e.date === selectedDayDateStr && (e.category === 'academic' || e.title.toLowerCase().includes('class'));
+      }) : [];
+      
+      const slots = [];
+      
+      // 1. Add exams
+      dayExams.forEach((exam) => {
+        slots.push({
+          time: '09:00 - 17:00', // standard exam block
+          entries: [{
+            code: 'EXAM',
+            title: exam.name,
+            venue: 'Exam Hall',
+            type: 'Examination'
+          }]
+        });
+      });
+      
+      // 2. Add extra classes
+      dayExtraClasses.forEach(ec => {
+        let timeStr = ec.time || '10:00 - 12:00';
+        if (ec.time && ec.endTime) {
+          timeStr = `${ec.time} - ${ec.endTime}`;
+        }
+        slots.push({
+          time: timeStr,
+          entries: [{
+            code: ec.title.substring(0, 10).toUpperCase(),
+            title: ec.title,
+            venue: ec.venue || 'TBA',
+            type: 'Extra Class'
+          }]
+        });
+      });
+
+      // Sort slots chronologically
+      const sorted = slots.sort((a, b) => {
+        const parseTime = (t) => {
+          if (!t) return 0;
+          const m = t.trim().match(/(\d+):(\d+)/);
+          if (!m) return 0;
+          return parseInt(m[1]) * 60 + parseInt(m[2]);
+        };
+        const aStart = parseTime(a.time.split(/[-–—]/)[0]);
+        const bStart = parseTime(b.time.split(/[-–—]/)[0]);
+        return aStart - bStart;
+      });
+
+      const finalSchedule = sorted.map(slot => {
+        const status = isToday ? getClassStatus(slot.time) : null;
+        return { ...slot, status };
+      });
+
+      if (isToday) {
+        const isCurrentlyRunning = finalSchedule.some(s => s.status === 'current');
+        if (!isCurrentlyRunning) {
+          const nextClass = finalSchedule.find(s => s.status === 'upcoming');
+          if (nextClass) nextClass.status = 'next';
+        }
+      }
+      
+      return finalSchedule;
+    }
+
     if (!savedTimetable) return [];
     const d = savedTimetable[selectedScheduleDay];
     if (!d) return [];
@@ -565,9 +719,6 @@ const HomePage = () => {
       return aStart - bStart;
     });
 
-    const todayName = DAY_NAMES[new Date().getDay()];
-    const isToday = selectedScheduleDay === todayName;
-
     // Determine highlighting (only for active today)
     const finalSchedule = sorted.map(slot => {
       const status = isToday ? getClassStatus(slot.time) : null;
@@ -584,7 +735,7 @@ const HomePage = () => {
     }
 
     return finalSchedule;
-  }, [savedTimetable, selectedScheduleDay]);
+  }, [savedTimetable, selectedScheduleDay, selectedDayDateStr, academicEvents, customEvents, holidays]);
 
   const allSlots = useMemo(() => {
     if (!savedTimetable) return [];
@@ -664,44 +815,89 @@ const HomePage = () => {
   };
 
   const cardContainerVariants = {
-    hidden: { opacity: 0, width: 0 },
-    visible: { 
-      opacity: 1, 
-      width: isMobile ? '100%' : 160,
-      transition: { 
-        duration: 0.4, 
-        ease: [0.4, 0, 0.2, 1],
-        staggerChildren: 0.1
-      }
-    },
-    exit: { 
-      opacity: 0, 
-      width: 0,
-      transition: { 
-        duration: 0.3, 
-        ease: [0.4, 0, 0.2, 1]
-      }
-    }
+    hidden: isMobile 
+      ? { opacity: 0, height: 0, overflow: 'hidden' }
+      : { opacity: 0, width: 0 },
+    visible: isMobile 
+      ? { 
+          opacity: 1, 
+          height: 'auto',
+          overflow: 'visible',
+          transition: { 
+            duration: 0.45, 
+            ease: [0.4, 0, 0.2, 1],
+            staggerChildren: 0.12
+          }
+        }
+      : { 
+          opacity: 1, 
+          width: 160,
+          transition: { 
+            duration: 0.4, 
+            ease: [0.4, 0, 0.2, 1],
+            staggerChildren: 0.1
+          }
+        },
+    exit: isMobile 
+      ? { 
+          opacity: 0, 
+          height: 0,
+          overflow: 'hidden',
+          transition: { 
+            duration: 0.35, 
+            ease: [0.4, 0, 0.2, 1]
+          }
+        }
+      : { 
+          opacity: 0, 
+          width: 0,
+          transition: { 
+            duration: 0.3, 
+            ease: [0.4, 0, 0.2, 1]
+          }
+        }
   };
 
   const singleCardVariants = {
-    hidden: { x: -160, opacity: 0 },
-    visible: { 
-      x: 0, 
-      opacity: 1, 
-      transition: { 
-        type: 'spring', 
-        stiffness: 110, 
-        damping: 15 
-      } 
-    },
-    exit: { 
-      x: -160, 
-      opacity: 0, 
-      transition: { 
-        duration: 0.2 
-      } 
-    }
+    hidden: isMobile 
+      ? { y: -50, opacity: 0, scale: 0.85 }
+      : { x: -160, opacity: 0 },
+    visible: isMobile 
+      ? { 
+          y: 0, 
+          opacity: 1, 
+          scale: 1,
+          transition: { 
+            type: 'spring', 
+            stiffness: 130, 
+            damping: 16 
+          } 
+        }
+      : { 
+          x: 0, 
+          opacity: 1, 
+          transition: { 
+            type: 'spring', 
+            stiffness: 110, 
+            damping: 15 
+          } 
+        },
+    exit: isMobile 
+      ? { 
+          y: -50, 
+          opacity: 0, 
+          scale: 0.85,
+          transition: { 
+            duration: 0.25 
+          } 
+        }
+      : { 
+          x: -160, 
+          opacity: 0, 
+          transition: { 
+            duration: 0.2 
+          } 
+        }
   };
 
   if (!currentUser) {
@@ -743,7 +939,7 @@ const HomePage = () => {
   const avatarUrl = getAvatarUrl(userProfile, currentUser?.email);
   const photoPosition = getPhotoPosition(userProfile);
 
-  // Build formatted programme string: "BTech'22 | 3rd Year / Semester 6"
+  // Build formatted programme string: "BTech'22 3rd Year/Semester 6"
   const formattedProgramme = (() => {
     const prog = userProfile?.programme || '';
     const yoa = userProfile?.yearOfAdmission;
@@ -756,10 +952,10 @@ const HomePage = () => {
       parts.push(progStr);
     }
     if (yr || sem) {
-      const yrSem = [yr, sem].filter(Boolean).join(' / ');
+      const yrSem = [yr, sem].filter(Boolean).join('/');
       parts.push(yrSem);
     }
-    return parts.join(' | ') || '—';
+    return parts.join(' ') || '—';
   })();
 
   const mainProfileFields = [
@@ -771,7 +967,22 @@ const HomePage = () => {
   // Add academic extras if set
   if (userProfile?.cgpa) mainProfileFields.push({ label: 'CGPA', value: userProfile.cgpa });
   if (userProfile?.minor) mainProfileFields.push({ label: 'Minor', value: userProfile.minor });
-  if (userProfile?.hostelName) mainProfileFields.push({ label: 'Hostel', value: `${userProfile.hostelName}${userProfile.roomNumber ? ' • ' + userProfile.roomNumber : ''}` });
+  if (userProfile?.hostelName) {
+    const hName = userProfile.hostelName;
+    let roomVal = '';
+    if (userProfile.roomNumber) {
+      const prefix = `${hName.split(' ')[0]}-`;
+      if (userProfile.roomNumber.startsWith(prefix)) {
+        roomVal = `${hName[0].toUpperCase()}-${userProfile.roomNumber.slice(prefix.length)}`;
+      } else {
+        roomVal = userProfile.roomNumber;
+      }
+    }
+    mainProfileFields.push({
+      label: 'Hostel',
+      value: roomVal ? `${hName}/${roomVal}` : hName
+    });
+  }
 
   // Contact & link fields — shown in dropdown on mobile
   const contactFields = [];
@@ -821,7 +1032,7 @@ const HomePage = () => {
         {/* Ambient Mood Header & Quote */}
         <div className="hud-top-bar">
           <div className="hud-quote-top">
-            "{MOODS.find(m => m.id === activeMoodId)?.quote || 'Hustle in silence. Let your success make the noise.'}"
+            "{getDailyQuote()}"
           </div>
         </div>
 
@@ -1047,27 +1258,57 @@ const HomePage = () => {
         className="home-top" 
         style={{ 
           gridTemplateColumns: (!isMobile && isDetailsExpanded) ? '28% auto 1fr' : undefined,
-          transition: 'grid-template-columns 0.4s cubic-bezier(0.4, 0, 0.2, 1)'
+          transition: !isMobile ? 'grid-template-columns 0.4s cubic-bezier(0.4, 0, 0.2, 1)' : 'none'
         }}
       >
         {/* LEFT 30% - Avatar & Identity */}
         <motion.div className="profile-left" variants={itemVariants} style={{ zIndex: 10, position: 'relative' }}>
           <h2 className="profile-username">{userProfile?.username || currentUser?.displayName || 'Student'}</h2>
-          <img src={avatarUrl} alt="Profile" className="profile-avatar-large" style={{ objectPosition: photoPosition }} />
+          
+          <div className="avatar-containment-cell">
+            {/* Tech targeting bracket corners */}
+            <div className="avatar-tech-corner top-left" />
+            <div className="avatar-tech-corner top-right" />
+            <div className="avatar-tech-corner bottom-left" />
+            <div className="avatar-tech-corner bottom-right" />
+            
+            {/* Futuristic ambient back glow */}
+            <div className="avatar-ambient-glow" />
+            
+            {/* Floating double orbit rings */}
+            <div className="avatar-orbital-ring ring-outer" />
+            <div className="avatar-orbital-ring ring-inner" />
+            
+            {/* Main photo frame */}
+            <div className={`avatar-photo-frame aspect-${userProfile?.photoAspectRatio || 'card'}`}>
+              <img 
+                src={avatarUrl} 
+                alt="Profile" 
+                className="profile-avatar-large" 
+                style={{ 
+                  objectPosition: photoPosition,
+                  '--img-zoom': (userProfile?.photoZoom ?? 100) / 100,
+                  '--img-rot': `${userProfile?.photoRotation ?? 0}deg`
+                }} 
+              />
+              <div className="avatar-hologram-sheen" />
+            </div>
+          </div>
+
           <div className="profile-student-id">ID: {userProfile?.rollNumber || '—'}</div>
 
           {/* QR / ID Card Toggle Button */}
           {userProfile?.messQrBase64 || userProfile?.studentIdBase64 ? (
             <div className="qr-id-dropdown" style={{ width: '100%', marginTop: '0.75rem' }}>
-              <button className="qr-id-toggle" onClick={handleToggleQr} style={{ cursor: 'pointer', width: '100%' }}>
-                <CreditCard size={13} /> Show My Card <ChevronDown size={13} style={{ transform: showQrId ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+              <button className="qr-id-toggle" onClick={handleToggleQr} style={{ cursor: 'pointer', width: '100%', whiteSpace: 'nowrap' }}>
+              <CreditCard size={13} /> {showQrId ? 'Hide My Cards' : 'Show My Cards'} <ChevronDown size={13} style={{ transform: showQrId ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
               </button>
             </div>
           ) : (
             <div className="qr-id-upload-prompt" style={{ marginTop: '0.75rem', width: '100%' }}>
               <button 
                 className="btn btn-outline btn-sm" 
-                style={{ fontSize: '0.75rem', gap: '0.4rem', width: '100%', cursor: 'pointer' }}
+                style={{ fontSize: '0.75rem', gap: '0.4rem', width: '100%', cursor: 'pointer', whiteSpace: 'nowrap' }}
                 onClick={() => navigate('/settings', { state: { openSection: 'messqr' } })}
               >
                 <QrCode size={14} /> Upload QR & ID Card
@@ -1086,14 +1327,17 @@ const HomePage = () => {
               exit="exit"
               style={{
                 display: 'flex',
-                flexDirection: isMobile ? 'row' : 'column',
+                flexDirection: 'column',
                 gap: '0.55rem',
-                justifyContent: isMobile ? 'center' : 'space-between',
+                justifyContent: 'center',
                 overflow: 'hidden',
                 zIndex: 5,
                 position: 'relative',
                 paddingLeft: isMobile ? 0 : '0.5rem',
-                height: isMobile ? 'auto' : '100%'
+                paddingTop: isMobile ? '0.5rem' : 0,
+                height: isMobile ? 'auto' : '100%',
+                width: isMobile ? '100%' : 'auto',
+                alignItems: isMobile ? 'center' : 'stretch'
               }}
             >
               {userProfile?.messQrBase64 && (
@@ -1111,8 +1355,9 @@ const HomePage = () => {
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    height: isMobile ? '120px' : 'auto',
-                    width: isMobile ? '50%' : '100%',
+                    height: isMobile ? 'auto' : 'auto',
+                    width: isMobile ? '280px' : '100%',
+                    aspectRatio: isMobile ? '1 / 1' : 'auto',
                     flex: isMobile ? 'none' : '1',
                     minHeight: 0,
                     overflow: 'hidden'
@@ -1124,8 +1369,8 @@ const HomePage = () => {
                     alt="Mess QR" 
                     style={{ 
                       cursor: 'pointer',
-                      width: isMobile ? '80px' : '100%',
-                      height: isMobile ? '80px' : 'auto',
+                      width: isMobile ? '240px' : '100%',
+                      height: isMobile ? '240px' : 'auto',
                       flex: isMobile ? 'none' : '1',
                       minHeight: 0,
                       objectFit: 'contain',
@@ -1153,8 +1398,9 @@ const HomePage = () => {
                     flexDirection: 'column',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    height: 'auto',
-                    width: isMobile ? '50%' : '100%',
+                    height: isMobile ? 'auto' : 'auto',
+                    width: isMobile ? '100%' : '100%',
+                    maxWidth: isMobile ? '260px' : '100%',
                     flex: isMobile ? 'none' : '1',
                     minHeight: 0,
                     overflow: 'hidden'
@@ -1192,9 +1438,10 @@ const HomePage = () => {
                     alignItems: 'center',
                     justifyContent: 'center',
                     aspectRatio: isMobile ? 'auto' : '1.58 / 1',
-                    height: isMobile ? '80px' : 'auto',
-                    width: isMobile ? '50%' : '100%',
-                    flex: 'none',
+                    height: isMobile ? 'auto' : 'auto',
+                    width: isMobile ? '100%' : '100%',
+                    maxWidth: isMobile ? '260px' : '100%',
+                    flex: isMobile ? 'none' : '1',
                     textAlign: 'center'
                   }}
                 >
@@ -1427,7 +1674,14 @@ const HomePage = () => {
               );
             })()
           ) : todaySchedule.length === 0 ? (
-            <div className="empty-state"><p>No classes scheduled for this day</p></div>
+            checkIsNoClassPeriod(selectedDayDateStr, holidays) ? (
+              <div className="empty-state">
+                <p>Campus Recess / Vacation Period</p>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>No classes are scheduled. Enjoy the break! 🏕️🌴</span>
+              </div>
+            ) : (
+              <div className="empty-state"><p>No classes scheduled for this day</p></div>
+            )
           ) : (
             <div className="today-schedule-timeline">
               {todaySchedule.map(({ time, entries, status }) => {
@@ -1797,7 +2051,7 @@ const HomePage = () => {
         </div>
       )}
 
-      {activeLightBoxImage && (
+      {activeLightBoxImage && createPortal(
         <div className="lightbox-overlay" onClick={() => { setActiveLightBoxImage(null); setZoomedImage(false); }}>
           <div className="lightbox-content" onClick={(e) => e.stopPropagation()}>
             <button className="lightbox-close" onClick={() => { setActiveLightBoxImage(null); setZoomedImage(false); }}>
@@ -1813,7 +2067,8 @@ const HomePage = () => {
             </div>
             <div className="lightbox-label">{activeLightBoxImage.label} (Click image to zoom)</div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       <div className="page-footer">Built with ❤️ by <a href="https://github.com/destopianpirate" target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>destopianpirate</a></div>

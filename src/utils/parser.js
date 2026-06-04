@@ -1,7 +1,25 @@
 import * as XLSX from 'xlsx';
 
-export const fetchAndParseTimetable = async () => {
-  const response = await fetch('/Timetable.xlsx');
+export const isEvenSemester = (semesterStr) => {
+  if (!semesterStr) return false;
+  const s = String(semesterStr).toLowerCase();
+  if (s.includes('even')) return true;
+  if (s.includes('odd')) return false;
+  const numMatch = s.match(/\d+/);
+  if (numMatch) {
+    const num = parseInt(numMatch[0]);
+    return num % 2 === 0;
+  }
+  if (s.includes('ii') || s.includes('iv') || s.includes('vi') || s.includes('viii') || s.includes('x')) {
+    return true;
+  }
+  return false;
+};
+
+export const fetchAndParseTimetable = async (semesterStr) => {
+  const isEven = isEvenSemester(semesterStr);
+  const timetableFile = isEven ? '/Timetable_Even.xlsx' : '/Timetable.xlsx';
+  const response = await fetch(timetableFile);
   const arrayBuffer = await response.arrayBuffer();
   const workbook = XLSX.read(arrayBuffer, { type: 'array' });
 

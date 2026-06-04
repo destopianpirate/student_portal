@@ -91,7 +91,7 @@ const TimetablePage = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const data = await fetchAndParseTimetable();
+        const data = await fetchAndParseTimetable(userProfile?.semester);
         setCourses(data.courses); 
         setOrderedTimeSlots(data.orderedTimeSlots); 
         setDays(data.days);
@@ -99,7 +99,7 @@ const TimetablePage = () => {
       finally { setLoading(false); }
     };
     load();
-  }, []);
+  }, [userProfile?.semester]);
 
   // Sync selectedIds with savedCourses or userProfile.selectedCourses when courses/savedCourses load
   useEffect(() => {

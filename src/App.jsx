@@ -69,6 +69,23 @@ function App() {
   }, [darkMode]);
 
   useEffect(() => {
+    const savedAccent = userProfile?.preferences?.accent || localStorage.getItem('theme_accent') || 'indigo';
+    const presets = {
+      indigo: { primary: '#6366f1', hover: '#4f46e5', accent: '#ec4899' },
+      emerald: { primary: '#10b981', hover: '#059669', accent: '#3b82f6' },
+      purple: { primary: '#a855f7', hover: '#9333ea', accent: '#f43f5e' },
+      orange: { primary: '#f59e0b', hover: '#d97706', accent: '#10b981' },
+      pink: { primary: '#ec4899', hover: '#db2777', accent: '#8b5cf6' },
+      blue: { primary: '#0284c7', hover: '#0369a1', accent: '#f59e0b' }
+    };
+    const selected = presets[savedAccent] || presets.indigo;
+    const root = document.documentElement;
+    root.style.setProperty('--primary', selected.primary);
+    root.style.setProperty('--primary-hover', selected.hover);
+    root.style.setProperty('--accent', selected.accent);
+  }, [userProfile]);
+
+  useEffect(() => {
     localStorage.setItem('sidebar_collapsed', sidebarCollapsed);
   }, [sidebarCollapsed]);
 
@@ -156,6 +173,7 @@ function App() {
             collapsed={sidebarCollapsed}
             setCollapsed={setSidebarCollapsed}
             mobileOpen={mobileSidebarOpen}
+            setMobileOpen={setMobileSidebarOpen}
             onOpenCommandPalette={() => setCmdOpen(true)}
           />
         )}

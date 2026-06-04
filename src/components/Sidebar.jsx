@@ -7,7 +7,7 @@ import { useCalendar } from '../contexts/CalendarContext';
 import { getAvatarUrl, getPhotoPosition } from '../utils/avatarUtils';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const Sidebar = ({ darkMode, setDarkMode, collapsed, setCollapsed, mobileOpen, onOpenCommandPalette }) => {
+const Sidebar = ({ darkMode, setDarkMode, collapsed, setCollapsed, mobileOpen, setMobileOpen, onOpenCommandPalette }) => {
   const { currentUser, userProfile, logout, isAdmin } = useAuth();
   const { unreadCount } = useNotifications();
   const { hasEventsOnDate, nextHoliday, getEventsForDate } = useCalendar();
@@ -84,7 +84,7 @@ const Sidebar = ({ darkMode, setDarkMode, collapsed, setCollapsed, mobileOpen, o
     return miniCalDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   }, [miniCalDate]);
 
-  const effectiveCollapsed = collapsed;
+  const effectiveCollapsed = isMobile ? false : collapsed;
 
   return (
     <motion.aside
@@ -160,58 +160,59 @@ const Sidebar = ({ darkMode, setDarkMode, collapsed, setCollapsed, mobileOpen, o
             {effectiveCollapsed && <div className="sidebar-tooltip">{label}</div>}
           </NavLink>
         ))}
-      </nav>
 
-      {/* Mini Calendar (only when expanded) */}
-      {!effectiveCollapsed && (
-        <div className="sidebar-mini-calendar">
-          <div className="mini-cal-month-nav" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', padding: '0 2px' }}>
-            <button 
-              type="button"
-              onClick={() => setMiniCalDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}
-              style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '2px 6px', display: 'flex', alignItems: 'center' }}
-              title="Previous Month"
-            >
-              <ChevronLeft size={14} />
-            </button>
-            <span style={{ fontSize: '0.72rem', fontWeight: '700', color: 'var(--primary)', letterSpacing: '.03em', textTransform: 'uppercase' }}>
-              {miniCalMonthName}
-            </span>
-            <button 
-              type="button"
-              onClick={() => setMiniCalDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}
-              style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '2px 6px', display: 'flex', alignItems: 'center' }}
-              title="Next Month"
-            >
-              <ChevronRight size={14} />
-            </button>
-          </div>
-          <div className="mini-cal-grid">
-            {['S','M','T','W','T','F','S'].map((d, i) => (
-              <div key={i} className="mini-cal-header">{d}</div>
-            ))}
-            {miniCalDays.map((d, i) => d ? (
-              <div
-                key={i}
-                className={`mini-cal-day ${d.isToday ? 'today' : ''} ${d.eventType ? 'has-event' : ''}`}
-                data-event-type={d.eventType || ''}
-                title={d.tooltip}
-                onClick={() => navigate('/calendar')}
-              >
-                {d.day}
-              </div>
-            ) : <div key={i} className="mini-cal-day empty" />)}
-          </div>
-          {nextHoliday && (
-            <div className="mini-cal-next-holiday" onClick={() => navigate('/calendar')}>
-              🎉 {nextHoliday.name} — {new Date(nextHoliday.date + 'T00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-            </div>
-          )}
-        </div>
-      )}
+      </nav>
 
       {/* Bottom Section */}
       <div className="sidebar-bottom" style={{ padding: effectiveCollapsed ? '0.35rem' : '0.5rem 0.75rem' }}>
+        {/* Mini Calendar (only when expanded) */}
+        {!effectiveCollapsed && (
+          <div className="sidebar-mini-calendar" style={{ margin: '0 0 0.5rem 0' }}>
+            <div className="mini-cal-month-nav" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', padding: '0 2px' }}>
+              <button 
+                type="button"
+                onClick={() => setMiniCalDate(prev => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}
+                style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '2px 6px', display: 'flex', alignItems: 'center' }}
+                title="Previous Month"
+              >
+                <ChevronLeft size={14} />
+              </button>
+              <span style={{ fontSize: '0.72rem', fontWeight: '700', color: 'var(--primary)', letterSpacing: '.03em', textTransform: 'uppercase' }}>
+                {miniCalMonthName}
+              </span>
+              <button 
+                type="button"
+                onClick={() => setMiniCalDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}
+                style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '2px 6px', display: 'flex', alignItems: 'center' }}
+                title="Next Month"
+              >
+                <ChevronRight size={14} />
+              </button>
+            </div>
+            <div className="mini-cal-grid">
+              {['S','M','T','W','T','F','S'].map((d, i) => (
+                <div key={i} className="mini-cal-header">{d}</div>
+              ))}
+              {miniCalDays.map((d, i) => d ? (
+                <div
+                  key={i}
+                  className={`mini-cal-day ${d.isToday ? 'today' : ''} ${d.eventType ? 'has-event' : ''}`}
+                  data-event-type={d.eventType || ''}
+                  title={d.tooltip}
+                  onClick={() => navigate('/calendar')}
+                >
+                  {d.day}
+                </div>
+              ) : <div key={i} className="mini-cal-day empty" />)}
+            </div>
+            {nextHoliday && (
+              <div className="mini-cal-next-holiday" onClick={() => navigate('/calendar')}>
+                🎉 {nextHoliday.name} — {new Date(nextHoliday.date + 'T00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              </div>
+            )}
+          </div>
+        )}
+
         <div style={{ 
           display: 'flex', 
           flexDirection: effectiveCollapsed ? 'column' : 'row', 
@@ -285,23 +286,42 @@ const Sidebar = ({ darkMode, setDarkMode, collapsed, setCollapsed, mobileOpen, o
             )}
           </button>
 
-          {/* Collapse Toggle */}
-          <button 
-            className="sidebar-collapse-btn" 
-            onClick={() => setCollapsed(!collapsed)} 
-            title={collapsed ? 'Expand' : 'Collapse'}
-            style={{ 
-              width: effectiveCollapsed ? '36px' : '40px', 
-              height: effectiveCollapsed ? '36px' : '40px',
-              justifyContent: 'center',
-              padding: 0,
-              borderRadius: '50%',
-              margin: 0,
-              flex: 'none'
-            }}
-          >
-            {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
-          </button>
+          {/* Collapse Toggle (desktop) / Close Toggle (mobile) */}
+          {isMobile ? (
+            <button 
+              className="sidebar-collapse-btn" 
+              onClick={() => setMobileOpen(false)} 
+              title="Close Menu"
+              style={{ 
+                width: '40px', 
+                height: '40px',
+                justifyContent: 'center',
+                padding: 0,
+                borderRadius: '50%',
+                margin: 0,
+                flex: 'none'
+              }}
+            >
+              <ChevronLeft size={16} />
+            </button>
+          ) : (
+            <button 
+              className="sidebar-collapse-btn" 
+              onClick={() => setCollapsed(!collapsed)} 
+              title={collapsed ? 'Expand' : 'Collapse'}
+              style={{ 
+                width: effectiveCollapsed ? '36px' : '40px', 
+                height: effectiveCollapsed ? '36px' : '40px',
+                justifyContent: 'center',
+                padding: 0,
+                borderRadius: '50%',
+                margin: 0,
+                flex: 'none'
+              }}
+            >
+              {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+            </button>
+          )}
         </div>
       </div>
     </motion.aside>

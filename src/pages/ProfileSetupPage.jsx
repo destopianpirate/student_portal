@@ -8,32 +8,65 @@ const AVATAR_SEEDS = [
   'Oreo', 'Coco', 'Buddy', 'Daisy', 'Max', 'Ruby', 'Charlie', 'Olive', 'Leo', 'Willow'
 ];
 
-const PROGRAMMES = [
-  'BTech (Bachelor of Technology)',
-  'MTech (Master of Technology)',
-  'Dual (BTech + MTech)',
-  'MA (Master of Arts)',
-  'BA (Bachelor of Arts)',
-  'BSc (Bachelor of Science)',
-  'MSc (Master of Science)',
-  'PhD (Doctor of Philosophy)'
-];
+const PROGRAMME_BRANCHES = {
+  'B.Tech': [
+    'Artificial Intelligence',
+    'Chemical Engineering',
+    'Civil Engineering',
+    'Computer Science & Engineering',
+    'Electrical Engineering',
+    'Integrated Circuit Design & Technology',
+    'Materials Engineering',
+    'Mechanical Engineering'
+  ],
+  'M.Tech': [
+    'Biological Engineering',
+    'Chemical Engineering',
+    'Civil Engineering',
+    'Computer Science & Engineering',
+    'Artificial Intelligence',
+    'Earth System Science',
+    'Electrical Engineering',
+    'Integrated Circuit Design & Technology',
+    'Mechanical Engineering',
+    'Materials Engineering',
+    'Maritime Engineering'
+  ],
+  'M.Sc.': [
+    'Chemistry',
+    'Mathematics',
+    'Physics',
+    'Cognitive Science'
+  ],
+  'M.A.': [
+    'Society and Culture'
+  ],
+  'Masters of Design (M.Des)': [
+    'M.Des in Integrated Design & Technology'
+  ],
+  'Ph.D.': [
+    'Biological Engineering',
+    'Chemical Engineering',
+    'Chemistry',
+    'Civil Engineering',
+    'Cognitive Science',
+    'Computer Science and Engineering',
+    'Artificial Intelligence',
+    'Earth Sciences',
+    'Archaeological Sciences',
+    'Electrical Engineering',
+    'Integrated Circuit Design and Technology',
+    'Humanities & Social Sciences',
+    'Materials Engineering',
+    'Mathematics',
+    'Mechanical Engineering',
+    'Maritime Engineering',
+    'Design',
+    'Physics'
+  ]
+};
 
-const BRANCHES = [
-  'Computer Science and Engineering',
-  'Electrical Engineering',
-  'Mechanical Engineering',
-  'Civil Engineering',
-  'Chemical Engineering',
-  'Materials Science and Engineering',
-  'Mathematics',
-  'Physics',
-  'Chemistry',
-  'Humanities and Social Sciences',
-  'Biological Engineering',
-  'Cognitive Science',
-  'Other'
-];
+const PROGRAMMES = Object.keys(PROGRAMME_BRANCHES);
 
 const ProfileSetupPage = () => {
   const navigate = useNavigate();
@@ -198,10 +231,7 @@ const ProfileSetupPage = () => {
               ))}
             </div>
 
-            <div className="input-group" style={{ marginTop: '1rem' }}>
-              <Camera size={18} className="input-icon" />
-              <input className="auth-input" placeholder="Or paste image URL (Google Drive, etc.)" value={customAvatarUrl} onChange={e => setCustomAvatarUrl(e.target.value)} />
-            </div>
+
 
             <div style={{ textAlign: 'center', marginTop: '1rem' }}>
               <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Preview:</p>
@@ -216,15 +246,15 @@ const ProfileSetupPage = () => {
             <h2 style={{ marginBottom: '1.5rem' }}>Academic Information</h2>
 
             <label className="field-label">Programme</label>
-            <select className="auth-select" value={programme} onChange={e => setProgramme(e.target.value)}>
+            <select className="auth-select" value={programme} onChange={e => { setProgramme(e.target.value); setBranch(''); }}>
               <option value="">Select Programme</option>
               {PROGRAMMES.map(p => <option key={p} value={p}>{p}</option>)}
             </select>
 
             <label className="field-label">Branch / Department</label>
-            <select className="auth-select" value={branch} onChange={e => setBranch(e.target.value)}>
-              <option value="">Select Branch</option>
-              {BRANCHES.map(b => <option key={b} value={b}>{b}</option>)}
+            <select className="auth-select" value={branch} onChange={e => setBranch(e.target.value)} disabled={!programme}>
+              <option value="">{programme ? 'Select Branch' : 'Select Programme First'}</option>
+              {programme && PROGRAMME_BRANCHES[programme]?.map(b => <option key={b} value={b}>{b}</option>)}
             </select>
 
             <label className="field-label">Year of Admission</label>

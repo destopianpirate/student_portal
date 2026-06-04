@@ -90,19 +90,61 @@ const CalendarPage = () => {
   }, [academicEvents, customEvents, isDateInCurrentViewedMonth]);
 
   const monthExamsAndQuizzes = useMemo(() => {
+    // Only custom (manually added) exam/quiz events for this month
     const list = [];
-    academicEvents.forEach(e => {
-      if ((e.category === 'exam' || e.category === 'quiz') && isDateInCurrentViewedMonth(e.date)) {
-        list.push({ ...e, source: 'academic', title: e.name });
-      }
-    });
     customEvents.forEach(e => {
       if ((e.category === 'exam' || e.category === 'quiz') && isDateInCurrentViewedMonth(e.date)) {
         list.push({ ...e, source: 'custom' });
       }
     });
     return list.sort((a, b) => a.date.localeCompare(b.date));
-  }, [academicEvents, customEvents, isDateInCurrentViewedMonth]);
+  }, [customEvents, isDateInCurrentViewedMonth]);
+
+  // Academic exam/quiz phases (from academic calendar) — filtered by current viewed month
+  const academicExamPhases = useMemo(() => {
+    const y = currentDate.getFullYear();
+    const m = currentDate.getMonth();
+    const monthStart = `${y}-${String(m + 1).padStart(2, '0')}-01`;
+    const lastDay = new Date(y, m + 1, 0).getDate();
+    const monthEnd = `${y}-${String(m + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+
+    const list = [];
+    academicEvents.forEach(e => {
+      if (e.category === 'exam' || e.category === 'quiz') {
+        const eEnd = e.endDate || e.date;
+        const overlaps = e.date <= monthEnd && eEnd >= monthStart;
+        if (overlaps) {
+          list.push({ ...e, source: 'academic', title: e.name });
+        }
+      }
+    });
+    return list.sort((a, b) => a.date.localeCompare(b.date));
+  }, [academicEvents, currentDate]);
+
+  // Helper: days between two date strings
+  const daysBetween = (startStr, endStr) => {
+    if (!endStr) return 0;
+    const start = new Date(startStr + 'T00:00');
+    const end = new Date(endStr + 'T00:00');
+    return Math.round((end - start) / (1000 * 60 * 60 * 24));
+  };
+
+  // Long academic events (>3 days) that overlap the current month — shown in dedicated section
+  const monthLongAcademicEvents = useMemo(() => {
+    const y = currentDate.getFullYear();
+    const m = currentDate.getMonth();
+    const monthStart = `${y}-${String(m + 1).padStart(2, '0')}-01`;
+    const lastDay = new Date(y, m + 1, 0).getDate();
+    const monthEnd = `${y}-${String(m + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
+
+    return academicEvents.filter(e => {
+      const span = daysBetween(e.date, e.endDate);
+      if (span <= 3) return false; // short events are marked on the calendar
+      const eEnd = e.endDate || e.date;
+      // overlaps the month?
+      return e.date <= monthEnd && eEnd >= monthStart;
+    }).sort((a, b) => a.date.localeCompare(b.date));
+  }, [academicEvents, currentDate]);
 
 
   useEffect(() => {
@@ -321,8 +363,13 @@ const CalendarPage = () => {
                     {d.events && d.events.all.length > 0 && (
                       <div className="cal-day-dots">
                         {d.events.holidays.length > 0 && <span className="cal-dot holiday" />}
-                        {d.events.academic.length > 0 && <span className="cal-dot academic" />}
-                        {d.events.custom.length > 0 && <span className="cal-dot custom" />}
+                        {/* Deadline dot: academic deadlines OR custom deadlines */}
+                        {(d.events.academicDeadlines?.length > 0 || d.events.custom.some(e => e.category === 'deadline')) && <span className="cal-dot deadline" />}
+                        {d.events.academic.some(e => e.category !== 'deadline') && <span className="cal-dot academic" />}
+                        {/* Exam dot: custom exams/quizzes */}
+                        {d.events.custom.some(e => e.category === 'exam' || e.category === 'quiz') && <span className="cal-dot exam" />}
+                        {/* Other custom events */}
+                        {d.events.custom.some(e => !['deadline','exam','quiz'].includes(e.category)) && <span className="cal-dot custom" />}
                       </div>
                     )}
                   </motion.div>
@@ -332,6 +379,8 @@ const CalendarPage = () => {
             <div className="cal-legend">
               <span><span className="cal-dot holiday" /> Holiday</span>
               <span><span className="cal-dot academic" /> Academic</span>
+              <span><span className="cal-dot deadline" /> Deadline</span>
+              <span><span className="cal-dot exam" /> Exam/Quiz</span>
               <span><span className="cal-dot custom" /> Custom</span>
             </div>
           </div>
@@ -392,17 +441,78 @@ const CalendarPage = () => {
                     {(() => {
                       const dayEvents = getEventsForDate(selectedDate);
                       const isHoliday = dayEvents.holidays && dayEvents.holidays.length > 0;
+                      const customEventsForDay = dayEvents.custom || [];
+                      
                       if (isHoliday) {
                         return (
-                          <div className="bottom-widget-empty" style={{ color: 'var(--danger)' }}>
-                            <Star size={24} style={{ marginBottom: '0.5rem', opacity: 0.8 }} />
-                            <p><strong>Holiday:</strong> {dayEvents.holidays[0].name}</p>
-                            <span style={{ fontSize: '0.75rem', opacity: 0.8 }}>No classes scheduled today! 🎉</span>
+                          <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                            <div className="bottom-widget-empty" style={{ color: 'var(--danger)', padding: '1rem', height: 'auto', minHeight: 'auto' }}>
+                              <Star size={20} style={{ marginBottom: '0.35rem', opacity: 0.8 }} />
+                              <p style={{ margin: 0 }}><strong>Holiday:</strong> {dayEvents.holidays[0].name}</p>
+                              <span style={{ fontSize: '0.75rem', opacity: 0.8 }}>No regular classes scheduled today! 🎉</span>
+                            </div>
+                            {customEventsForDay.length > 0 && (
+                              <div style={{ padding: '0 0.5rem 1rem' }}>
+                                <div style={{ fontSize: '0.7rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+                                  Extra Scheduled Events
+                                </div>
+                                <div className="bottom-widget-list">
+                                  {customEventsForDay.map((e, idx) => (
+                                    <div key={idx} className="bottom-widget-item">
+                                      <div className="cal-event-color" style={{ background: e.color || 'var(--primary)', marginTop: '5px' }} />
+                                      <div style={{ flex: 1 }}>
+                                        <div style={{ fontWeight: '600', fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between' }}>
+                                          <span>{e.title}</span>
+                                          {e.time && <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{e.time}</span>}
+                                        </div>
+                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px', display: 'flex', justifyContent: 'space-between' }}>
+                                          <span style={{ textTransform: 'capitalize' }}>{e.category}</span>
+                                          {e.endTime && <span>until {e.endTime}</span>}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         );
                       }
                       
                       if (['Saturday', 'Sunday'].includes(selectedDayName)) {
+                        if (customEventsForDay.length > 0) {
+                          return (
+                            <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                              <div className="bottom-widget-empty" style={{ padding: '1rem', height: 'auto', minHeight: 'auto' }}>
+                                <PartyPopper size={20} style={{ marginBottom: '0.35rem', opacity: 0.5 }} />
+                                <p style={{ margin: 0 }}>Weekend ({selectedDayName})</p>
+                                <span style={{ fontSize: '0.75rem', opacity: 0.8 }}>No regular classes. Enjoy your weekend! ☕</span>
+                              </div>
+                              <div style={{ padding: '0 0.5rem 1rem' }}>
+                                <div style={{ fontSize: '0.7rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+                                  Extra Scheduled Events
+                                </div>
+                                <div className="bottom-widget-list">
+                                  {customEventsForDay.map((e, idx) => (
+                                    <div key={idx} className="bottom-widget-item">
+                                      <div className="cal-event-color" style={{ background: e.color || 'var(--primary)', marginTop: '5px' }} />
+                                      <div style={{ flex: 1 }}>
+                                        <div style={{ fontWeight: '600', fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between' }}>
+                                          <span>{e.title}</span>
+                                          {e.time && <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{e.time}</span>}
+                                        </div>
+                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px', display: 'flex', justifyContent: 'space-between' }}>
+                                          <span style={{ textTransform: 'capitalize' }}>{e.category}</span>
+                                          {e.endTime && <span>until {e.endTime}</span>}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        }
                         return (
                           <div className="bottom-widget-empty">
                             <PartyPopper size={24} style={{ marginBottom: '0.5rem', opacity: 0.5 }} />
@@ -484,16 +594,82 @@ const CalendarPage = () => {
               </div>
             </div>
 
-            {/* Section 3: Exams & Quizzes of the Month */}
+
+            {/* Section 3: Multi-Day Academic Periods for this month */}
+            {monthLongAcademicEvents.length > 0 && (
+              <div className="bottom-widget-card glass-card">
+                <h4 className="bottom-widget-title">
+                  <BookOpen size={16} />
+                  Academic Periods — {MONTHS[month]}
+                </h4>
+                <div className="bottom-widget-content">
+                  <div className="bottom-widget-list">
+                    {monthLongAcademicEvents.map((e, idx) => (
+                      <div key={idx} className="bottom-widget-item">
+                        <div className="cal-event-color" style={{ background: CATEGORY_COLORS[e.category] || '#6366f1', marginTop: '5px' }} />
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontWeight: '600', fontSize: '0.85rem' }}>{e.name}</div>
+                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px', display: 'flex', flexWrap: 'wrap', gap: '0.35rem', alignItems: 'center' }}>
+                            <span>
+                              {new Date(e.date + 'T00:00').toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
+                              {e.endDate && ` → ${new Date(e.endDate + 'T00:00').toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}`}
+                            </span>
+                            <span className="acad-sem-badge" style={{ fontSize: '0.65rem', padding: '1px 6px' }}>Sem {e.semester}</span>
+                            <span style={{ color: CATEGORY_COLORS[e.category], textTransform: 'capitalize', fontWeight: '600', fontSize: '0.7rem' }}>{e.category}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Section 4: Exams & Quizzes of the Month */}
             <div className="bottom-widget-card glass-card">
               <h4 className="bottom-widget-title">
                 <Star size={16} />
-                Exams & Quizzes — {MONTHS[month]}
+                Exams &amp; Quizzes — {MONTHS[month]}
               </h4>
               <div className="bottom-widget-content">
+                {/* Academic Exam Phases */}
+                {academicExamPhases.length > 0 && (
+                  <div style={{
+                    background: 'rgba(239, 68, 68, 0.07)',
+                    border: '1px solid rgba(239, 68, 68, 0.22)',
+                    borderRadius: '10px',
+                    padding: '0.6rem 0.75rem',
+                    marginBottom: '0.85rem'
+                  }}>
+                    <div style={{ fontSize: '0.7rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.06em', color: '#ef4444', marginBottom: '0.4rem', padding: '0 0.1rem' }}>
+                      Academic Phases (Exam Period)
+                    </div>
+                    <div className="bottom-widget-list">
+                      {academicExamPhases.map((e, idx) => (
+                        <div key={`ap-${idx}`} className="bottom-widget-item" style={{ background: 'rgba(239, 68, 68, 0.03)', borderColor: 'rgba(239, 68, 68, 0.12)' }}>
+                          <div className="cal-event-color" style={{ background: '#ef4444', marginTop: '5px' }} />
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: '600', fontSize: '0.85rem' }}>{e.title}</div>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px', display: 'flex', flexWrap: 'wrap', gap: '0.35rem', alignItems: 'center' }}>
+                              <span>
+                                {new Date(e.date + 'T00:00').toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
+                                {e.endDate && ` → ${new Date(e.endDate + 'T00:00').toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}`}
+                              </span>
+                              <span className="acad-sem-badge" style={{ fontSize: '0.65rem', padding: '1px 6px', color: '#ef4444', background: 'rgba(239,68,68,0.1)' }}>Sem {e.semester}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {/* Manually Added Exams */}
+                <div style={{ fontSize: '0.7rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', marginBottom: '0.4rem', padding: '0 0.1rem' }}>
+                  My Added Exams &amp; Quizzes — {MONTHS[month]}
+                </div>
                 {monthExamsAndQuizzes.length === 0 ? (
                   <div className="bottom-widget-empty">
-                    <p>No exams or quizzes scheduled for {MONTHS[month]}.</p>
+                    <p>No exams or quizzes added for {MONTHS[month]}.</p>
                     <button className="btn btn-outline btn-sm" onClick={() => { setShowAddModal(true); setEventForm(f => ({ ...f, category: 'exam' })); }}>
                       <Plus size={12} /> Add Exam/Quiz
                     </button>
@@ -501,7 +677,7 @@ const CalendarPage = () => {
                 ) : (
                   <div className="bottom-widget-list">
                     {monthExamsAndQuizzes.map((e, idx) => (
-                      <div key={idx} className="bottom-widget-item">
+                      <div key={`ceq-${idx}`} className="bottom-widget-item">
                         <div className="cal-event-color" style={{ background: CATEGORY_COLORS[e.category] || '#ef4444', marginTop: '5px' }} />
                         <div style={{ flex: 1 }}>
                           <div style={{ fontWeight: '600', fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between' }}>
@@ -511,7 +687,7 @@ const CalendarPage = () => {
                             </span>
                           </div>
                           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px', display: 'flex', justifyContent: 'space-between' }}>
-                            <span style={{ textTransform: 'capitalize' }}>{e.category} {e.semester ? `(Sem ${e.semester})` : ''}</span>
+                            <span style={{ textTransform: 'capitalize' }}>{e.category}</span>
                             {e.time && <span>{e.time}{e.endTime ? ` - ${e.endTime}` : ''}</span>}
                           </div>
                         </div>
