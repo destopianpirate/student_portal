@@ -6,13 +6,13 @@ import { Award, Plus, Trash2, TrendingUp, BookOpen, BarChart3, Download, Chevron
 import { fetchAndParseTimetable, isEvenSemester } from '../utils/parser';
 
 const GRADE_POINTS = {
-  'A+': 11, 'A': 10, 'A-': 9, 'AB': 8, 'B-': 7, 'BC': 6,
-  'C-': 5, 'CD': 4, 'E': 2, 'F': 0, 'I': null, 'W': null,
+  'A+': 11, 'A': 10, 'A-': 9, 'B': 8, 'B-': 7, 'C': 6,
+  'C-': 5, 'D': 4, 'E': 2, 'F': 0, 'I': null, 'W': null,
 };
 
 const GRADE_COLORS = {
-  'A+': '#22c55e', 'A': '#22c55e', 'A-': '#4ade80', 'AB': '#6366f1', 'B-': '#818cf8',
-  'BC': '#f59e0b', 'C-': '#fbbf24', 'CD': '#ef4444', 'E': '#dc2626', 'F': '#dc2626',
+  'A+': '#22c55e', 'A': '#22c55e', 'A-': '#4ade80', 'B': '#6366f1', 'B-': '#818cf8',
+  'C': '#f59e0b', 'C-': '#fbbf24', 'D': '#ef4444', 'E': '#dc2626', 'F': '#dc2626',
 };
 
 const GradesPage = () => {

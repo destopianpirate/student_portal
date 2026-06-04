@@ -88,8 +88,8 @@ const applyThemeAccent = (accent) => {
 };
 
 const GRADE_POINTS = {
-  'A+': 11, 'A': 10, 'A-': 9, 'AB': 8, 'B-': 7, 'BC': 6,
-  'C-': 5, 'CD': 4, 'E': 2, 'F': 0, 'I': null, 'W': null,
+  'A+': 11, 'A': 10, 'A-': 9, 'B': 8, 'B-': 7, 'C': 6,
+  'C-': 5, 'D': 4, 'E': 2, 'F': 0, 'I': null, 'W': null,
 };
 
 const loadImage = (src) => {
