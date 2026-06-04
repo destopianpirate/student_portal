@@ -4,6 +4,7 @@ import { GraduationCap, Award, CalendarDays, Target, BookOpen, Search, ChevronDo
 import GradesPage from './GradesPage';
 import AttendancePage from './AttendancePage';
 import GoalsPage from './GoalsPage';
+import { useAuth } from '../contexts/AuthContext';
 
 const DEPARTMENT_MAP = {
   'BE': 'Biological Engineering',
@@ -196,8 +197,15 @@ const CoursePolicyTab = () => {
   );
 };
 
+const ACADEMIC_GRADE_POINTS = {
+  'A+': 11, 'A': 10, 'A-': 9, 'B': 8, 'B-': 7, 'C': 6,
+  'C-': 5, 'D': 4, 'E': 2, 'F': 0, 'I': null, 'W': null,
+};
+
 const AcademicsPage = () => {
   const [activeTab, setActiveTab] = useState('grades');
+  const { currentUser, userProfile } = useAuth();
+  const [academicsMeta, setAcademicsMeta] = useState({ cgpa: '—', credits: 0, semestersCount: 0 });
 
   const tabs = [
     { key: 'grades', label: 'Academic Summary', icon: Award },
@@ -206,15 +214,162 @@ const AcademicsPage = () => {
     { key: 'courses', label: 'Course Policy', icon: BookOpen },
   ];
 
+  useEffect(() => {
+    if (!currentUser) return;
+    try {
+      const grades = JSON.parse(localStorage.getItem(`grades_${currentUser.uid}`) || '[]');
+      let totalPoints = 0, totalCredits = 0;
+      let completedCredits = 0;
+      grades.forEach(sem => {
+        sem.courses?.forEach(c => {
+          const gp = ACADEMIC_GRADE_POINTS[c.grade];
+          if (gp !== null && gp !== undefined && c.credits > 0) {
+            totalPoints += gp * parseFloat(c.credits);
+            totalCredits += parseFloat(c.credits);
+          }
+          if (gp !== null && gp !== undefined && gp > 0) {
+            completedCredits += parseFloat(c.credits || 0);
+          }
+        });
+      });
+      const calcCgpa = totalCredits > 0 ? (totalPoints / totalCredits).toFixed(2) : '—';
+      setAcademicsMeta({
+        cgpa: calcCgpa !== '—' ? calcCgpa : (userProfile?.cgpa || '—'),
+        credits: completedCredits,
+        semestersCount: grades.length
+      });
+    } catch (e) {
+      console.error('Error loading academics meta:', e);
+    }
+  }, [currentUser, userProfile?.cgpa]);
+
   const containerVariants = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.08 } } };
   const itemVariants = { hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.4 } } };
 
   return (
     <motion.div className="page-container" variants={containerVariants} initial="hidden" animate="visible" style={{ paddingBottom: 0 }}>
-      <motion.div variants={itemVariants}>
-        <h2 className="page-title"><GraduationCap size={24} /> Academics</h2>
-        <p className="page-subtitle">Manage your grades, attendance, goals, and explore course policies</p>
+      <motion.div variants={itemVariants} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+        <div>
+          <h2 className="page-title" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <GraduationCap size={24} style={{ color: 'var(--primary)' }} /> Academics Hub
+          </h2>
+          <p className="page-subtitle" style={{ margin: '0.25rem 0 0 0' }}>Manage your grades, attendance, goals, and explore course policies</p>
+        </div>
       </motion.div>
+
+      {/* Academic Profile Card */}
+      {userProfile && (
+        <motion.div 
+          className="academic-profile-header-card glass-card"
+          variants={itemVariants}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '1.5rem',
+            borderRadius: '1.25rem',
+            marginBottom: '2rem',
+            background: 'var(--card-bg)',
+            border: '1px solid var(--border)',
+            gap: '1.5rem',
+            flexWrap: 'wrap',
+            position: 'relative',
+            overflow: 'hidden'
+          }}
+        >
+          <div style={{
+            position: 'absolute',
+            top: '-20%',
+            right: '-10%',
+            width: '200px',
+            height: '200px',
+            background: 'var(--primary)',
+            filter: 'blur(80px)',
+            opacity: 0.08,
+            pointerEvents: 'none'
+          }} />
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem', flexWrap: 'wrap' }}>
+            {userProfile.profilePhotoBase64 ? (
+              <img 
+                src={userProfile.profilePhotoBase64} 
+                alt="Student Profile" 
+                style={{
+                  width: '70px',
+                  height: '70px',
+                  borderRadius: '50%',
+                  objectFit: 'cover',
+                  border: '3px solid var(--primary)',
+                  boxShadow: '0 0 15px rgba(99, 102, 241, 0.25)'
+                }}
+              />
+            ) : (
+              <div 
+                style={{
+                  width: '70px',
+                  height: '70px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, var(--primary), var(--accent))',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#fff',
+                  fontSize: '1.75rem',
+                  fontWeight: 'bold',
+                  boxShadow: '0 0 15px rgba(99, 102, 241, 0.25)'
+                }}
+              >
+                {userProfile.firstName?.[0] || userProfile.name?.[0] || 'S'}
+              </div>
+            )}
+
+            <div>
+              <h3 style={{ margin: '0 0 0.25rem 0', fontSize: '1.35rem', fontWeight: 800, color: 'var(--text)' }}>
+                {userProfile.name || `${userProfile.firstName || ''} ${userProfile.surname || ''}`.trim() || 'Student'}
+              </h3>
+              <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                Roll Number: <strong>{userProfile.rollNumber || 'N/A'}</strong> | {userProfile.programme || 'N/A'} in {userProfile.branch || 'N/A'}
+              </p>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <span className="semester-synced-badge" style={{ fontSize: '0.75rem', padding: '0.2rem 0.6rem', borderRadius: '2rem' }}>
+                  {userProfile.semester || 'N/A'}
+                </span>
+                {userProfile.minor && (
+                  <span style={{ fontSize: '0.75rem', background: 'rgba(16, 185, 129, 0.1)', color: '#10b981', border: '1px solid rgba(16, 185, 129, 0.2)', padding: '0.2rem 0.6rem', borderRadius: '2rem', fontWeight: 600 }}>
+                    Minor: {userProfile.minor}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', alignItems: 'center' }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem', fontWeight: 700 }}>
+                Cumulative GPA
+              </div>
+              <div style={{ fontSize: '2rem', fontWeight: 900, background: 'linear-gradient(135deg, var(--primary), var(--accent))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', display: 'inline-block' }}>
+                {academicsMeta.cgpa}
+              </div>
+              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '-0.1rem' }}>
+                on 11.00 scale
+              </div>
+            </div>
+
+            <div style={{ width: '120px' }}>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.25rem', fontWeight: 700 }}>
+                Degree Credits
+              </div>
+              <div style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text)' }}>
+                {academicsMeta.credits} <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: 'normal' }}>Done</span>
+              </div>
+              <div style={{ width: '100%', height: '6px', background: 'var(--input-bg)', borderRadius: '10px', marginTop: '0.35rem', overflow: 'hidden', border: '1px solid var(--border)' }}>
+                <div style={{ width: `${Math.min(100, (academicsMeta.credits / 180) * 100)}%`, height: '100%', background: 'linear-gradient(90deg, var(--primary), var(--accent))', borderRadius: '10px' }} />
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       <motion.div className="study-tabs" variants={itemVariants}>
         {tabs.map(t => (

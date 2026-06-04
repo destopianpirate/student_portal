@@ -1781,4 +1781,41 @@
   border-top-right-radius: 1rem;
 }
 
+/* Revamped Academic summary styling */
+.academic-profile-header-card {
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px -2px rgba(99, 102, 241, 0.06);
+}
+.academic-profile-header-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px -5px rgba(99, 102, 241, 0.12);
+}
+
+.semester-card.is-synced-card {
+  border-left: 4px solid var(--primary);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.02) 0%, rgba(139, 92, 246, 0.02) 100%), var(--card-bg);
+}
+
+.grade-course-row {
+  transition: all 0.2s ease;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+}
+.grade-course-row:hover:not(.is-synced-row) {
+  background: rgba(99, 102, 241, 0.03);
+}
+
+.grade-course-row.is-synced-row {
+  background: rgba(99, 102, 241, 0.02);
+  border-left: 3px solid var(--primary);
+  padding-left: 0.5rem;
+}
+
+[data-theme=dark] .academic-profile-header-card {
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.3);
+}
+[data-theme=dark] .academic-profile-header-card:hover {
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
+}
+
 

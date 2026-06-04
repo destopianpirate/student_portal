@@ -268,13 +268,29 @@ const GradesPage = () => {
 
   return (
     <motion.div className="page-container" variants={containerVariants} initial="hidden" animate="visible">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '1rem' }}>
-        <h2 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '.5rem' }}>
-          <Award size={24} style={{ color: 'var(--primary)' }} /> Academic Summary & GPA Tracker
-        </h2>
-        <div style={{ display: 'flex', gap: '.5rem' }}>
-          <button className="btn btn-outline btn-sm" onClick={handleSave}><Download size={14} /> Save to Cloud</button>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+        <div>
+          <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '.5rem', color: 'var(--text)' }}>
+            <Award size={20} style={{ color: 'var(--primary)' }} /> Academic Performance Summary
+          </h3>
+          <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+            Track semester-wise SPI, cumulative GPA, and synced timetable registrations.
+          </p>
         </div>
+        <button 
+          className="btn btn-primary btn-sm" 
+          onClick={handleSave}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+            boxShadow: '0 4px 12px rgba(99, 102, 241, 0.2)',
+            borderRadius: '0.5rem',
+            padding: '0.5rem 1rem'
+          }}
+        >
+          <Award size={14} /> Save to Cloud
+        </button>
       </div>
 
       {/* Stats Cards */}
@@ -283,51 +299,107 @@ const GradesPage = () => {
           <div className="grade-stat-icon"><TrendingUp size={20} /></div>
           <div className="grade-stat-value">{cgpa}</div>
           <div className="grade-stat-label">Cumulative GPA</div>
+          <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>Out of 11.00</div>
         </div>
         <div className="grade-stat-card">
           <div className="grade-stat-icon"><BookOpen size={20} /></div>
           <div className="grade-stat-value">{totalCreditsEarned}</div>
           <div className="grade-stat-label">Credits Earned</div>
+          <div style={{ width: '80%', height: '4px', background: 'var(--input-bg)', borderRadius: '4px', marginTop: '0.5rem', overflow: 'hidden' }}>
+            <div style={{ width: `${Math.min(100, (totalCreditsEarned / 180) * 100)}%`, height: '100%', background: 'var(--primary)' }} />
+          </div>
         </div>
         <div className="grade-stat-card">
           <div className="grade-stat-icon"><BarChart3 size={20} /></div>
           <div className="grade-stat-value">{semesters.length}</div>
-          <div className="grade-stat-label">Semesters</div>
+          <div className="grade-stat-label">Semesters Added</div>
+          <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>{semesters.filter(s => s.isSynced).length} Synced</div>
         </div>
         <div className="grade-stat-card">
           <div className="grade-stat-icon"><Award size={20} /></div>
           <div className="grade-stat-value">{semesters.reduce((s, sem) => s + sem.courses.length, 0)}</div>
           <div className="grade-stat-label">Total Courses</div>
+          <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>In Curriculum</div>
         </div>
       </motion.div>
 
       {/* SGPA Trend Chart */}
       {sgpaTrend.length > 1 && (
-        <motion.div className="grades-chart-card" variants={itemVariants}>
-          <h3 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '.5rem' }}>
-            <TrendingUp size={16} style={{ color: 'var(--primary)' }} /> GPA Trend
+        <motion.div className="grades-chart-card glass-card" variants={itemVariants} style={{ position: 'relative', overflow: 'hidden' }}>
+          <h3 style={{ marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '.5rem', fontSize: '1rem', fontWeight: 800, color: 'var(--text)' }}>
+            <TrendingUp size={18} style={{ color: 'var(--primary)' }} /> Semester SPI Progress
           </h3>
-          <div className="sgpa-chart">
-            {sgpaTrend.map((s, i) => (
-              <div key={i} className="sgpa-bar-wrapper">
-                <div className="sgpa-bar-value">{s.sgpa}</div>
-                <div className="sgpa-bar" style={{ height: `${(s.sgpa / maxSGPA) * 100}%` }} />
-                <div className="sgpa-bar-label">{s.name.replace('Semester ', 'S')}</div>
+          
+          <div className="sgpa-chart" style={{ position: 'relative', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-around', height: '180px', padding: '1.5rem 1rem 0.5rem', background: 'rgba(99, 102, 241, 0.02)', border: '1px dashed var(--border)', borderRadius: '0.75rem' }}>
+            {/* Dashed CGPA Baseline across all bars */}
+            {cgpa !== '—' && (
+              <div 
+                style={{
+                  position: 'absolute',
+                  left: 0,
+                  right: 0,
+                  top: `${(1 - (parseFloat(cgpa) || 0) / maxSGPA) * 100}%`,
+                  borderTop: '1px dashed var(--primary)',
+                  opacity: 0.6,
+                  zIndex: 1,
+                  pointerEvents: 'none'
+                }}
+              >
+                <span style={{ position: 'absolute', right: '15px', top: '-14px', fontSize: '0.65rem', color: 'var(--primary)', fontWeight: 'bold', background: 'var(--card-bg)', padding: '0.1rem 0.4rem', borderRadius: '4px', border: '1px solid var(--border)' }}>
+                  CGPA: {cgpa}
+                </span>
               </div>
-            ))}
+            )}
+
+            {sgpaTrend.map((s, i) => {
+              const heightPercent = (s.sgpa / maxSGPA) * 100;
+              return (
+                <div key={i} className="sgpa-bar-wrapper" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end', flex: 1, position: 'relative', zIndex: 2 }}>
+                  <div className="sgpa-bar-value" style={{ fontSize: '0.75rem', fontWeight: 'bold', marginBottom: '0.25rem' }}>{s.sgpa.toFixed(2)}</div>
+                  <div 
+                    className="sgpa-bar" 
+                    style={{ 
+                      height: `${heightPercent}%`, 
+                      width: '28px', 
+                      background: 'linear-gradient(180deg, var(--primary) 0%, var(--accent) 100%)', 
+                      borderRadius: '6px 6px 0 0',
+                      boxShadow: '0 4px 10px rgba(99, 102, 241, 0.15)',
+                      transition: 'all 0.3s ease'
+                    }} 
+                  />
+                  <div className="sgpa-bar-label" style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.5rem', fontWeight: 'bold' }}>{s.name}</div>
+                </div>
+              );
+            })}
           </div>
         </motion.div>
       )}
 
       {/* Grade Distribution */}
       {Object.keys(gradeDistribution).length > 0 && (
-        <motion.div className="grades-chart-card" variants={itemVariants}>
-          <h3 style={{ marginBottom: '1rem' }}>Grade Distribution</h3>
-          <div className="grade-dist-row">
+        <motion.div className="grades-chart-card glass-card" variants={itemVariants}>
+          <h3 style={{ marginBottom: '1.25rem', fontSize: '1rem', fontWeight: 800, color: 'var(--text)' }}>Grade Profile Analysis</h3>
+          <div className="grade-dist-row" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.65rem' }}>
             {Object.entries(gradeDistribution).sort((a, b) => (GRADE_POINTS[b[0]] || 0) - (GRADE_POINTS[a[0]] || 0)).map(([grade, count]) => (
-              <div key={grade} className="grade-dist-chip" style={{ background: `${GRADE_COLORS[grade] || '#6366f1'}18`, borderColor: GRADE_COLORS[grade] || '#6366f1' }}>
-                <span className="grade-dist-letter" style={{ color: GRADE_COLORS[grade] }}>{grade}</span>
-                <span className="grade-dist-count">×{count}</span>
+              <div 
+                key={grade} 
+                className="grade-dist-chip" 
+                style={{ 
+                  background: `${GRADE_COLORS[grade] || '#6366f1'}0d`, 
+                  borderColor: `${GRADE_COLORS[grade] || '#6366f1'}33`,
+                  borderWidth: '1px',
+                  borderStyle: 'solid',
+                  borderRadius: '0.75rem',
+                  padding: '0.4rem 0.8rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  fontSize: '0.85rem'
+                }}
+              >
+                <span className="grade-dist-letter" style={{ color: GRADE_COLORS[grade], fontWeight: 800 }}>{grade}</span>
+                <span style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>&bull;</span>
+                <span className="grade-dist-count" style={{ color: 'var(--text)', fontWeight: 600 }}>{count} {count === 1 ? 'Course' : 'Courses'}</span>
               </div>
             ))}
           </div>
@@ -344,7 +416,7 @@ const GradesPage = () => {
           return (gp !== null && gp !== undefined && gp > 0) ? sum + (parseFloat(c.credits) || 0) : sum;
         }, 0);
         return (
-          <motion.div key={sem.id} className="semester-card" variants={itemVariants}>
+          <motion.div key={sem.id} className={`semester-card ${sem.isSynced ? 'is-synced-card' : ''}`} variants={itemVariants}>
             <div className="semester-header" onClick={() => setExpandedSem(isExpanded ? null : semIdx)}>
               <div className="semester-header-left">
                 <h3>{sem.name}</h3>
@@ -384,27 +456,39 @@ const GradesPage = () => {
                   <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '1rem', fontSize: '.85rem' }}>No courses added yet</p>
                 )}
                 {sem.courses.map((course, cIdx) => (
-                  <div key={course.id} className="grade-course-row">
-                    <div className="course-input-wrapper" style={{ flex: 3 }}>
-                      <input
-                        className="grade-course-input name"
-                        placeholder="Course name"
-                        value={course.name}
-                        onChange={e => {
-                          updateCourse(semIdx, cIdx, 'name', e.target.value);
-                          setActiveSearch({ semIdx, courseIdx: cIdx, query: e.target.value });
-                        }}
-                        onFocus={() => setActiveSearch({ semIdx, courseIdx: cIdx, query: course.name })}
-                        onBlur={() => {
-                          setTimeout(() => {
-                            setActiveSearch(prev => prev.semIdx === semIdx && prev.courseIdx === cIdx ? { semIdx: null, courseIdx: null, query: '' } : prev);
-                          }, 200);
-                        }}
-                        disabled={sem.isSynced}
-                        style={{ width: '100%' }}
-                      />
+                  <div key={course.id} className={`grade-course-row ${sem.isSynced ? 'is-synced-row' : ''}`} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.65rem 0', borderBottom: '1px dashed var(--border)' }}>
+                    <div className="course-input-wrapper" style={{ flex: 3, position: 'relative' }}>
+                      <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                        <input
+                          className="grade-course-input name"
+                          placeholder="Course name (e.g. CS 201 - Data Structures)"
+                          value={course.name}
+                          onChange={e => {
+                            updateCourse(semIdx, cIdx, 'name', e.target.value);
+                            setActiveSearch({ semIdx, courseIdx: cIdx, query: e.target.value });
+                          }}
+                          onFocus={() => setActiveSearch({ semIdx, courseIdx: cIdx, query: course.name })}
+                          onBlur={() => {
+                            setTimeout(() => {
+                              setActiveSearch(prev => prev.semIdx === semIdx && prev.courseIdx === cIdx ? { semIdx: null, courseIdx: null, query: '' } : prev);
+                            }, 200);
+                          }}
+                          disabled={sem.isSynced}
+                          style={{
+                            width: '100%',
+                            paddingLeft: sem.isSynced ? '2.25rem' : '0.85rem',
+                            fontWeight: sem.isSynced ? 600 : 'normal'
+                          }}
+                        />
+                        {sem.isSynced && (
+                          <span style={{ position: 'absolute', left: '0.75rem', color: 'var(--primary)', display: 'flex', alignItems: 'center' }} title="Synced from registration/timetable">
+                            <BookOpen size={14} />
+                          </span>
+                        )}
+                      </div>
+                      
                       {activeSearch.semIdx === semIdx && activeSearch.courseIdx === cIdx && filteredSuggestions.length > 0 && (
-                        <div className="course-suggestions-dropdown">
+                        <div className="course-suggestions-dropdown" style={{ zIndex: 1000 }}>
                           {filteredSuggestions.map((sugCourse) => (
                             <button
                               key={sugCourse.code}
@@ -423,18 +507,24 @@ const GradesPage = () => {
                         </div>
                       )}
                     </div>
-                    <input
-                      className="grade-course-input credits"
-                      type="number"
-                      min="1"
-                      max="12"
-                      placeholder="Cr"
-                      value={course.credits}
-                      onChange={e => updateCourse(semIdx, cIdx, 'credits', parseInt(e.target.value) || 0)}
-                      disabled={sem.isSynced}
-                    />
+                    
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', flexShrink: 0 }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Credits:</span>
+                      <input
+                        className="grade-course-input credits"
+                        type="number"
+                        min="1"
+                        max="12"
+                        placeholder="Cr"
+                        value={course.credits}
+                        onChange={e => updateCourse(semIdx, cIdx, 'credits', parseInt(e.target.value) || 0)}
+                        disabled={sem.isSynced}
+                        style={{ width: '55px', textAlign: 'center', fontWeight: 'bold' }}
+                      />
+                    </div>
+                    
                     {sem.isSynced ? (
-                      <span className="grade-course-running" style={{ padding: '0.45rem 0.65rem', fontSize: '0.8rem', color: 'var(--text-muted)', background: 'var(--input-bg)', borderRadius: '0.5rem', fontWeight: 600, minWidth: '80px', textAlign: 'center', border: '1px solid var(--border)', display: 'inline-block' }}>
+                      <span className="grade-course-running" style={{ padding: '0.45rem 0.65rem', fontSize: '0.75rem', color: 'var(--primary)', background: 'rgba(99, 102, 241, 0.08)', borderRadius: '0.5rem', fontWeight: 700, minWidth: '90px', textAlign: 'center', border: '1px solid rgba(99, 102, 241, 0.15)', display: 'inline-block' }}>
                         In Progress
                       </span>
                     ) : (
@@ -442,6 +532,7 @@ const GradesPage = () => {
                         className="grade-course-input grade"
                         value={course.grade}
                         onChange={e => updateCourse(semIdx, cIdx, 'grade', e.target.value)}
+                        style={{ width: '85px', fontWeight: 'bold' }}
                       >
                         <option value="">Grade</option>
                         {Object.keys(GRADE_POINTS).map(g => (
@@ -449,11 +540,12 @@ const GradesPage = () => {
                         ))}
                       </select>
                     )}
+                    
                     <button 
                       className="btn-icon-sm danger" 
                       onClick={() => removeCourse(semIdx, cIdx)}
                       disabled={sem.isSynced}
-                      style={{ opacity: sem.isSynced ? 0.5 : 1, cursor: sem.isSynced ? 'not-allowed' : 'pointer' }}
+                      style={{ opacity: sem.isSynced ? 0.4 : 1, cursor: sem.isSynced ? 'not-allowed' : 'pointer' }}
                     >
                       <Trash2 size={13} />
                     </button>
