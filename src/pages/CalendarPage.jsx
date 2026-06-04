@@ -29,6 +29,12 @@ const CalendarPage = () => {
   const [activeTab, setActiveTab] = useState('calendar');
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(null);
+  const todayStr = useMemo(() => {
+    const today = new Date();
+    return `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  }, []);
+  const activeDateStr = selectedDate || todayStr;
+
   const [showAddModal, setShowAddModal] = useState(false);
   const [showMobileDetail, setShowMobileDetail] = useState(false);
   const [eventForm, setEventForm] = useState({ title: '', date: '', time: '', endTime: '', category: 'personal', color: '#3b82f6' });
@@ -43,10 +49,10 @@ const CalendarPage = () => {
   }, [currentUser, userProfile]);
 
   const selectedDayName = useMemo(() => {
-    if (!selectedDate) return null;
-    const d = new Date(selectedDate + 'T00:00');
+    if (!activeDateStr) return null;
+    const d = new Date(activeDateStr + 'T00:00');
     return DAY_NAMES[d.getDay()];
-  }, [selectedDate]);
+  }, [activeDateStr]);
 
   const isDateInCurrentViewedMonth = useCallback((dateStr) => {
     if (!dateStr) return false;
@@ -60,7 +66,7 @@ const CalendarPage = () => {
   }, [currentDate]);
 
   const clickedDayClasses = useMemo(() => {
-    if (!selectedDate || !selectedDayName || !savedTimetable) return [];
+    if (!activeDateStr || !selectedDayName || !savedTimetable) return [];
     const dayData = savedTimetable[selectedDayName];
     if (!dayData) return [];
     return Object.entries(dayData).map(([time, entries]) => ({ time, entries })).sort((a, b) => {
@@ -72,7 +78,7 @@ const CalendarPage = () => {
       };
       return parseTime(a.time.split(/[-–—]/)[0]) - parseTime(b.time.split(/[-–—]/)[0]);
     });
-  }, [selectedDate, selectedDayName, savedTimetable]);
+  }, [activeDateStr, selectedDayName, savedTimetable]);
 
   const monthDeadlines = useMemo(() => {
     const list = [];
@@ -198,9 +204,9 @@ const CalendarPage = () => {
   };
 
   const selectedEvents = useMemo(() => {
-    if (!selectedDate) return null;
-    return getEventsForDate(selectedDate);
-  }, [selectedDate, getEventsForDate]);
+    if (!activeDateStr) return null;
+    return getEventsForDate(activeDateStr);
+  }, [activeDateStr, getEventsForDate]);
 
   const isFormValid = () => {
     if (!eventForm.title || !eventForm.date) return false;
@@ -235,73 +241,204 @@ const CalendarPage = () => {
   const itemVariants = { hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.35 } } };
 
   const renderDetailContent = () => {
-    if (!selectedDate) {
-      return (
-        <div className="cal-detail-empty">
-          <Calendar size={32} style={{ opacity: 0.3, marginBottom: '1rem' }} />
-          <p>Select a date to view events</p>
-        </div>
-      );
-    }
+    const formattedDate = new Date(activeDateStr + 'T00:00').toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+
+    const dayEvents = selectedEvents || { holidays: [], academic: [], custom: [], all: [] };
+    const isHoliday = dayEvents.holidays && dayEvents.holidays.length > 0;
 
     return (
-      <>
-        <div className="cal-detail-header-flex">
-          <h4 className="cal-detail-date">
-            {new Date(selectedDate + 'T00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
-          </h4>
-          {isMobile && (
-            <button className="cal-close-btn" onClick={() => setShowMobileDetail(false)}>
-              <X size={18} />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', height: '100%' }}>
+        {/* Date Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem' }}>
+          <div>
+            <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: 'var(--text)' }}>
+              {formattedDate}
+            </h4>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+              {activeDateStr === todayStr ? 'Today\'s Agenda' : 'Selected Date'}
+            </span>
+          </div>
+          <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
+            <button 
+              className="btn-icon-sm"
+              title="Add Event"
+              onClick={() => { setEventForm(prev => ({ ...prev, date: activeDateStr })); setShowAddModal(true); }}
+              style={{ padding: '0.35rem', borderRadius: '8px', background: 'var(--input-bg)', border: '1px solid var(--border)', color: 'var(--primary)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+            >
+              <Plus size={16} />
             </button>
+            {isMobile && (
+              <button className="cal-close-btn" onClick={() => setShowMobileDetail(false)}>
+                <X size={18} />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Dynamic Daily Agenda List */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+          <h5 style={{ margin: 0, fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)', letterSpacing: '0.5px' }}>
+            Events &amp; Holidays
+          </h5>
+          {dayEvents.all.length === 0 ? (
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontStyle: 'italic', padding: '0.15rem 0' }}>
+              No scheduled events for this day.
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+              {dayEvents.holidays.map((e, idx) => (
+                <div key={`h-${idx}`} style={{ display: 'flex', gap: '0.5rem', background: 'rgba(239, 68, 68, 0.04)', borderLeft: '3px solid #ef4444', padding: '0.45rem 0.55rem', borderRadius: '0.375rem', fontSize: '0.75rem', alignItems: 'center' }}>
+                  <Star size={14} style={{ color: '#ef4444', flexShrink: 0 }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{e.name}</div>
+                    <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
+                      {e.type === 'gazetted' ? '🔴 Gazetted Holiday' : '🟠 Restricted Holiday'}
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {dayEvents.academic.map((e, idx) => (
+                <div key={`a-${idx}`} style={{ display: 'flex', gap: '0.5rem', background: 'rgba(99, 102, 241, 0.04)', borderLeft: '3px solid #6366f1', padding: '0.45rem 0.55rem', borderRadius: '0.375rem', fontSize: '0.75rem', alignItems: 'center' }}>
+                  <BookOpen size={14} style={{ color: '#6366f1', flexShrink: 0 }} />
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 600, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{e.name}</div>
+                    <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>Semester {e.semester} &bull; {e.category}</div>
+                  </div>
+                </div>
+              ))}
+              {dayEvents.custom.map((e, idx) => (
+                <div key={`c-${e.id}`} style={{ display: 'flex', gap: '0.5rem', background: 'var(--input-bg)', borderLeft: `3px solid ${e.color || '#3b82f6'}`, padding: '0.45rem 0.55rem', borderRadius: '0.375rem', fontSize: '0.75rem', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flex: 1, minWidth: 0 }}>
+                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: e.color || '#3b82f6', flexShrink: 0 }} />
+                    <div style={{ flex: 1, minWidth: 0, textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                      <div style={{ fontWeight: 600, color: 'var(--text)', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{e.title}</div>
+                      {e.time && (
+                        <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '0.2rem', marginTop: '0.1rem' }}>
+                          <Clock size={10} /> {e.time}{e.endTime ? ` - ${e.endTime}` : ''}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <button className="cal-delete-btn" onClick={() => removeEvent(e.id)} style={{ padding: '0.25rem', cursor: 'pointer', background: 'transparent', border: 'none', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <Trash2 size={12} />
+                  </button>
+                </div>
+              ))}
+            </div>
           )}
         </div>
-        
-        {selectedEvents.all.length === 0 ? (
-          <div className="cal-detail-empty">
-            <p>No events on this day</p>
-            <button className="btn btn-outline btn-sm" onClick={() => { setEventForm(prev => ({ ...prev, date: selectedDate })); setShowAddModal(true); if (isMobile) setShowMobileDetail(false); }}>
-              <Plus size={14} /> Add Event
-            </button>
-          </div>
-        ) : (
-          <div className="cal-detail-events">
-            {selectedEvents.holidays.map((e, i) => (
-              <motion.div initial={{opacity:0, x:-10}} animate={{opacity:1, x:0}} transition={{delay: i*0.05}} key={`h-${i}`} className="cal-detail-item holiday">
-                <Star size={16} />
-                <div className="cal-detail-item-content">
-                  <div className="cal-detail-name">{e.name}</div>
-                  <div className="cal-detail-type">{e.type === 'gazetted' ? '🔴 Gazetted Holiday' : '🟠 Restricted Holiday'}</div>
-                </div>
-              </motion.div>
-            ))}
-            {selectedEvents.academic.map((e, i) => (
-              <motion.div initial={{opacity:0, x:-10}} animate={{opacity:1, x:0}} transition={{delay: (selectedEvents.holidays.length + i)*0.05}} key={`a-${i}`} className="cal-detail-item academic">
-                <BookOpen size={16} />
-                <div className="cal-detail-item-content">
-                  <div className="cal-detail-name">{e.name}</div>
-                  <div className="cal-detail-type">Semester {e.semester} • {e.category}</div>
-                </div>
-              </motion.div>
-            ))}
-            {selectedEvents.custom.map((e, i) => (
-              <motion.div initial={{opacity:0, x:-10}} animate={{opacity:1, x:0}} transition={{delay: (selectedEvents.holidays.length + selectedEvents.academic.length + i)*0.05}} key={`c-${e.id}`} className="cal-detail-item custom">
-                <div className="cal-event-color" style={{ background: e.color || '#6366f1' }} />
-                <div className="cal-detail-item-content">
-                  <div className="cal-detail-name">{e.title}</div>
-                  {e.time && (
-                    <div className="cal-detail-type">
-                      <Clock size={12} style={{display:'inline', marginRight: 4}} /> 
-                      {e.time}{e.endTime ? ` - ${e.endTime}` : ''}
+
+        {/* Classes of the Day */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
+          <h5 style={{ margin: 0, fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+            <Clock size={12} /> Synced Timetable Classes
+          </h5>
+          {isHoliday ? (
+            <div style={{ fontSize: '0.75rem', color: '#ef4444', background: 'rgba(239, 68, 68, 0.04)', padding: '0.45rem 0.65rem', borderRadius: '0.375rem', display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+              <strong>Holiday: {dayEvents.holidays[0].name}</strong>
+              <span style={{ fontSize: '0.68rem', opacity: 0.8 }}>No classes scheduled today! 🎉</span>
+            </div>
+          ) : ['Saturday', 'Sunday'].includes(selectedDayName) ? (
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', background: 'var(--input-bg)', padding: '0.45rem 0.65rem', borderRadius: '0.375rem' }}>
+              Enjoy your weekend! No classes scheduled. ☕
+            </div>
+          ) : clickedDayClasses.length === 0 ? (
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontStyle: 'italic', padding: '0.15rem 0' }}>
+              No classes scheduled for {selectedDayName}.
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+              {clickedDayClasses.map((slot, idx) => (
+                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.45rem 0.55rem', background: 'var(--input-bg)', borderRadius: '0.375rem', fontSize: '0.75rem', borderLeft: '3px solid var(--primary)', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flex: 1, minWidth: 0 }}>
+                    <GraduationCap size={14} style={{ color: 'var(--primary)', flexShrink: 0 }} />
+                    <div style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <strong style={{ color: 'var(--text)' }}>{slot.entries[0]?.code || 'Course'}</strong>
+                      <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '0.05rem' }}>{slot.entries[0]?.type || 'Lecture'} &bull; {slot.entries[0]?.venue || 'N/A'}</div>
                     </div>
-                  )}
+                  </div>
+                  <span style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-muted)' }}>{slot.time.split(' – ')[0]}</span>
                 </div>
-                <button className="cal-delete-btn" onClick={() => removeEvent(e.id)}><Trash2 size={14} /></button>
-              </motion.div>
-            ))}
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Month Agenda / Highlights */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', borderTop: '1px solid var(--border)', paddingTop: '1rem', flex: 1, overflowY: 'auto' }}>
+          <h5 style={{ margin: 0, fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)', letterSpacing: '0.5px' }}>
+            Month Highlights ({MONTHS[month]})
+          </h5>
+          
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+            {/* Deadlines */}
+            <div>
+              <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--primary)', marginBottom: '0.25rem', letterSpacing: '0.3px' }}>Deadlines</div>
+              {monthDeadlines.length === 0 ? (
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>No deadlines this month.</span>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  {monthDeadlines.map((e, idx) => (
+                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', background: 'var(--input-bg)', padding: '0.35rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem', alignItems: 'center' }}>
+                      <span style={{ color: 'var(--text)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, marginRight: '0.5rem' }}>{e.title}</span>
+                      <span style={{ color: '#f59e0b', fontWeight: 600, flexShrink: 0 }}>{new Date(e.date + 'T00:00').toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Exams / Quizzes */}
+            <div>
+              <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: '#ef4444', marginBottom: '0.25rem', letterSpacing: '0.3px' }}>Exams &amp; Quizzes</div>
+              {(academicExamPhases.length === 0 && monthExamsAndQuizzes.length === 0) ? (
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>No exams scheduled.</span>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  {academicExamPhases.map((e, idx) => (
+                    <div key={`ae-${idx}`} style={{ display: 'flex', flexDirection: 'column', background: 'rgba(239, 68, 68, 0.03)', border: '1px solid rgba(239, 68, 68, 0.08)', padding: '0.35rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem' }}>
+                      <strong style={{ color: '#ef4444', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{e.title}</strong>
+                      <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '0.05rem' }}>
+                        {new Date(e.date + 'T00:00').toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
+                        {e.endDate && ` → ${new Date(e.endDate + 'T00:00').toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}`}
+                      </span>
+                    </div>
+                  ))}
+                  {monthExamsAndQuizzes.map((e, idx) => (
+                    <div key={`ce-${idx}`} style={{ display: 'flex', justifyContent: 'space-between', background: 'var(--input-bg)', padding: '0.35rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem', alignItems: 'center' }}>
+                      <span style={{ color: 'var(--text)', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, marginRight: '0.5rem' }}>{e.title}</span>
+                      <span style={{ color: '#ef4444', fontWeight: 600, flexShrink: 0 }}>{new Date(e.date + 'T00:00').toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Academic Periods */}
+            {monthLongAcademicEvents.length > 0 && (
+              <div>
+                <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', color: '#10b981', marginBottom: '0.25rem', letterSpacing: '0.3px' }}>Academic Periods</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                  {monthLongAcademicEvents.map((e, idx) => (
+                    <div key={idx} style={{ display: 'flex', flexDirection: 'column', background: 'var(--input-bg)', padding: '0.35rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem' }}>
+                      <span style={{ color: 'var(--text)', fontWeight: 600, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{e.name}</span>
+                      <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '0.05rem' }}>
+                        {new Date(e.date + 'T00:00').toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
+                        {e.endDate && ` → ${new Date(e.endDate + 'T00:00').toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}`}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
-        )}
-      </>
+        </div>
+      </div>
     );
   };
 
@@ -423,281 +560,6 @@ const CalendarPage = () => {
               </>
             )}
           </AnimatePresence>
-          {/* Bottom Dynamic Sections */}
-          <div className="calendar-bottom-widgets">
-            {/* Section 1: Classes of the Selected Day */}
-            <div className="bottom-widget-card glass-card">
-              <h4 className="bottom-widget-title">
-                <Clock size={16} />
-                Classes {selectedDate ? `— ${new Date(selectedDate + 'T00:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}` : ''}
-              </h4>
-              <div className="bottom-widget-content">
-                {!selectedDate ? (
-                  <div className="bottom-widget-empty">
-                    <p>Click a date on the calendar to view its classes.</p>
-                  </div>
-                ) : (
-                  <>
-                    {(() => {
-                      const dayEvents = getEventsForDate(selectedDate);
-                      const isHoliday = dayEvents.holidays && dayEvents.holidays.length > 0;
-                      const customEventsForDay = dayEvents.custom || [];
-                      
-                      if (isHoliday) {
-                        return (
-                          <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                            <div className="bottom-widget-empty" style={{ color: 'var(--danger)', padding: '1rem', height: 'auto', minHeight: 'auto' }}>
-                              <Star size={20} style={{ marginBottom: '0.35rem', opacity: 0.8 }} />
-                              <p style={{ margin: 0 }}><strong>Holiday:</strong> {dayEvents.holidays[0].name}</p>
-                              <span style={{ fontSize: '0.75rem', opacity: 0.8 }}>No regular classes scheduled today! 🎉</span>
-                            </div>
-                            {customEventsForDay.length > 0 && (
-                              <div style={{ padding: '0 0.5rem 1rem' }}>
-                                <div style={{ fontSize: '0.7rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
-                                  Extra Scheduled Events
-                                </div>
-                                <div className="bottom-widget-list">
-                                  {customEventsForDay.map((e, idx) => (
-                                    <div key={idx} className="bottom-widget-item">
-                                      <div className="cal-event-color" style={{ background: e.color || 'var(--primary)', marginTop: '5px' }} />
-                                      <div style={{ flex: 1 }}>
-                                        <div style={{ fontWeight: '600', fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between' }}>
-                                          <span>{e.title}</span>
-                                          {e.time && <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{e.time}</span>}
-                                        </div>
-                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px', display: 'flex', justifyContent: 'space-between' }}>
-                                          <span style={{ textTransform: 'capitalize' }}>{e.category}</span>
-                                          {e.endTime && <span>until {e.endTime}</span>}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      }
-                      
-                      if (['Saturday', 'Sunday'].includes(selectedDayName)) {
-                        if (customEventsForDay.length > 0) {
-                          return (
-                            <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-                              <div className="bottom-widget-empty" style={{ padding: '1rem', height: 'auto', minHeight: 'auto' }}>
-                                <PartyPopper size={20} style={{ marginBottom: '0.35rem', opacity: 0.5 }} />
-                                <p style={{ margin: 0 }}>Weekend ({selectedDayName})</p>
-                                <span style={{ fontSize: '0.75rem', opacity: 0.8 }}>No regular classes. Enjoy your weekend! ☕</span>
-                              </div>
-                              <div style={{ padding: '0 0.5rem 1rem' }}>
-                                <div style={{ fontSize: '0.7rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
-                                  Extra Scheduled Events
-                                </div>
-                                <div className="bottom-widget-list">
-                                  {customEventsForDay.map((e, idx) => (
-                                    <div key={idx} className="bottom-widget-item">
-                                      <div className="cal-event-color" style={{ background: e.color || 'var(--primary)', marginTop: '5px' }} />
-                                      <div style={{ flex: 1 }}>
-                                        <div style={{ fontWeight: '600', fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between' }}>
-                                          <span>{e.title}</span>
-                                          {e.time && <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{e.time}</span>}
-                                        </div>
-                                        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px', display: 'flex', justifyContent: 'space-between' }}>
-                                          <span style={{ textTransform: 'capitalize' }}>{e.category}</span>
-                                          {e.endTime && <span>until {e.endTime}</span>}
-                                        </div>
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        }
-                        return (
-                          <div className="bottom-widget-empty">
-                            <PartyPopper size={24} style={{ marginBottom: '0.5rem', opacity: 0.5 }} />
-                            <p>It's {selectedDayName} (Weekend)!</p>
-                            <span>No classes scheduled. Enjoy your break! ☕</span>
-                          </div>
-                        );
-                      }
-
-                      if (clickedDayClasses.length === 0) {
-                        return (
-                          <div className="bottom-widget-empty">
-                            <p>No classes scheduled for this day.</p>
-                          </div>
-                        );
-                      }
-
-                      return (
-                        <div className="bottom-widget-list">
-                          {clickedDayClasses.map((slot, idx) => (
-                            <div key={idx} className="bottom-widget-item">
-                              <GraduationCap size={16} style={{ color: 'var(--primary)', marginTop: '2px' }} />
-                              <div style={{ flex: 1 }}>
-                                <div style={{ fontWeight: '600', fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between' }}>
-                                  <span>{slot.entries[0]?.code || 'Course'}</span>
-                                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{slot.time}</span>
-                                </div>
-                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px', display: 'flex', justifyContent: 'space-between' }}>
-                                  <span>{slot.entries[0]?.type || 'Lecture'}</span>
-                                  <span style={{ fontWeight: '500' }}>{slot.entries[0]?.venue || 'N/A'}</span>
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      );
-                    })()}
-                  </>
-                )}
-              </div>
-            </div>
-
-            {/* Section 2: Deadlines of the Month */}
-            <div className="bottom-widget-card glass-card">
-              <h4 className="bottom-widget-title">
-                <Filter size={16} />
-                Deadlines — {MONTHS[month]}
-              </h4>
-              <div className="bottom-widget-content">
-                {monthDeadlines.length === 0 ? (
-                  <div className="bottom-widget-empty">
-                    <p>No deadlines scheduled for {MONTHS[month]}.</p>
-                    <button className="btn btn-outline btn-sm" onClick={() => { setShowAddModal(true); setEventForm(f => ({ ...f, category: 'deadline' })); }}>
-                      <Plus size={12} /> Add Deadline
-                    </button>
-                  </div>
-                ) : (
-                  <div className="bottom-widget-list">
-                    {monthDeadlines.map((e, idx) => (
-                      <div key={idx} className="bottom-widget-item">
-                        <div className="cal-event-color" style={{ background: CATEGORY_COLORS.deadline, marginTop: '5px' }} />
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontWeight: '600', fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between' }}>
-                            <span>{e.title}</span>
-                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                              {new Date(e.date + 'T00:00').toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
-                            </span>
-                          </div>
-                          {e.time && (
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px' }}>
-                              Time: {e.time}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-
-            {/* Section 3: Multi-Day Academic Periods for this month */}
-            {monthLongAcademicEvents.length > 0 && (
-              <div className="bottom-widget-card glass-card">
-                <h4 className="bottom-widget-title">
-                  <BookOpen size={16} />
-                  Academic Periods — {MONTHS[month]}
-                </h4>
-                <div className="bottom-widget-content">
-                  <div className="bottom-widget-list">
-                    {monthLongAcademicEvents.map((e, idx) => (
-                      <div key={idx} className="bottom-widget-item">
-                        <div className="cal-event-color" style={{ background: CATEGORY_COLORS[e.category] || '#6366f1', marginTop: '5px' }} />
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontWeight: '600', fontSize: '0.85rem' }}>{e.name}</div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px', display: 'flex', flexWrap: 'wrap', gap: '0.35rem', alignItems: 'center' }}>
-                            <span>
-                              {new Date(e.date + 'T00:00').toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
-                              {e.endDate && ` → ${new Date(e.endDate + 'T00:00').toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}`}
-                            </span>
-                            <span className="acad-sem-badge" style={{ fontSize: '0.65rem', padding: '1px 6px' }}>Sem {e.semester}</span>
-                            <span style={{ color: CATEGORY_COLORS[e.category], textTransform: 'capitalize', fontWeight: '600', fontSize: '0.7rem' }}>{e.category}</span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Section 4: Exams & Quizzes of the Month */}
-            <div className="bottom-widget-card glass-card">
-              <h4 className="bottom-widget-title">
-                <Star size={16} />
-                Exams &amp; Quizzes — {MONTHS[month]}
-              </h4>
-              <div className="bottom-widget-content">
-                {/* Academic Exam Phases */}
-                {academicExamPhases.length > 0 && (
-                  <div style={{
-                    background: 'rgba(239, 68, 68, 0.07)',
-                    border: '1px solid rgba(239, 68, 68, 0.22)',
-                    borderRadius: '10px',
-                    padding: '0.6rem 0.75rem',
-                    marginBottom: '0.85rem'
-                  }}>
-                    <div style={{ fontSize: '0.7rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.06em', color: '#ef4444', marginBottom: '0.4rem', padding: '0 0.1rem' }}>
-                      Academic Phases (Exam Period)
-                    </div>
-                    <div className="bottom-widget-list">
-                      {academicExamPhases.map((e, idx) => (
-                        <div key={`ap-${idx}`} className="bottom-widget-item" style={{ background: 'rgba(239, 68, 68, 0.03)', borderColor: 'rgba(239, 68, 68, 0.12)' }}>
-                          <div className="cal-event-color" style={{ background: '#ef4444', marginTop: '5px' }} />
-                          <div style={{ flex: 1 }}>
-                            <div style={{ fontWeight: '600', fontSize: '0.85rem' }}>{e.title}</div>
-                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px', display: 'flex', flexWrap: 'wrap', gap: '0.35rem', alignItems: 'center' }}>
-                              <span>
-                                {new Date(e.date + 'T00:00').toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
-                                {e.endDate && ` → ${new Date(e.endDate + 'T00:00').toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}`}
-                              </span>
-                              <span className="acad-sem-badge" style={{ fontSize: '0.65rem', padding: '1px 6px', color: '#ef4444', background: 'rgba(239,68,68,0.1)' }}>Sem {e.semester}</span>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {/* Manually Added Exams */}
-                <div style={{ fontSize: '0.7rem', fontWeight: '700', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', marginBottom: '0.4rem', padding: '0 0.1rem' }}>
-                  My Added Exams &amp; Quizzes — {MONTHS[month]}
-                </div>
-                {monthExamsAndQuizzes.length === 0 ? (
-                  <div className="bottom-widget-empty">
-                    <p>No exams or quizzes added for {MONTHS[month]}.</p>
-                    <button className="btn btn-outline btn-sm" onClick={() => { setShowAddModal(true); setEventForm(f => ({ ...f, category: 'exam' })); }}>
-                      <Plus size={12} /> Add Exam/Quiz
-                    </button>
-                  </div>
-                ) : (
-                  <div className="bottom-widget-list">
-                    {monthExamsAndQuizzes.map((e, idx) => (
-                      <div key={`ceq-${idx}`} className="bottom-widget-item">
-                        <div className="cal-event-color" style={{ background: CATEGORY_COLORS[e.category] || '#ef4444', marginTop: '5px' }} />
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontWeight: '600', fontSize: '0.85rem', display: 'flex', justifyContent: 'space-between' }}>
-                            <span>{e.title}</span>
-                            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                              {new Date(e.date + 'T00:00').toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
-                            </span>
-                          </div>
-                          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '2px', display: 'flex', justifyContent: 'space-between' }}>
-                            <span style={{ textTransform: 'capitalize' }}>{e.category}</span>
-                            {e.time && <span>{e.time}{e.endTime ? ` - ${e.endTime}` : ''}</span>}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
         </motion.div>
       )}
 

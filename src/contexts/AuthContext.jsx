@@ -154,34 +154,75 @@ export const AuthProvider = ({ children }) => {
   const loginAsDemo = () => {
     const demoUser = {
       uid: 'demo_user_id',
-      email: 'demo@iitgn.ac.in',
-      displayName: 'Demo Student',
+      email: 'singh.ayush@iitgn.ac.in',
+      displayName: 'Ayush Singh',
       emailVerified: true,
       isDemo: true
     };
     const demoProfile = {
       uid: 'demo_user_id',
-      name: 'Demo Student',
-      username: 'demo',
-      rollNumber: '22110001',
-      programme: 'BTech',
-      branch: 'Computer Science and Engineering',
-      yearOfAdmission: 2022,
-      currentYear: '3rd Year',
-      semester: 'Semester 6',
-      avatarUrl: 'https://api.dicebear.com/9.x/thumbs/svg?seed=demo',
+      name: 'Ayush Singh',
+      username: 'singh.ayush',
+      rollNumber: '23110001',
+      programme: 'B.Tech',
+      branch: 'Computer Science & Engineering',
+      yearOfAdmission: 2024,
+      currentYear: '2nd Year',
+      semester: 'Semester 3',
+      avatarUrl: 'https://api.dicebear.com/9.x/thumbs/svg?seed=Ayush',
       phone: '+91 98765 43210',
-      gmail: 'demo.personal@gmail.com',
-      github: 'https://github.com/demo-student',
-      linkedin: 'https://linkedin.com/in/demo-student',
-      instagram: 'https://instagram.com/demo-student',
+      gmail: 'singh.ayush.personal@gmail.com',
+      github: 'https://github.com/singh-ayush',
+      linkedin: 'https://linkedin.com/in/singh-ayush',
+      instagram: 'https://instagram.com/singh-ayush',
       privacy: { phone: false, email: false, social: true },
       notifications: { email: true, push: false, updates: true },
-      preferences: { librarySeat: 'A-12', defaultView: 'Grid' },
+      preferences: { librarySeat: 'A-12', defaultView: 'Grid', accent: 'indigo' },
       isDemo: true
     };
+
+    const demoGrades = [
+      {
+        id: 1,
+        name: 'Semester 1',
+        courses: [
+          { id: 101, name: 'CS 101 - Introduction to Computing', credits: 4, grade: 'A-' },
+          { id: 102, name: 'MA 101 - Calculus', credits: 4, grade: 'B' },
+          { id: 103, name: 'PH 101 - Physics I', credits: 4, grade: 'B-' },
+          { id: 104, name: 'HS 101 - English Communication', credits: 3, grade: 'A' },
+          { id: 105, name: 'CE 101 - Engineering Graphics', credits: 3, grade: 'B' },
+          { id: 106, name: 'CH 101 - General Chemistry', credits: 3, grade: 'B' }
+        ]
+      },
+      {
+        id: 2,
+        name: 'Semester 2',
+        courses: [
+          { id: 201, name: 'CS 102 - Data Structures', credits: 3, grade: 'A-' },
+          { id: 202, name: 'MA 102 - Linear Algebra', credits: 3, grade: 'B' },
+          { id: 203, name: 'PH 102 - Physics II', credits: 3, grade: 'B' },
+          { id: 204, name: 'EE 101 - Introduction to Electrical Engineering', credits: 3, grade: 'B' },
+          { id: 205, name: 'ME 101 - Engineering Mechanics', credits: 3, grade: 'B' },
+          { id: 206, name: 'HS 102 - Professional Ethics', credits: 3, grade: 'B-' },
+          { id: 207, name: 'CH 102 - Chemistry Lab', credits: 2, grade: 'A' },
+          { id: 208, name: 'PH 103 - Physics Lab', credits: 2, grade: 'B-' }
+        ]
+      }
+    ];
+
+    const demoCourses = [
+      { id: 301, code: 'CS 201', title: 'Data Structures and Algorithms', credits: 4, slots: [{ day: 'Monday', time: '09:00 – 10:30', venue: 'LHC-101' }, { day: 'Wednesday', time: '09:00 – 10:30', venue: 'LHC-101' }] },
+      { id: 302, code: 'CS 202', title: 'Discrete Mathematics', credits: 4, slots: [{ day: 'Tuesday', time: '10:30 – 12:00', venue: 'LHC-102' }, { day: 'Thursday', time: '10:30 – 12:00', venue: 'LHC-102' }] },
+      { id: 303, code: 'EE 201', title: 'Signals and Systems', credits: 4, slots: [{ day: 'Monday', time: '14:00 – 15:30', venue: 'LHC-103' }, { day: 'Wednesday', time: '14:00 – 15:30', venue: 'LHC-103' }] },
+      { id: 304, code: 'MA 201', title: 'Differential Equations', credits: 3, slots: [{ day: 'Tuesday', time: '09:00 – 10:00', venue: 'LHC-104' }, { day: 'Friday', time: '09:00 – 10:00', venue: 'LHC-104' }] },
+      { id: 305, code: 'HS 201', title: 'Sociology & Technology', credits: 3, slots: [{ day: 'Wednesday', time: '11:00 – 12:00', venue: 'LHC-105' }, { day: 'Friday', time: '11:00 – 12:00', venue: 'LHC-105' }] },
+      { id: 306, code: 'CS 291', title: 'Programming Laboratory', credits: 3, slots: [{ day: 'Thursday', time: '14:00 – 17:00', venue: 'CC-Lab' }] }
+    ];
+
     localStorage.setItem('demo_user', JSON.stringify(demoUser));
     localStorage.setItem(`profile_${demoUser.uid}`, JSON.stringify(demoProfile));
+    localStorage.setItem(`grades_${demoUser.uid}`, JSON.stringify(demoGrades));
+    localStorage.setItem(`courses_${demoUser.uid}`, JSON.stringify(demoCourses));
     setCurrentUser(demoUser);
     setUserProfile(demoProfile);
   };

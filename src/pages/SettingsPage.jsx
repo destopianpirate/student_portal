@@ -103,14 +103,17 @@ const loadImage = (src) => {
 };
 
 const SettingsPage = ({ darkMode, setDarkMode }) => {
-  const { currentUser, userProfile, logout, saveProfile } = useAuth();
+  const { currentUser, userProfile, logout, saveProfile, deleteAccount, resetPassword, sendVerificationEmail } = useAuth();
   const { addNotification } = useNotifications();
   const navigate = useNavigate();
   const location = useLocation();
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
-  const [lightboxImage, setLightboxImage] = useState(null);
   const [importPreview, setImportPreview] = useState(null);
+  const [importError, setImportError] = useState(null);
+  const [lightboxImage, setLightboxImage] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
   const [form, setForm] = useState({
     name: '', firstName: '', surname: '', username: '', rollNumber: '', programme: '', branch: '',
@@ -912,7 +915,10 @@ const SettingsPage = ({ darkMode, setDarkMode }) => {
         // Strict verification: college email must match the logged-in email
         if (importedData.collegeEmail !== currentUser?.email) {
           addNotification('error', 'Import Failed', 'College ID in the file does not match your logged-in account.');
-          alert(`Import Failed: This backup file belongs to college ID "${importedData.collegeEmail || 'Unknown'}". It cannot be imported into your account (${currentUser?.email}).`);
+          setImportError({
+            title: 'Import Failed',
+            message: `This backup file belongs to college ID "${importedData.collegeEmail || 'Unknown'}". It cannot be imported into your account (${currentUser?.email || 'N/A'}).`
+          });
           return;
         }
 
@@ -920,7 +926,10 @@ const SettingsPage = ({ darkMode, setDarkMode }) => {
       } catch (err) {
         console.error('Import parse error:', err);
         addNotification('error', 'Import Failed', 'Invalid backup file format.');
-        alert('Import Failed: Invalid backup file format or corrupted data.');
+        setImportError({
+          title: 'Import Failed',
+          message: 'Invalid backup file format or corrupted data. Please upload a valid JSON backup file generated from StudentOS.'
+        });
       }
     };
     reader.readAsText(file);
@@ -1137,6 +1146,85 @@ const SettingsPage = ({ darkMode, setDarkMode }) => {
     setIsDragging(false);
   };
 
+  const getDeviceDetails = () => {
+    const ua = navigator.userAgent;
+    let browser = "Unknown Browser";
+    let os = "Unknown OS";
+    
+    if (ua.indexOf("Firefox") > -1) browser = "Mozilla Firefox";
+    else if (ua.indexOf("SamsungBrowser") > -1) browser = "Samsung Internet";
+    else if (ua.indexOf("Opera") > -1 || ua.indexOf("OPR") > -1) browser = "Opera";
+    else if (ua.indexOf("Trident") > -1) browser = "Internet Explorer";
+    else if (ua.indexOf("Edge") > -1 || ua.indexOf("Edg") > -1) browser = "Microsoft Edge";
+    else if (ua.indexOf("Chrome") > -1) browser = "Google Chrome";
+    else if (ua.indexOf("Safari") > -1) browser = "Apple Safari";
+    
+    if (ua.indexOf("Windows NT 10.0") > -1) os = "Windows 10/11";
+    else if (ua.indexOf("Windows NT 6.2") > -1) os = "Windows 8";
+    else if (ua.indexOf("Windows NT 6.1") > -1) os = "Windows 7";
+    else if (ua.indexOf("Macintosh") > -1) os = "macOS";
+    else if (ua.indexOf("Android") > -1) os = "Android";
+    else if (ua.indexOf("iPhone") > -1) os = "iOS";
+    else if (ua.indexOf("Linux") > -1) os = "Linux";
+    
+    return `${browser} on ${os}`;
+  };
+
+  const handlePasswordReset = async () => {
+    try {
+      if (currentUser?.isDemo) {
+        addNotification('success', 'Reset Link Sent', 'Demo password reset email sent successfully (simulated).');
+        return;
+      }
+      await resetPassword(currentUser.email);
+      addNotification('success', 'Reset Link Sent', `A password reset link has been sent to ${currentUser.email}.`);
+    } catch (err) {
+      console.error(err);
+      addNotification('error', 'Reset Failed', err.message || 'Could not send reset link.');
+    }
+  };
+
+  const handleSendVerification = async () => {
+    try {
+      if (currentUser?.isDemo) {
+        addNotification('success', 'Verification Link Sent', 'Demo verification email sent successfully (simulated).');
+        return;
+      }
+      await sendVerificationEmail();
+      addNotification('success', 'Verification Link Sent', `A verification link has been sent to ${currentUser.email}.`);
+    } catch (err) {
+      console.error(err);
+      addNotification('error', 'Verification Failed', err.message || 'Could not send verification link.');
+    }
+  };
+
+  const handleConfirmDeleteAccount = async () => {
+    if (deleteConfirmText !== 'DELETE') return;
+    try {
+      if (currentUser?.isDemo) {
+        localStorage.clear();
+        addNotification('success', 'Account Deleted', 'Demo account cleared. Wiping all local data.');
+        setShowDeleteModal(false);
+        setDeleteConfirmText('');
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 1000);
+        return;
+      }
+      await deleteAccount();
+      localStorage.clear();
+      addNotification('success', 'Account Deleted', 'Your student account has been successfully deleted.');
+      setShowDeleteModal(false);
+      setDeleteConfirmText('');
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 1000);
+    } catch (err) {
+      console.error(err);
+      addNotification('error', 'Deletion Failed', err.message || 'Could not delete your account.');
+    }
+  };
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -1214,25 +1302,51 @@ const SettingsPage = ({ darkMode, setDarkMode }) => {
           </div>
         </div>
 
-        {/* Security Health Check */}
-        <div className="security-health-widget">
-          <div className="security-header-row">
-            <h4 style={{ display: 'flex', alignItems: 'center', gap: '.5rem', margin: 0 }}>
-              <Shield size={16} style={{ color: 'var(--primary)' }} /> Security Strength
-            </h4>
-            <span className={`security-score-badge ${securityHealth.levelClass}`}>
-              {securityHealth.level} ({securityHealth.score}/{securityHealth.total})
-            </span>
+        {/* Account & Data Portability */}
+        <div className="security-health-widget" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '220px' }}>
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
+              <h4 style={{ display: 'flex', alignItems: 'center', gap: '.4rem', margin: 0, fontSize: '0.9rem', fontWeight: 800 }}>
+                <Shield size={16} style={{ color: 'var(--primary)' }} /> Account & Data Portability
+              </h4>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                Active Session
+              </span>
+            </div>
+            
+            <p style={{ color: 'var(--text-muted)', fontSize: '.8rem', marginBottom: '1rem', marginTop: '0.25rem' }}>
+              Signed in as <strong>{currentUser?.email || 'singh.ayush@iitgn.ac.in'}</strong>
+            </p>
+            
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
+              <button className="btn btn-outline btn-sm" onClick={handleDownloadData} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.75rem', padding: '0.4rem 0.75rem' }}>
+                <Download size={14} /> Export Backup (JSON)
+              </button>
+              <button className="btn btn-outline btn-sm" onClick={handleExportPDF} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.75rem', padding: '0.4rem 0.75rem' }}>
+                <Download size={14} /> Export Report (PDF)
+              </button>
+              <button className="btn btn-outline btn-sm danger" onClick={handleLogout} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.75rem', padding: '0.4rem 0.75rem' }}>
+                <LogOut size={14} /> Logout
+              </button>
+            </div>
           </div>
-          <div className="security-checklist">
-            {securityHealth.checks.map((c, i) => (
-              <div key={i} className={`security-check-item ${c.passed ? 'passed' : ''}`}>
-                <span style={{ color: c.passed ? 'var(--success)' : 'var(--danger)', marginRight: '6px', fontSize: '1rem' }}>
-                  {c.passed ? '●' : '○'}
-                </span>
-                <span style={{ textDecoration: c.passed ? 'none' : 'line-through' }}>{c.name}</span>
-              </div>
-            ))}
+          
+          <div style={{ borderTop: '1px dashed var(--border)', paddingTop: '0.75rem' }}>
+            <h5 style={{ margin: '0 0 0.25rem 0', fontSize: '0.8rem', fontWeight: 700, color: 'var(--text)' }}>
+              Import Profile & Data
+            </h5>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.7rem', margin: '0 0 0.75rem 0', lineHeight: '1.4' }}>
+              Restore settings, profile photo, Mess QR, student ID, projects, certificates, note lists, and semester grades from a matching `.json` backup file.
+            </p>
+            <label className="btn btn-primary btn-sm" style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', width: 'fit-content', padding: '0.4rem 0.85rem', fontSize: '0.75rem' }}>
+              <Upload size={14} /> Upload Backup JSON
+              <input 
+                type="file" 
+                accept=".json" 
+                onChange={handleImportJSON} 
+                style={{ display: 'none' }} 
+              />
+            </label>
           </div>
         </div>
       </motion.div>
@@ -1974,38 +2088,157 @@ const SettingsPage = ({ darkMode, setDarkMode }) => {
         </div>
       </motion.div>
 
-      {/* ACCOUNT & DANGER ZONE */}
+      {/* ACCOUNT & SECURITY */}
       <motion.div className="settings-section" variants={itemVariants}>
         <h3><Shield size={18} /> Account & Security</h3>
-        <div className="settings-card" style={{ marginBottom: '1.5rem' }}>
-          <p style={{ color: 'var(--text-muted)', fontSize: '.85rem', marginBottom: '1.5rem' }}>Signed in as <strong>{currentUser?.email}</strong></p>
-          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
-            <button className="btn btn-outline" onClick={handleDownloadData}><Download size={16} /> Export Backup (JSON)</button>
-            <button className="btn btn-outline" onClick={handleExportPDF}><Download size={16} /> Export Report (PDF)</button>
-            <button className="btn btn-outline" onClick={handleLogout}><LogOut size={16} /> Logout</button>
-          </div>
-          
-          <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.5rem', marginTop: '1.5rem' }}>
-            <h4 style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text)', marginBottom: '0.5rem' }}>Import Profile & Data</h4>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginBottom: '1rem', lineHeight: '1.4' }}>
-              Restore settings, profile photo, Mess QR, student ID, projects, certificates, note lists, and semester grades from a matching `.json` backup file.
-            </p>
-            <label className="btn btn-outline btn-sm" style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.5rem', width: 'fit-content' }}>
-              <Upload size={14} /> Upload Backup JSON
-              <input 
-                type="file" 
-                accept=".json" 
-                onChange={handleImportJSON} 
-                style={{ display: 'none' }} 
-              />
-            </label>
+        
+        <div className="settings-card" style={{ marginBottom: '1.5rem', padding: '1.5rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            
+            {/* Account Metadata Grid */}
+            <div>
+              <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.75rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
+                Account Identity & Status
+              </h4>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem' }}>
+                <div>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>Logged In User</div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text)', marginTop: '0.15rem' }}>{currentUser?.email || 'singh.ayush@iitgn.ac.in'}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>Account Sync Mode</div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: currentUser?.isDemo ? 'var(--warning)' : 'var(--success)', marginTop: '0.15rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: currentUser?.isDemo ? 'var(--warning)' : 'var(--success)' }} />
+                    {currentUser?.isDemo ? 'Local Sandboxed Demo' : 'Cloud Synchronized'}
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>Identity Provider</div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text)', marginTop: '0.15rem' }}>
+                    {currentUser?.providerId === 'google.com' ? 'Google SSO' : 'Email & Password'}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Email Verification Status */}
+            <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.25rem' }}>
+              <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.5rem' }}>Email Verification</h4>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: 0, lineHeight: '1.4', flex: 1, minWidth: '240px' }}>
+                  Verify your email address to secure your account and recover data in case of credential loss.
+                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  {(currentUser?.emailVerified || currentUser?.isDemo) ? (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.25rem 0.6rem', background: 'rgba(34, 197, 94, 0.1)', color: '#22c55e', borderRadius: '0.375rem', fontSize: '0.75rem', fontWeight: 700 }}>
+                      <CheckCircle2 size={12} /> Verified
+                    </span>
+                  ) : (
+                    <>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.25rem 0.6rem', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderRadius: '0.375rem', fontSize: '0.75rem', fontWeight: 700 }}>
+                        Unverified
+                      </span>
+                      <button className="btn btn-outline btn-sm" onClick={handleSendVerification} style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem' }}>
+                        Send Link
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Password Reset Section */}
+            <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.25rem' }}>
+              <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.5rem' }}>Password Management</h4>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', justifyContent: 'space-between' }}>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: 0, lineHeight: '1.4', flex: 1, minWidth: '240px' }}>
+                  {currentUser?.providerId === 'google.com' 
+                    ? 'Your password is securely managed via Google SSO connection. Credentials cannot be modified here.' 
+                    : 'Request a secure email link to change or reset your password.'
+                  }
+                </p>
+                {currentUser?.providerId !== 'google.com' && (
+                  <button className="btn btn-outline btn-sm" onClick={handlePasswordReset} style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem' }}>
+                    Send Reset Email
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Device & Session Details */}
+            <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.25rem' }}>
+              <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.5rem' }}>Active Session Details</h4>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                <div>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Logged-in Device</div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text)', fontWeight: 500, marginTop: '0.15rem' }}>{getDeviceDetails()}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Last Login Time</div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text)', fontWeight: 500, marginTop: '0.15rem' }}>
+                    {currentUser?.metadata?.lastSignInTime 
+                      ? new Date(currentUser.metadata.lastSignInTime).toLocaleString() 
+                      : new Date().toLocaleString() + ' (This Session)'
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Session Management */}
+            <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+              <div>
+                <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.25rem' }}>Session Management</h4>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: 0, lineHeight: '1.4' }}>
+                  Securely log out of this active device session.
+                </p>
+              </div>
+              <button className="btn btn-outline" onClick={handleLogout} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+                <LogOut size={16} /> Logout Session
+              </button>
+            </div>
+
+            {/* Reset Local Cache */}
+            <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+              <div>
+                <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.25rem' }}>Reset Local Cache</h4>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: 0, lineHeight: '1.4' }}>
+                  Clear cached databases, timetables, note summaries, and logs stored locally.
+                </p>
+              </div>
+              <button 
+                className="btn btn-outline danger" 
+                onClick={() => {
+                  if (confirm('Are you sure you want to clear all local data? This will log you out and reset cached timetables, grades, and notes.')) {
+                    localStorage.clear();
+                    window.location.href = '/login';
+                  }
+                }} 
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
+              >
+                <RotateCw size={16} /> Reset Local Data
+              </button>
+            </div>
+            
           </div>
         </div>
 
-        <div className="danger-zone">
-          <h4>Danger Zone</h4>
-          <p>Permanently delete your account and all associated data. This action cannot be undone.</p>
-          <button className="btn btn-danger" onClick={() => alert('Account deletion is disabled in demo mode.')}><Trash2 size={16} /> Delete Account</button>
+        {/* Danger Zone */}
+        <div className="danger-zone" style={{ border: '1px solid rgba(239, 68, 68, 0.25)', borderRadius: '1rem', padding: '1.5rem', background: 'rgba(239, 68, 68, 0.02)' }}>
+          <h4 style={{ color: '#ef4444', margin: '0 0 0.5rem 0', fontWeight: 800 }}>Danger Zone</h4>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0 0 1.25rem 0', lineHeight: '1.4' }}>
+            Permanently delete your student profile, grades database, timetable mappings, notes, and all digital assets. This operation is immediate and irreversible.
+          </p>
+          <button 
+            className="btn btn-danger" 
+            onClick={() => {
+              setShowDeleteModal(true);
+              setDeleteConfirmText('');
+            }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', boxShadow: '0 4px 12px rgba(239, 68, 68, 0.15)' }}
+          >
+            <Trash2 size={16} /> Delete Account
+          </button>
         </div>
       </motion.div>
 
@@ -2289,6 +2522,83 @@ const SettingsPage = ({ darkMode, setDarkMode }) => {
                 }}
               >
                 Confirm Import
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {importError && (
+        <div className="modal-overlay" onClick={() => setImportError(null)}>
+          <motion.div 
+            className="modal-content glass-card"
+            style={{ maxWidth: '420px', width: '90vw', padding: '1.75rem', textAlign: 'center', background: 'var(--card-bg)', border: '1px solid var(--border)', color: 'var(--text)', borderRadius: '1rem' }}
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.25rem', color: '#ef4444' }}>
+              <Shield size={48} />
+            </div>
+            <h3 style={{ margin: '0 0 0.5rem 0', color: 'var(--text)', fontSize: '1.25rem', fontWeight: 800 }}>{importError.title}</h3>
+            <p style={{ margin: '0 0 1.5rem 0', fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: '1.45' }}>
+              {importError.message}
+            </p>
+            <button 
+              className="btn btn-primary" 
+              onClick={() => setImportError(null)}
+              style={{ width: '100%', padding: '0.6rem 1.25rem', borderRadius: '0.5rem', fontWeight: 'bold' }}
+            >
+              Close
+            </button>
+          </motion.div>
+        </div>
+      )}
+
+      {showDeleteModal && (
+        <div className="modal-overlay" onClick={() => setShowDeleteModal(false)}>
+          <motion.div 
+            className="modal-content glass-card"
+            style={{ maxWidth: '420px', width: '90vw', padding: '1.75rem', textAlign: 'center', background: 'var(--card-bg)', border: '1px solid var(--border)', color: 'var(--text)', borderRadius: '1rem' }}
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.25rem', color: '#ef4444' }}>
+              <Trash2 size={48} />
+            </div>
+            <h3 style={{ margin: '0 0 0.5rem 0', color: 'var(--text)', fontSize: '1.25rem', fontWeight: 800 }}>Delete Your Account?</h3>
+            <p style={{ margin: '0 0 1.25rem 0', fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: '1.45' }}>
+              This action is immediate and completely irreversible. All your profile details, notes, calendar events, projects, certificates, and grades will be permanently deleted.
+            </p>
+            <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.8rem', color: 'var(--text)', fontWeight: 600 }}>
+              Type <strong>DELETE</strong> to confirm:
+            </p>
+            <input 
+              type="text" 
+              className="compact-course-input name"
+              style={{ width: '100%', marginBottom: '1.5rem', textAlign: 'center', height: '36px', fontSize: '0.9rem', letterSpacing: '2px', fontWeight: 'bold', textTransform: 'uppercase' }}
+              value={deleteConfirmText}
+              onChange={e => setDeleteConfirmText(e.target.value)}
+              placeholder="Type DELETE"
+            />
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button 
+                type="button"
+                className="btn btn-outline" 
+                onClick={() => setShowDeleteModal(false)}
+                style={{ flex: 1, padding: '0.6rem 1.25rem', borderRadius: '0.5rem' }}
+              >
+                Cancel
+              </button>
+              <button 
+                type="button"
+                className="btn btn-danger" 
+                disabled={deleteConfirmText !== 'DELETE'}
+                onClick={handleConfirmDeleteAccount}
+                style={{ flex: 1, padding: '0.6rem 1.25rem', borderRadius: '0.5rem', fontWeight: 'bold', opacity: deleteConfirmText === 'DELETE' ? 1 : 0.5, cursor: deleteConfirmText === 'DELETE' ? 'pointer' : 'not-allowed' }}
+              >
+                Confirm Delete
               </button>
             </div>
           </motion.div>
