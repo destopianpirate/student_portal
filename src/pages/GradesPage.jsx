@@ -6,13 +6,13 @@ import { Award, Plus, Trash2, TrendingUp, BookOpen, BarChart3, Download, Chevron
 import { fetchAndParseTimetable, isEvenSemester } from '../utils/parser';
 
 const GRADE_POINTS = {
-  'A+': 10, 'A': 10, 'A-': 9, 'B+': 8, 'B': 8, 'B-': 7,
-  'C+': 6, 'C': 6, 'C-': 5, 'D': 4, 'F': 0, 'I': null, 'W': null,
+  'A+': 11, 'A': 10, 'A-': 9, 'AB': 8, 'B-': 7, 'BC': 6,
+  'C-': 5, 'CD': 4, 'E': 2, 'F': 0, 'I': null, 'W': null,
 };
 
 const GRADE_COLORS = {
-  'A+': '#22c55e', 'A': '#22c55e', 'A-': '#4ade80', 'B+': '#6366f1', 'B': '#6366f1', 'B-': '#818cf8',
-  'C+': '#f59e0b', 'C': '#f59e0b', 'C-': '#fbbf24', 'D': '#ef4444', 'F': '#dc2626',
+  'A+': '#22c55e', 'A': '#22c55e', 'A-': '#4ade80', 'AB': '#6366f1', 'B-': '#818cf8',
+  'BC': '#f59e0b', 'C-': '#fbbf24', 'CD': '#ef4444', 'E': '#dc2626', 'F': '#dc2626',
 };
 
 const GradesPage = () => {
@@ -338,6 +338,11 @@ const GradesPage = () => {
       {semesters.map((sem, semIdx) => {
         const isExpanded = expandedSem === semIdx;
         const sgpa = calculateSGPA(sem.courses);
+        const semCredits = sem.courses.reduce((sum, c) => sum + (parseFloat(c.credits) || 0), 0);
+        const completedCredits = sem.courses.reduce((sum, c) => {
+          const gp = GRADE_POINTS[c.grade];
+          return (gp !== null && gp !== undefined && gp > 0) ? sum + (parseFloat(c.credits) || 0) : sum;
+        }, 0);
         return (
           <motion.div key={sem.id} className="semester-card" variants={itemVariants}>
             <div className="semester-header" onClick={() => setExpandedSem(isExpanded ? null : semIdx)}>
@@ -348,8 +353,11 @@ const GradesPage = () => {
                     Synced with Timetable
                   </span>
                 )}
-                <span className="semester-sgpa-badge">SGPA: {sgpa}</span>
+                <span className="semester-sgpa-badge">SPI: {sem.isSynced ? '—' : sgpa}</span>
                 <span className="semester-course-count">{sem.courses.length} courses</span>
+                <span className="semester-credits-badge">
+                  {sem.isSynced ? `${semCredits} Credits (Registered)` : `${completedCredits} Credits Completed`}
+                </span>
               </div>
               <div style={{ display: 'flex', gap: '.5rem', alignItems: 'center' }}>
                 <button 
@@ -368,8 +376,8 @@ const GradesPage = () => {
             {isExpanded && (
               <motion.div
                 className="semester-body"
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
+                initial={{ opacity: 0, height: 0, overflow: 'hidden' }}
+                animate={{ opacity: 1, height: 'auto', transitionEnd: { overflow: 'visible' } }}
                 transition={{ duration: 0.3 }}
               >
                 {sem.courses.length === 0 && (
@@ -425,16 +433,22 @@ const GradesPage = () => {
                       onChange={e => updateCourse(semIdx, cIdx, 'credits', parseInt(e.target.value) || 0)}
                       disabled={sem.isSynced}
                     />
-                    <select
-                      className="grade-course-input grade"
-                      value={course.grade}
-                      onChange={e => updateCourse(semIdx, cIdx, 'grade', e.target.value)}
-                    >
-                      <option value="">Grade</option>
-                      {Object.keys(GRADE_POINTS).map(g => (
-                        <option key={g} value={g}>{g}</option>
-                      ))}
-                    </select>
+                    {sem.isSynced ? (
+                      <span className="grade-course-running" style={{ padding: '0.45rem 0.65rem', fontSize: '0.8rem', color: 'var(--text-muted)', background: 'var(--input-bg)', borderRadius: '0.5rem', fontWeight: 600, minWidth: '80px', textAlign: 'center', border: '1px solid var(--border)', display: 'inline-block' }}>
+                        In Progress
+                      </span>
+                    ) : (
+                      <select
+                        className="grade-course-input grade"
+                        value={course.grade}
+                        onChange={e => updateCourse(semIdx, cIdx, 'grade', e.target.value)}
+                      >
+                        <option value="">Grade</option>
+                        {Object.keys(GRADE_POINTS).map(g => (
+                          <option key={g} value={g}>{g}</option>
+                        ))}
+                      </select>
+                    )}
                     <button 
                       className="btn-icon-sm danger" 
                       onClick={() => removeCourse(semIdx, cIdx)}

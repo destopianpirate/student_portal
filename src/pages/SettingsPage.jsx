@@ -88,8 +88,18 @@ const applyThemeAccent = (accent) => {
 };
 
 const GRADE_POINTS = {
-  'A+': 10, 'A': 10, 'A-': 9, 'B+': 8, 'B': 8, 'B-': 7,
-  'C+': 6, 'C': 6, 'C-': 5, 'D': 4, 'F': 0, 'I': null, 'W': null,
+  'A+': 11, 'A': 10, 'A-': 9, 'AB': 8, 'B-': 7, 'BC': 6,
+  'C-': 5, 'CD': 4, 'E': 2, 'F': 0, 'I': null, 'W': null,
+};
+
+const loadImage = (src) => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.src = src;
+    img.onload = () => resolve(img);
+    img.onerror = (e) => reject(e);
+  });
 };
 
 const SettingsPage = ({ darkMode, setDarkMode }) => {
@@ -100,6 +110,7 @@ const SettingsPage = ({ darkMode, setDarkMode }) => {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [lightboxImage, setLightboxImage] = useState(null);
+  const [importPreview, setImportPreview] = useState(null);
 
   const [form, setForm] = useState({
     name: '', firstName: '', surname: '', username: '', rollNumber: '', programme: '', branch: '',
@@ -257,7 +268,7 @@ const SettingsPage = ({ darkMode, setDarkMode }) => {
     }
   };
 
-  const handleExportPDF = () => {
+  const handleExportPDF = async () => {
     if (!userProfile) return;
     try {
       const doc = new jsPDF();
@@ -267,6 +278,14 @@ const SettingsPage = ({ darkMode, setDarkMode }) => {
       const certificates = JSON.parse(localStorage.getItem('student_certificates') || '[]');
       const projects = JSON.parse(localStorage.getItem('student_projects') || '[]');
       const grades = JSON.parse(localStorage.getItem(`grades_${currentUser.uid}`) || '[]');
+
+      // Load IITGN Logo
+      let logoImg = null;
+      try {
+        logoImg = await loadImage('/IITGN-5.png');
+      } catch (e) {
+        console.warn('Failed to load IITGN logo:', e);
+      }
 
       // Helper for page breaks
       let y = 50;
@@ -286,7 +305,13 @@ const SettingsPage = ({ darkMode, setDarkMode }) => {
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(22);
       doc.setFont('helvetica', 'bold');
-      doc.text("StudentOS — Academic Profile Report", 15, 22);
+      
+      if (logoImg) {
+        doc.addImage(logoImg, 'PNG', 15, 5, 25, 25);
+        doc.text("StudentOS — Academic Profile Report", 45, 22);
+      } else {
+        doc.text("StudentOS — Academic Profile Report", 15, 22);
+      }
 
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
@@ -370,7 +395,9 @@ const SettingsPage = ({ darkMode, setDarkMode }) => {
         grades.forEach(sem => {
           checkPageBreak(30);
           
-          // Calculate SGPA for this semester
+          const isRunning = sem.name === profile.semester || sem.isSynced;
+          
+          // Calculate completed credits and SPI
           let totalPoints = 0, totalCredits = 0;
           sem.courses.forEach(c => {
             const gp = GRADE_POINTS[c.grade];
@@ -379,13 +406,32 @@ const SettingsPage = ({ darkMode, setDarkMode }) => {
               totalCredits += parseFloat(c.credits);
             }
           });
-          const sgpa = totalCredits > 0 ? (totalPoints / totalCredits).toFixed(2) : '—';
+          const spi = totalCredits > 0 ? (totalPoints / totalCredits).toFixed(2) : '—';
+          
+          const completedCredits = sem.courses.reduce((sum, c) => {
+            const gp = GRADE_POINTS[c.grade];
+            return (gp !== null && gp !== undefined && gp > 0) ? sum + parseFloat(c.credits) : sum;
+          }, 0);
+
+          const totalSemCredits = sem.courses.reduce((sum, c) => sum + (parseFloat(c.credits) || 0), 0);
 
           doc.setFont('helvetica', 'bold');
           doc.setTextColor(99, 102, 241);
-          doc.text(`${sem.name} (SGPA: ${sgpa})`, 15, y);
+          
+          if (isRunning) {
+            doc.text(`${sem.name} (Running Semester — Synced with Timetable)`, 15, y);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Courses: ${sem.courses.length}  |  Total Credits: ${totalSemCredits}  |  SPI: — (In Progress)`, 15, y + 5);
+          } else {
+            doc.text(`${sem.name} (Completed Semester)`, 15, y);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(100, 100, 100);
+            doc.text(`Courses: ${sem.courses.length}  |  Credits Completed: ${completedCredits}  |  SPI: ${spi}`, 15, y + 5);
+          }
+          
           doc.setTextColor(33, 33, 33);
-          y += 6;
+          y += 11;
 
           sem.courses.forEach(course => {
             checkPageBreak(7);
@@ -393,7 +439,12 @@ const SettingsPage = ({ darkMode, setDarkMode }) => {
             doc.text(`- ${course.name || 'Unnamed Course'}`, 20, y);
             doc.setFont('helvetica', 'bold');
             doc.text(`Credits: ${course.credits || 0}`, 110, y);
-            doc.text(`Grade: ${course.grade || '—'} (GP: ${GRADE_POINTS[course.grade] !== null && GRADE_POINTS[course.grade] !== undefined ? GRADE_POINTS[course.grade] : '—'})`, 150, y);
+            
+            if (isRunning) {
+              doc.text(`Grade: — (In Progress)`, 150, y);
+            } else {
+              doc.text(`Grade: ${course.grade || '—'} (GP: ${GRADE_POINTS[course.grade] !== null && GRADE_POINTS[course.grade] !== undefined ? GRADE_POINTS[course.grade] : '—'})`, 150, y);
+            }
             y += 6;
           });
           y += 4;
@@ -543,23 +594,7 @@ const SettingsPage = ({ darkMode, setDarkMode }) => {
           return;
         }
 
-        // Restore localStorage parameters
-        if (importedData.notes) localStorage.setItem('student_notes', JSON.stringify(importedData.notes));
-        if (importedData.customEvents) localStorage.setItem('custom_events', JSON.stringify(importedData.customEvents));
-        if (importedData.certificates) localStorage.setItem('student_certificates', JSON.stringify(importedData.certificates));
-        if (importedData.projects) localStorage.setItem('student_projects', JSON.stringify(importedData.projects));
-        if (importedData.grades) localStorage.setItem(`grades_${currentUser.uid}`, JSON.stringify(importedData.grades));
-
-        // Restore profile details
-        if (importedData.profile) {
-          saveProfile(importedData.profile);
-        }
-
-        addNotification('success', 'Import Successful', 'All settings, data, and digital IDs successfully restored. Reloading...');
-        setTimeout(() => {
-          window.location.reload();
-        }, 1500);
-
+        setImportPreview(importedData);
       } catch (err) {
         console.error('Import parse error:', err);
         addNotification('error', 'Import Failed', 'Invalid backup file format.');
@@ -1716,6 +1751,135 @@ const SettingsPage = ({ darkMode, setDarkMode }) => {
           </div>
         </div>,
         document.body
+      )}
+
+      {/* Review Imported Data Modal */}
+      {importPreview && (
+        <div className="modal-overlay" onClick={() => setImportPreview(null)}>
+          <motion.div 
+            className="modal-content glass-card"
+            style={{ maxWidth: '680px', width: '90vw', maxHeight: '85vh', overflowY: 'auto', background: 'var(--card-bg)', border: '1px solid var(--border)', color: 'var(--text)' }}
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h3 style={{ margin: 0 }}>Review Imported Data</h3>
+              <button className="modal-close" onClick={() => setImportPreview(null)}>&times;</button>
+            </div>
+            <div className="modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+                Please review the semesters and courses from the backup file before importing.
+              </p>
+              
+              <div style={{ display: 'flex', gap: '1.5rem', background: 'var(--input-bg)', padding: '1rem', borderRadius: '0.75rem', fontSize: '0.85rem' }}>
+                <div>
+                  <strong>College ID:</strong> {importPreview.collegeEmail}
+                </div>
+                <div>
+                  <strong>Running Semester:</strong> {importPreview.profile?.semester || 'N/A'}
+                </div>
+              </div>
+
+              <div>
+                <h4 style={{ marginBottom: '0.5rem', fontSize: '0.95rem' }}>Semester-wise Summary</h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {importPreview.grades && importPreview.grades.length > 0 ? (
+                    importPreview.grades.map(sem => {
+                      const isRunning = sem.name === importPreview.profile?.semester || sem.isSynced;
+                      
+                      // Calculate SPI
+                      let totalPoints = 0, totalCredits = 0;
+                      sem.courses?.forEach(c => {
+                        const gp = GRADE_POINTS[c.grade];
+                        if (gp !== null && gp !== undefined && c.credits > 0) {
+                          totalPoints += gp * parseFloat(c.credits);
+                          totalCredits += parseFloat(c.credits);
+                        }
+                      });
+                      const spi = totalCredits > 0 ? (totalPoints / totalCredits).toFixed(2) : '—';
+
+                      // Calculate credits completed
+                      const completedCredits = sem.courses?.reduce((sum, c) => {
+                        const gp = GRADE_POINTS[c.grade];
+                        return (gp !== null && gp !== undefined && gp > 0) ? sum + parseFloat(c.credits) : sum;
+                      }, 0) || 0;
+
+                      const totalSemCredits = sem.courses?.reduce((sum, c) => sum + (parseFloat(c.credits) || 0), 0) || 0;
+
+                      return (
+                        <div key={sem.name} style={{ border: '1px solid var(--border)', borderRadius: '0.75rem', padding: '0.75rem' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                            <strong style={{ fontSize: '0.9rem' }}>
+                              {sem.name} {isRunning && <span style={{ fontSize: '0.7rem', background: '#e0f2fe', color: '#0369a1', padding: '0.1rem 0.4rem', borderRadius: '4px', marginLeft: '0.5rem' }}>Running</span>}
+                            </strong>
+                            <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.75rem' }}>
+                              <span style={{ background: 'var(--input-bg)', padding: '0.15rem 0.4rem', borderRadius: '4px' }}>
+                                {sem.courses?.length || 0} courses
+                              </span>
+                              <span style={{ background: 'var(--input-bg)', padding: '0.15rem 0.4rem', borderRadius: '4px' }}>
+                                {isRunning ? `${totalSemCredits} Credits` : `${completedCredits} Credits Done`}
+                              </span>
+                              <span style={{ background: 'var(--primary)', color: '#fff', padding: '0.15rem 0.4rem', borderRadius: '4px', fontWeight: 'bold' }}>
+                                SPI: {isRunning ? '—' : spi}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          {/* Courses List */}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', paddingLeft: '0.5rem' }}>
+                            {sem.courses && sem.courses.length > 0 ? (
+                              sem.courses.map((course, idx) => (
+                                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                                  <span>{course.name}</span>
+                                  <span>{course.credits} Cr &bull; {isRunning ? 'In Progress' : (course.grade || '—')}</span>
+                                </div>
+                              ))
+                            ) : (
+                              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>No courses</span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No semesters found in the backup file.</div>
+                  )}
+                </div>
+              </div>
+            </div>
+            
+            <div className="modal-footer" style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem', marginTop: '1.25rem', display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+              <button className="btn btn-outline" onClick={() => setImportPreview(null)}>Cancel</button>
+              <button 
+                className="btn btn-primary" 
+                onClick={async () => {
+                  const importedData = importPreview;
+                  setImportPreview(null);
+                  
+                  // Restore localStorage parameters
+                  if (importedData.notes) localStorage.setItem('student_notes', JSON.stringify(importedData.notes));
+                  if (importedData.customEvents) localStorage.setItem('custom_events', JSON.stringify(importedData.customEvents));
+                  if (importedData.certificates) localStorage.setItem('student_certificates', JSON.stringify(importedData.certificates));
+                  if (importedData.projects) localStorage.setItem('student_projects', JSON.stringify(importedData.projects));
+                  if (importedData.grades) localStorage.setItem(`grades_${currentUser.uid}`, JSON.stringify(importedData.grades));
+                  
+                  // Restore profile details
+                  if (importedData.profile) {
+                    await saveProfile(importedData.profile);
+                  }
+                  
+                  addNotification('success', 'Import Successful', 'All settings, data, and digital IDs successfully restored. Reloading...');
+                  setTimeout(() => {
+                    window.location.reload();
+                  }, 1000);
+                }}
+              >
+                Confirm Import
+              </button>
+            </div>
+          </motion.div>
+        </div>
       )}
 
     </motion.div>

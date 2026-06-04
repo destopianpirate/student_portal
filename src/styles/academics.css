@@ -1754,3 +1754,31 @@
   border-color: rgba(56, 189, 248, 0.3);
 }
 
+.semester-credits-badge {
+  background: rgba(99, 102, 241, 0.08);
+  color: var(--primary);
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  border-radius: .5rem;
+  padding: .15rem .5rem;
+  font-size: .7rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+}
+
+[data-theme=dark] .semester-credits-badge {
+  background: rgba(129, 140, 248, 0.15);
+  color: #a5b4fc;
+  border-color: rgba(165, 180, 252, 0.25);
+}
+
+.semester-card {
+  overflow: visible !important;
+}
+
+.semester-header {
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 1rem;
+}
+
+
