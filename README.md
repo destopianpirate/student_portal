@@ -4,18 +4,7 @@ StudentOS is a modern, responsive, and feature-rich web portal designed to strea
 
 ---
 
-## 📸 visual Previews
 
-### 1. Home Dashboard
-![StudentOS Home Dashboard](screenshots/dashboard_view.png)
-
-### 2. Interactive Calendar
-![StudentOS Calendar with Inline Timetable](screenshots/calendar_view.png)
-
-### 3. Dynamic Course Timetable
-![StudentOS Timetable Grid](screenshots/timetable_view.png)
-
----
 
 ## ✨ Features
 
