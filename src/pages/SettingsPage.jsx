@@ -240,7 +240,44 @@ const SettingsPage = ({ darkMode, setDarkMode }) => {
       const events = JSON.parse(localStorage.getItem('custom_events') || '[]');
       const certificates = JSON.parse(localStorage.getItem('student_certificates') || '[]');
       const projects = JSON.parse(localStorage.getItem('student_projects') || '[]');
-      const grades = JSON.parse(localStorage.getItem(`grades_${currentUser.uid}`) || '[]');
+      const rawGrades = JSON.parse(localStorage.getItem(`grades_${currentUser.uid}`) || '[]');
+      const timetableCourses = JSON.parse(localStorage.getItem(`courses_${currentUser.uid}`) || '[]');
+      
+      // Reconcile/sync running semester courses from timetable to grades before export
+      const runningSemName = userProfile.semester;
+      let finalGrades = [...rawGrades];
+      if (runningSemName) {
+        const savedCoursesJSON = localStorage.getItem(`courses_${currentUser.uid}`);
+        const timetableCoursesList = savedCoursesJSON ? JSON.parse(savedCoursesJSON) : (userProfile.selectedCourses || []);
+        
+        const exists = finalGrades.some(sem => sem.name === runningSemName);
+        if (!exists) {
+          finalGrades.push({ id: Date.now(), name: runningSemName, courses: [], isSynced: true });
+        }
+        
+        finalGrades = finalGrades.map(sem => {
+          if (sem.name === runningSemName) {
+            const syncedCourses = timetableCoursesList.map(tc => {
+              const fullName = `${tc.code} - ${tc.title}`;
+              const existing = sem.courses?.find(c => c.name === fullName || c.name.startsWith(tc.code));
+              return {
+                id: existing?.id || tc.id || Date.now() + Math.random(),
+                name: fullName,
+                credits: parseInt(tc.credits) || 0,
+                grade: '' // Clear/ensure empty grade for running semester
+              };
+            });
+            return { ...sem, courses: syncedCourses, isSynced: true };
+          }
+          return sem;
+        });
+        
+        finalGrades.sort((a, b) => {
+          const numA = parseInt(a.name.match(/\d+/)?.[0] || 0);
+          const numB = parseInt(b.name.match(/\d+/)?.[0] || 0);
+          return numA - numB;
+        });
+      }
       
       const fullBackup = {
         collegeEmail: currentUser?.email || '',
@@ -249,7 +286,8 @@ const SettingsPage = ({ darkMode, setDarkMode }) => {
         customEvents: events,
         certificates: certificates,
         projects: projects,
-        grades: grades,
+        grades: finalGrades,
+        timetableCourses: timetableCourses,
         exportedAt: new Date().toISOString(),
         version: "1.0.0",
         portal: "StudentOS"
@@ -277,7 +315,43 @@ const SettingsPage = ({ darkMode, setDarkMode }) => {
       const events = JSON.parse(localStorage.getItem('custom_events') || '[]');
       const certificates = JSON.parse(localStorage.getItem('student_certificates') || '[]');
       const projects = JSON.parse(localStorage.getItem('student_projects') || '[]');
-      const grades = JSON.parse(localStorage.getItem(`grades_${currentUser.uid}`) || '[]');
+      const rawGrades = JSON.parse(localStorage.getItem(`grades_${currentUser.uid}`) || '[]');
+
+      // Reconcile/sync running semester courses from timetable to grades before export
+      const runningSemName = profile.semester;
+      let finalGrades = [...rawGrades];
+      if (runningSemName) {
+        const savedCoursesJSON = localStorage.getItem(`courses_${currentUser.uid}`);
+        const timetableCoursesList = savedCoursesJSON ? JSON.parse(savedCoursesJSON) : (profile.selectedCourses || []);
+        
+        const exists = finalGrades.some(sem => sem.name === runningSemName);
+        if (!exists) {
+          finalGrades.push({ id: Date.now(), name: runningSemName, courses: [], isSynced: true });
+        }
+        
+        finalGrades = finalGrades.map(sem => {
+          if (sem.name === runningSemName) {
+            const syncedCourses = timetableCoursesList.map(tc => {
+              const fullName = `${tc.code} - ${tc.title}`;
+              const existing = sem.courses?.find(c => c.name === fullName || c.name.startsWith(tc.code));
+              return {
+                id: existing?.id || tc.id || Date.now() + Math.random(),
+                name: fullName,
+                credits: parseInt(tc.credits) || 0,
+                grade: '' // Clear/ensure empty grade for running semester
+              };
+            });
+            return { ...sem, courses: syncedCourses, isSynced: true };
+          }
+          return sem;
+        });
+        
+        finalGrades.sort((a, b) => {
+          const numA = parseInt(a.name.match(/\d+/)?.[0] || 0);
+          const numB = parseInt(b.name.match(/\d+/)?.[0] || 0);
+          return numA - numB;
+        });
+      }
 
       // Load IITGN Logo
       let logoImg = null;
@@ -288,7 +362,7 @@ const SettingsPage = ({ darkMode, setDarkMode }) => {
       }
 
       // Helper for page breaks
-      let y = 50;
+      let y = 45;
       const checkPageBreak = (heightNeeded) => {
         if (y + heightNeeded > 275) {
           doc.addPage();
@@ -298,106 +372,261 @@ const SettingsPage = ({ darkMode, setDarkMode }) => {
         return false;
       };
 
-      // Set styling variables
-      doc.setFillColor(99, 102, 241); // Indigo Primary
-      doc.rect(0, 0, 210, 35, 'F'); // Header Banner
+      // Set styling variables - Premium White Header with Orange Saffron Top Accent Bar
+      doc.setFillColor(255, 153, 51); // IITGN Orange Saffron
+      doc.rect(0, 0, 210, 4, 'F');
 
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(22);
-      doc.setFont('helvetica', 'bold');
-      
       if (logoImg) {
-        doc.addImage(logoImg, 'PNG', 15, 5, 25, 25);
-        doc.text("StudentOS — Academic Profile Report", 45, 22);
+        doc.addImage(logoImg, 'PNG', 15, 8, 22, 22);
+        
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(16);
+        doc.setTextColor(30, 41, 59); // Slate 800
+        doc.text("Indian Institute of Technology Gandhinagar", 42, 16);
+        
+        doc.setFontSize(10.5);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(99, 102, 241); // Indigo
+        doc.text("STUDENT PROFILE & ACADEMIC PORTFOLIO", 42, 22);
+        
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8.5);
+        doc.setTextColor(100, 116, 139); // Slate 500
+        doc.text(`Academic Session: ${new Date().getFullYear()}-${new Date().getFullYear()+1}   |   Report Date: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`, 42, 27);
       } else {
-        doc.text("StudentOS — Academic Profile Report", 15, 22);
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(16);
+        doc.setTextColor(30, 41, 59);
+        doc.text("StudentOS — Academic Profile Report", 15, 18);
+        
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8.5);
+        doc.setTextColor(100, 116, 139);
+        doc.text(`Generated: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`, 15, 25);
       }
 
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
-      doc.text(`Generated: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`, 145, 28);
+      // Divider line
+      doc.setDrawColor(226, 232, 240); // Slate 200
+      doc.setLineWidth(0.5);
+      doc.line(15, 33, 195, 33);
+
+      const drawSectionHeader = (title, num) => {
+        checkPageBreak(25);
+        doc.setFillColor(241, 245, 249); // Slate 100 Background Pill
+        doc.rect(15, y, 180, 8, 'F');
+        doc.setFillColor(99, 102, 241); // Indigo Left Border Bar
+        doc.rect(15, y, 3, 8, 'F');
+        
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.setTextColor(30, 41, 59);
+        doc.text(`${num}. ${title.toUpperCase()}`, 22, y + 5.8);
+        y += 13;
+      };
+
+      // Helper to draw single-column row
+      const drawLeftRow = (label, val, hasPhotoOpt) => {
+        doc.setFillColor(248, 250, 252);
+        doc.rect(15, y, 35, 7, 'F');
+        doc.setDrawColor(226, 232, 240);
+        doc.rect(15, y, 35, 7, 'S');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8.5);
+        doc.setTextColor(71, 85, 105);
+        doc.text(label, 18, y + 4.8);
+
+        doc.setFillColor(255, 255, 255);
+        doc.rect(50, y, hasPhotoOpt ? 105 : 145, 7, 'F');
+        doc.rect(50, y, hasPhotoOpt ? 105 : 145, 7, 'S');
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8.5);
+        doc.setTextColor(15, 23, 42);
+        doc.text(String(val || 'N/A'), 53, y + 4.8);
+        y += 7;
+      };
+
+      // Helper to draw full-width two-column rows
+      const drawFullRow = (label1, val1, label2, val2) => {
+        // Label 1
+        doc.setFillColor(248, 250, 252);
+        doc.rect(15, y, 35, 7, 'F');
+        doc.setDrawColor(226, 232, 240);
+        doc.rect(15, y, 35, 7, 'S');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8.5);
+        doc.setTextColor(71, 85, 105);
+        doc.text(label1, 18, y + 4.8);
+
+        // Value 1
+        doc.setFillColor(255, 255, 255);
+        doc.rect(50, y, 55, 7, 'F');
+        doc.rect(50, y, 55, 7, 'S');
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8.5);
+        doc.setTextColor(15, 23, 42);
+        doc.text(String(val1 || 'N/A'), 53, y + 4.8);
+
+        // Label 2
+        doc.setFillColor(248, 250, 252);
+        doc.rect(105, y, 35, 7, 'F');
+        doc.rect(105, y, 35, 7, 'S');
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(8.5);
+        doc.setTextColor(71, 85, 105);
+        doc.text(label2, 108, y + 4.8);
+
+        // Value 2
+        doc.setFillColor(255, 255, 255);
+        doc.rect(140, y, 55, 7, 'F');
+        doc.rect(140, y, 55, 7, 'S');
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8.5);
+        doc.setTextColor(15, 23, 42);
+        doc.text(String(val2 || 'N/A'), 143, y + 4.8);
+
+        y += 7;
+      };
 
       // 1. STUDENT INFORMATION (with Profile Photo if available)
-      doc.setTextColor(33, 33, 33);
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text("1. Student Information", 15, y);
-      doc.setDrawColor(200, 200, 200);
-      doc.line(15, y + 2, 195, y + 2);
-      y += 10;
-
-      // Draw Profile Photo at top right if available
+      drawSectionHeader("Student Information", "1");
+      
       let hasPhoto = false;
+      let photoY = y;
       if (profile.profilePhotoBase64) {
         try {
-          doc.addImage(profile.profilePhotoBase64, 'PNG', 160, y, 35, 35);
+          doc.addImage(profile.profilePhotoBase64, 'PNG', 160, photoY, 35, 35);
+          doc.setDrawColor(99, 102, 241);
+          doc.setLineWidth(0.5);
+          doc.rect(159.5, photoY - 0.5, 36, 36, 'S');
           hasPhoto = true;
         } catch (e) {
           console.warn('Failed to render profile photo in PDF:', e);
         }
       }
 
-      doc.setFontSize(10);
-      const drawField = (label, value, indent = 15) => {
-        doc.setFont('helvetica', 'bold');
-        doc.text(`${label}:`, indent, y);
-        doc.setFont('helvetica', 'normal');
-        doc.text(String(value || 'N/A'), indent + 50, y);
-        y += 7;
-      };
+      drawLeftRow("Full Name", profile.name || `${profile.firstName || ''} ${profile.surname || ''}`.trim(), hasPhoto);
+      drawLeftRow("Roll Number", profile.rollNumber, hasPhoto);
+      drawLeftRow("College Email", currentUser?.email, hasPhoto);
+      drawLeftRow("Programme", profile.programme, hasPhoto);
+      drawLeftRow("Branch/Department", profile.branch, hasPhoto);
 
-      drawField("Full Name", profile.name || `${profile.firstName || ''} ${profile.surname || ''}`.trim());
-      drawField("Roll Number", profile.rollNumber);
-      drawField("College Email", currentUser?.email);
-      drawField("Programme", profile.programme);
-      drawField("Branch/Department", profile.branch);
-      drawField("Year of Admission", profile.yearOfAdmission);
-      drawField("Current Year", profile.currentYear);
-      drawField("Semester", profile.semester);
-      drawField("Cumulative GPA", profile.cgpa);
-      drawField("Minor Specialization", profile.minor);
-      drawField("Hostel Details", `${profile.hostelName || 'N/A'}, Room ${profile.roomNumber || 'N/A'}`);
-
-      // If we drew a photo, let's make sure y is past the photo height
-      if (hasPhoto && y < 105) {
-        y = 105;
+      if (hasPhoto && y < photoY + 35) {
+        y = photoY + 35;
       }
 
-      // Contact details
-      checkPageBreak(40);
-      doc.setFontSize(14);
+      y += 2;
+      checkPageBreak(30);
+      drawFullRow("Admission Year", profile.yearOfAdmission, "Current Year", profile.currentYear);
+      drawFullRow("Active Semester", profile.semester, "Cumulative GPA", profile.cgpa);
+      drawFullRow("Minor Focus", profile.minor, "Hostel & Room", `${profile.hostelName || 'N/A'}, Room ${profile.roomNumber || 'N/A'}`);
+      y += 4;
+
+      // 2. CONTACT DETAILS
+      drawSectionHeader("Contact & Connection Channels", "2");
+      drawFullRow("Personal Contact", profile.phone, "Personal Email", profile.gmail);
+      drawFullRow("GitHub Username", profile.github, "LinkedIn ID", profile.linkedin);
+      
+      doc.setFillColor(248, 250, 252);
+      doc.rect(15, y, 35, 7, 'F');
+      doc.setDrawColor(226, 232, 240);
+      doc.rect(15, y, 35, 7, 'S');
       doc.setFont('helvetica', 'bold');
-      doc.text("2. Contact & Connection Channels", 15, y);
-      doc.line(15, y + 2, 195, y + 2);
-      y += 10;
+      doc.setFontSize(8.5);
+      doc.setTextColor(71, 85, 105);
+      doc.text("Instagram Handle", 18, y + 4.8);
 
-      doc.setFontSize(10);
-      drawField("Personal Contact", profile.phone);
-      drawField("Personal Email", profile.gmail);
-      drawField("GitHub Profile", profile.github);
-      drawField("LinkedIn Profile", profile.linkedin);
-      drawField("Instagram Handle", profile.instagram);
+      doc.setFillColor(255, 255, 255);
+      doc.rect(50, y, 145, 7, 'F');
+      doc.rect(50, y, 145, 7, 'S');
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(15, 23, 42);
+      doc.text(String(profile.instagram || 'N/A'), 53, y + 4.8);
+      y += 12;
 
-      // 3. REGISTERED COURSES & GRADES SEMESTER WISE
-      checkPageBreak(50);
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text("3. Registered Courses & Semesters", 15, y);
-      doc.line(15, y + 2, 195, y + 2);
-      y += 10;
+      // 3. RUNNING SEMESTER & REGISTERED COURSES
+      drawSectionHeader("Running Semester & Registered Courses", "3");
 
-      doc.setFontSize(10);
-      if (grades.length === 0) {
-        doc.setFont('helvetica', 'normal');
-        doc.text("No registered courses or grade logs available.", 15, y);
+      const runningSemObj = finalGrades.find(sem => sem.name === runningSemName);
+      if (!runningSemObj || !runningSemObj.courses || runningSemObj.courses.length === 0) {
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(9.5);
+        doc.setTextColor(100, 116, 139);
+        doc.text("No registered courses found for the running semester (sync via Timetable Generator).", 18, y);
         y += 10;
       } else {
-        grades.forEach(sem => {
-          checkPageBreak(30);
+        const totalSemCredits = runningSemObj.courses.reduce((sum, c) => sum + (parseFloat(c.credits) || 0), 0);
+        
+        doc.setFillColor(248, 250, 252);
+        doc.rect(15, y, 180, 8, 'F');
+        doc.setDrawColor(226, 232, 240);
+        doc.rect(15, y, 180, 8, 'S');
+        
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.setTextColor(99, 102, 241);
+        doc.text(`${runningSemObj.name}`, 18, y + 5.5);
+        
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8.5);
+        doc.setTextColor(100, 116, 139);
+        doc.text(`Courses Selected: ${runningSemObj.courses.length}   |   Total Registered Credits: ${totalSemCredits}   |   SPI: — (In Progress)`, 60, y + 5.5);
+        y += 12;
+
+        // Table Header
+        doc.setFillColor(99, 102, 241); // Indigo
+        doc.rect(15, y, 110, 7, 'F');
+        doc.rect(125, y, 35, 7, 'F');
+        doc.rect(160, y, 35, 7, 'F');
+        
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.setTextColor(255, 255, 255);
+        doc.text("Course Details", 18, y + 4.8);
+        doc.text("Credits", 130, y + 4.8);
+        doc.text("Status", 165, y + 4.8);
+        
+        y += 7;
+
+        runningSemObj.courses.forEach(course => {
+          checkPageBreak(8);
           
-          const isRunning = sem.name === profile.semester || sem.isSynced;
+          doc.setFillColor(255, 255, 255);
+          doc.setDrawColor(226, 232, 240);
+          doc.rect(15, y, 110, 7, 'F');
+          doc.rect(15, y, 110, 7, 'S');
+          doc.rect(125, y, 35, 7, 'F');
+          doc.rect(125, y, 35, 7, 'S');
+          doc.rect(160, y, 35, 7, 'F');
+          doc.rect(160, y, 35, 7, 'S');
           
-          // Calculate completed credits and SPI
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(8.5);
+          doc.setTextColor(15, 23, 42);
+          doc.text(course.name || 'Unnamed Course', 18, y + 4.8);
+          
+          doc.setFont('helvetica', 'bold');
+          doc.text(String(course.credits || 0), 130, y + 4.8);
+          
+          doc.setTextColor(99, 102, 241);
+          doc.text("In Progress", 165, y + 4.8);
+          y += 7;
+        });
+        y += 6;
+      }
+
+      // 4. COMPLETED SEMESTERS & ACADEMIC SUMMARY
+      drawSectionHeader("Completed Semesters & Academic Summary", "4");
+
+      const completedSemObjs = finalGrades.filter(sem => sem.name !== runningSemName);
+      if (completedSemObjs.length === 0) {
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(9.5);
+        doc.setTextColor(100, 116, 139);
+        doc.text("No completed semesters recorded (add and manage via Academics page).", 18, y);
+        y += 10;
+      } else {
+        completedSemObjs.forEach(sem => {
           let totalPoints = 0, totalCredits = 0;
           sem.courses.forEach(c => {
             const gp = GRADE_POINTS[c.grade];
@@ -413,147 +642,214 @@ const SettingsPage = ({ darkMode, setDarkMode }) => {
             return (gp !== null && gp !== undefined && gp > 0) ? sum + parseFloat(c.credits) : sum;
           }, 0);
 
-          const totalSemCredits = sem.courses.reduce((sum, c) => sum + (parseFloat(c.credits) || 0), 0);
+          const neededHeight = 15 + (sem.courses.length * 7) + 12;
+          checkPageBreak(neededHeight);
 
+          doc.setFillColor(241, 245, 249);
+          doc.rect(15, y, 180, 8, 'F');
+          doc.setDrawColor(226, 232, 240);
+          doc.rect(15, y, 180, 8, 'S');
+          
           doc.setFont('helvetica', 'bold');
-          doc.setTextColor(99, 102, 241);
+          doc.setFontSize(9);
+          doc.setTextColor(15, 23, 42);
+          doc.text(sem.name, 18, y + 5.5);
           
-          if (isRunning) {
-            doc.text(`${sem.name} (Running Semester — Synced with Timetable)`, 15, y);
-            doc.setFont('helvetica', 'normal');
-            doc.setTextColor(100, 100, 100);
-            doc.text(`Courses: ${sem.courses.length}  |  Total Credits: ${totalSemCredits}  |  SPI: — (In Progress)`, 15, y + 5);
-          } else {
-            doc.text(`${sem.name} (Completed Semester)`, 15, y);
-            doc.setFont('helvetica', 'normal');
-            doc.setTextColor(100, 100, 100);
-            doc.text(`Courses: ${sem.courses.length}  |  Credits Completed: ${completedCredits}  |  SPI: ${spi}`, 15, y + 5);
-          }
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(8.5);
+          doc.setTextColor(71, 85, 105);
+          doc.text(`Courses: ${sem.courses.length}   |   Credits Completed: ${completedCredits}   |   SPI: `, 60, y + 5.5);
           
-          doc.setTextColor(33, 33, 33);
-          y += 11;
+          doc.setFont('helvetica', 'bold');
+          doc.setTextColor(16, 185, 129); // Emerald for SPI
+          doc.text(spi, 145, y + 5.5);
+          y += 12;
+
+          // Table Header
+          doc.setFillColor(71, 85, 105); // Slate
+          doc.rect(15, y, 110, 7, 'F');
+          doc.rect(125, y, 35, 7, 'F');
+          doc.rect(160, y, 35, 7, 'F');
+          
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(9);
+          doc.setTextColor(255, 255, 255);
+          doc.text("Course Name", 18, y + 4.8);
+          doc.text("Credits", 130, y + 4.8);
+          doc.text("Grade (GP)", 165, y + 4.8);
+          y += 7;
 
           sem.courses.forEach(course => {
-            checkPageBreak(7);
-            doc.setFont('helvetica', 'normal');
-            doc.text(`- ${course.name || 'Unnamed Course'}`, 20, y);
-            doc.setFont('helvetica', 'bold');
-            doc.text(`Credits: ${course.credits || 0}`, 110, y);
+            checkPageBreak(8);
             
-            if (isRunning) {
-              doc.text(`Grade: — (In Progress)`, 150, y);
-            } else {
-              doc.text(`Grade: ${course.grade || '—'} (GP: ${GRADE_POINTS[course.grade] !== null && GRADE_POINTS[course.grade] !== undefined ? GRADE_POINTS[course.grade] : '—'})`, 150, y);
-            }
-            y += 6;
+            doc.setFillColor(255, 255, 255);
+            doc.setDrawColor(226, 232, 240);
+            doc.rect(15, y, 110, 7, 'F');
+            doc.rect(15, y, 110, 7, 'S');
+            doc.rect(125, y, 35, 7, 'F');
+            doc.rect(125, y, 35, 7, 'S');
+            doc.rect(160, y, 35, 7, 'F');
+            doc.rect(160, y, 35, 7, 'S');
+            
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(8.5);
+            doc.setTextColor(15, 23, 42);
+            doc.text(course.name || 'Unnamed Course', 18, y + 4.8);
+            
+            doc.setFont('helvetica', 'bold');
+            doc.text(String(course.credits || 0), 130, y + 4.8);
+            
+            const gpVal = GRADE_POINTS[course.grade];
+            const gpStr = gpVal !== null && gpVal !== undefined ? `GP: ${gpVal.toFixed(1)}` : 'GP: —';
+            doc.text(`${course.grade || '—'} (${gpStr})`, 165, y + 4.8);
+            y += 7;
           });
-          y += 4;
+          y += 6;
         });
       }
 
-      // 4. PROJECTS LIST
-      y += 5;
-      checkPageBreak(40);
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text("4. Academic & Personal Projects", 15, y);
-      doc.line(15, y + 2, 195, y + 2);
-      y += 10;
-
-      doc.setFontSize(10);
+      // 5. PROJECTS LIST
+      drawSectionHeader("Academic & Personal Projects", "5");
       if (projects.length === 0) {
-        doc.setFont('helvetica', 'normal');
-        doc.text("No projects tracked yet.", 15, y);
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(9.5);
+        doc.setTextColor(100, 116, 139);
+        doc.text("No projects tracked yet.", 18, y);
         y += 10;
       } else {
         projects.forEach(proj => {
-          checkPageBreak(25);
-          doc.setFont('helvetica', 'bold');
-          doc.text(`${proj.title || 'Untitled Project'} (${proj.status || 'General'})`, 15, y);
-          doc.setFont('helvetica', 'normal');
-          doc.text(`Course/Area: ${proj.course || 'Independent'}`, 15, y + 5);
           const desc = proj.description || '';
-          const splitDesc = doc.splitTextToSize(desc.substring(0, 150) + (desc.length > 150 ? '...' : ''), 175);
-          doc.text(splitDesc, 15, y + 10);
-          y += 12 + Math.max(5, splitDesc.length * 4);
+          const splitDesc = doc.splitTextToSize(desc, 172);
+          const needed = 15 + splitDesc.length * 4.5;
+          checkPageBreak(needed);
+
+          doc.setFillColor(248, 250, 252);
+          doc.rect(15, y, 180, needed - 5, 'F');
+          doc.setDrawColor(226, 232, 240);
+          doc.rect(15, y, 180, needed - 5, 'S');
+
+          doc.setFillColor(99, 102, 241);
+          doc.rect(15, y, 2, needed - 5, 'F');
+
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(9.5);
+          doc.setTextColor(30, 41, 59);
+          doc.text(`${proj.title || 'Untitled Project'} (${proj.status || 'General'})`, 20, y + 5.5);
+          
+          doc.setFont('helvetica', 'italic');
+          doc.setFontSize(8.5);
+          doc.setTextColor(100, 116, 139);
+          doc.text(`Course/Area: ${proj.course || 'Independent'}`, 20, y + 9.5);
+
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(8.5);
+          doc.setTextColor(51, 65, 85);
+          doc.text(splitDesc, 20, y + 14.5);
+
+          y += needed;
         });
+        y += 4;
       }
 
-      // 5. CERTIFICATES LIST
-      y += 5;
-      checkPageBreak(40);
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text("5. Earned Certificates & Awards", 15, y);
-      doc.line(15, y + 2, 195, y + 2);
-      y += 10;
-
-      doc.setFontSize(10);
+      // 6. CERTIFICATES LIST
+      drawSectionHeader("Earned Certificates & Awards", "6");
       if (certificates.length === 0) {
-        doc.setFont('helvetica', 'normal');
-        doc.text("No certificates recorded yet.", 15, y);
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(9.5);
+        doc.setTextColor(100, 116, 139);
+        doc.text("No certificates recorded yet.", 18, y);
         y += 10;
       } else {
         certificates.forEach(cert => {
-          checkPageBreak(20);
+          checkPageBreak(25);
+          
+          doc.setFillColor(248, 250, 252);
+          doc.rect(15, y, 180, cert.link ? 18 : 13, 'F');
+          doc.rect(15, y, 180, cert.link ? 18 : 13, 'S');
+          doc.setFillColor(16, 185, 129); // Emerald
+          doc.rect(15, y, 2, cert.link ? 18 : 13, 'F');
+
           doc.setFont('helvetica', 'bold');
-          doc.text(`${cert.title || 'Untitled Certificate'}`, 15, y);
+          doc.setFontSize(9.5);
+          doc.setTextColor(30, 41, 59);
+          doc.text(`${cert.title || 'Untitled Certificate'}`, 20, y + 5.5);
+          
           doc.setFont('helvetica', 'normal');
-          doc.text(`Issued by: ${cert.issuer || 'N/A'} on ${cert.date || 'N/A'}`, 15, y + 5);
+          doc.setFontSize(8.5);
+          doc.setTextColor(71, 85, 105);
+          doc.text(`Issued by: ${cert.issuer || 'N/A'} on ${cert.date || 'N/A'}`, 20, y + 9.5);
+          
           if (cert.link) {
+            doc.setFont('helvetica', 'italic');
             doc.setTextColor(99, 102, 241);
-            doc.text(`Link: ${cert.link}`, 15, y + 10);
-            doc.setTextColor(33, 33, 33);
-            y += 15;
-          } else {
-            y += 10;
+            doc.text(`Link: ${cert.link}`, 20, y + 14.5);
           }
+          
+          y += cert.link ? 23 : 18;
         });
+        y += 4;
       }
 
-      // 6. NOTES LIST
-      y += 5;
-      checkPageBreak(40);
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text("6. Student Notes Summary", 15, y);
-      doc.line(15, y + 2, 195, y + 2);
-      y += 10;
-
-      doc.setFontSize(10);
+      // 7. NOTES LIST
+      drawSectionHeader("Student Notes Summary", "7");
       if (notes.length === 0) {
-        doc.setFont('helvetica', 'normal');
-        doc.text("No notes saved.", 15, y);
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(9.5);
+        doc.setTextColor(100, 116, 139);
+        doc.text("No notes saved.", 18, y);
         y += 10;
       } else {
         notes.slice(0, 15).forEach(note => {
-          checkPageBreak(15);
+          const contentStr = (note.content || '').replace(/\n/g, ' ');
+          const splitPreview = doc.splitTextToSize(contentStr, 125);
+          const needed = Math.max(12, splitPreview.length * 4.5 + 8);
+          
+          checkPageBreak(needed);
+          
+          doc.setFillColor(248, 250, 252);
+          doc.rect(15, y, 180, needed - 3, 'F');
+          doc.rect(15, y, 180, needed - 3, 'S');
+          doc.setFillColor(245, 158, 11); // Amber
+          doc.rect(15, y, 2, needed - 3, 'F');
+
           doc.setFont('helvetica', 'bold');
-          doc.text(`${note.title || 'Untitled Note'} (${note.course || 'General'}):`, 15, y);
+          doc.setFontSize(9);
+          doc.setTextColor(30, 41, 59);
+          doc.text(`${note.title || 'Untitled Note'} (${note.course || 'General'}):`, 20, y + 5.5);
+          
           doc.setFont('helvetica', 'normal');
-          const preview = (note.content || '').replace(/\n/g, ' ');
-          const splitPreview = doc.splitTextToSize(preview.substring(0, 120) + (preview.length > 120 ? '...' : ''), 120);
-          doc.text(splitPreview, 75, y);
-          y += Math.max(6, splitPreview.length * 5);
+          doc.setFontSize(8.5);
+          doc.setTextColor(71, 85, 105);
+          doc.text(splitPreview, 65, y + 5.5);
+          
+          y += needed;
         });
+        y += 4;
       }
 
-      // 7. DIGITAL IDENTITY CARD & MESS QR
+      // 8. DIGITAL IDENTITY CARD & MESS QR
       doc.addPage();
       y = 20;
 
-      doc.setFontSize(14);
-      doc.setFont('helvetica', 'bold');
-      doc.text("7. Digital Identity Documents", 15, y);
-      doc.line(15, y + 2, 195, y + 2);
-      y += 15;
-
+      drawSectionHeader("Digital Identity Documents", "8");
+      
       if (profile.messQrBase64) {
         try {
-          doc.setFontSize(11);
+          checkPageBreak(65);
+          doc.setDrawColor(226, 232, 240);
+          doc.setFillColor(248, 250, 252);
+          doc.rect(15, y, 80, 60, 'F');
+          doc.rect(15, y, 80, 60, 'S');
+          
+          doc.setFillColor(255, 153, 51); // saffron accent
+          doc.rect(15, y, 80, 3, 'F');
+
           doc.setFont('helvetica', 'bold');
-          doc.text("Mess QR Code", 25, y);
-          doc.addImage(profile.messQrBase64, 'PNG', 25, y + 5, 50, 50);
+          doc.setFontSize(10);
+          doc.setTextColor(30, 41, 59);
+          doc.text("MESS QR CODE", 25, y + 8);
+          
+          doc.addImage(profile.messQrBase64, 'PNG', 30, y + 12, 50, 45);
         } catch (e) {
           console.warn('Failed to render Mess QR in PDF:', e);
         }
@@ -561,13 +857,39 @@ const SettingsPage = ({ darkMode, setDarkMode }) => {
 
       if (profile.studentIdBase64) {
         try {
-          doc.setFontSize(11);
+          doc.setDrawColor(99, 102, 241);
+          doc.setFillColor(248, 250, 252);
+          doc.rect(105, y, 90, 60, 'F');
+          doc.rect(105, y, 90, 60, 'S');
+          
+          doc.setFillColor(99, 102, 241); // indigo accent
+          doc.rect(105, y, 90, 3, 'F');
+
           doc.setFont('helvetica', 'bold');
-          doc.text("Student ID Card", 100, y);
-          doc.addImage(profile.studentIdBase64, 'PNG', 100, y + 5, 85, 55);
+          doc.setFontSize(10);
+          doc.setTextColor(30, 41, 59);
+          doc.text("OFFICIAL STUDENT ID CARD", 115, y + 8);
+
+          doc.addImage(profile.studentIdBase64, 'PNG', 110, y + 12, 80, 45);
         } catch (e) {
           console.warn('Failed to render Student ID in PDF:', e);
         }
+      }
+      y += 65;
+
+      // Draw footer with page numbers
+      const totalPages = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= totalPages; i++) {
+        doc.setPage(i);
+        doc.setDrawColor(226, 232, 240);
+        doc.setLineWidth(0.5);
+        doc.line(15, 282, 195, 282);
+        
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(148, 163, 184);
+        doc.text("IITGN StudentOS — Academic & Profile Report", 15, 287);
+        doc.text(`Page ${i} of ${totalPages}`, 180, 287);
       }
 
       // Save the PDF
@@ -1782,66 +2104,134 @@ const SettingsPage = ({ darkMode, setDarkMode }) => {
               </div>
 
               <div>
-                <h4 style={{ marginBottom: '0.5rem', fontSize: '0.95rem' }}>Semester-wise Summary</h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <h4 style={{ marginBottom: '0.5rem', fontSize: '0.95rem', color: 'var(--text)' }}>Semester-wise Summary</h4>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   {importPreview.grades && importPreview.grades.length > 0 ? (
-                    importPreview.grades.map(sem => {
-                      const isRunning = sem.name === importPreview.profile?.semester || sem.isSynced;
-                      
-                      // Calculate SPI
-                      let totalPoints = 0, totalCredits = 0;
-                      sem.courses?.forEach(c => {
-                        const gp = GRADE_POINTS[c.grade];
-                        if (gp !== null && gp !== undefined && c.credits > 0) {
-                          totalPoints += gp * parseFloat(c.credits);
-                          totalCredits += parseFloat(c.credits);
-                        }
-                      });
-                      const spi = totalCredits > 0 ? (totalPoints / totalCredits).toFixed(2) : '—';
-
-                      // Calculate credits completed
-                      const completedCredits = sem.courses?.reduce((sum, c) => {
-                        const gp = GRADE_POINTS[c.grade];
-                        return (gp !== null && gp !== undefined && gp > 0) ? sum + parseFloat(c.credits) : sum;
-                      }, 0) || 0;
-
-                      const totalSemCredits = sem.courses?.reduce((sum, c) => sum + (parseFloat(c.credits) || 0), 0) || 0;
+                    (() => {
+                      const runningSemName = importPreview.profile?.semester;
+                      const runningSem = importPreview.grades.find(sem => sem.name === runningSemName);
+                      const completedSems = importPreview.grades.filter(sem => sem.name !== runningSemName);
 
                       return (
-                        <div key={sem.name} style={{ border: '1px solid var(--border)', borderRadius: '0.75rem', padding: '0.75rem' }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-                            <strong style={{ fontSize: '0.9rem' }}>
-                              {sem.name} {isRunning && <span style={{ fontSize: '0.7rem', background: '#e0f2fe', color: '#0369a1', padding: '0.1rem 0.4rem', borderRadius: '4px', marginLeft: '0.5rem' }}>Running</span>}
-                            </strong>
-                            <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.75rem' }}>
-                              <span style={{ background: 'var(--input-bg)', padding: '0.15rem 0.4rem', borderRadius: '4px' }}>
-                                {sem.courses?.length || 0} courses
-                              </span>
-                              <span style={{ background: 'var(--input-bg)', padding: '0.15rem 0.4rem', borderRadius: '4px' }}>
-                                {isRunning ? `${totalSemCredits} Credits` : `${completedCredits} Credits Done`}
-                              </span>
-                              <span style={{ background: 'var(--primary)', color: '#fff', padding: '0.15rem 0.4rem', borderRadius: '4px', fontWeight: 'bold' }}>
-                                SPI: {isRunning ? '—' : spi}
-                              </span>
-                            </div>
-                          </div>
-                          
-                          {/* Courses List */}
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', paddingLeft: '0.5rem' }}>
-                            {sem.courses && sem.courses.length > 0 ? (
-                              sem.courses.map((course, idx) => (
-                                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                                  <span>{course.name}</span>
-                                  <span>{course.credits} Cr &bull; {isRunning ? 'In Progress' : (course.grade || '—')}</span>
-                                </div>
-                              ))
+                        <>
+                          {/* Running Semester Section */}
+                          <div>
+                            <h5 style={{ margin: '0 0 0.5rem 0', fontSize: '0.85rem', textTransform: 'uppercase', color: 'var(--primary)', letterSpacing: '0.05em', fontWeight: 'bold' }}>
+                              Running Semester
+                            </h5>
+                            {runningSem ? (
+                              (() => {
+                                const totalSemCredits = runningSem.courses?.reduce((sum, c) => sum + (parseFloat(c.credits) || 0), 0) || 0;
+                                return (
+                                  <div style={{ border: '1px solid var(--primary)', borderRadius: '0.75rem', padding: '0.75rem', background: 'rgba(99, 102, 241, 0.04)' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                      <strong style={{ fontSize: '0.9rem', color: 'var(--text)' }}>
+                                        {runningSem.name}
+                                      </strong>
+                                      <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.75rem' }}>
+                                        <span style={{ background: 'var(--input-bg)', color: 'var(--text-muted)', padding: '0.15rem 0.4rem', borderRadius: '4px' }}>
+                                          {runningSem.courses?.length || 0} courses
+                                        </span>
+                                        <span style={{ background: 'var(--input-bg)', color: 'var(--text-muted)', padding: '0.15rem 0.4rem', borderRadius: '4px' }}>
+                                          {totalSemCredits} Credits
+                                        </span>
+                                        <span style={{ background: '#e0f2fe', color: '#0369a1', padding: '0.15rem 0.4rem', borderRadius: '4px', fontWeight: 'bold' }}>
+                                          SPI: — (In Progress)
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', paddingLeft: '0.5rem' }}>
+                                      {runningSem.courses && runningSem.courses.length > 0 ? (
+                                        runningSem.courses.map((course, idx) => (
+                                          <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                                            <span>{course.name}</span>
+                                            <span>{course.credits} Cr &bull; In Progress</span>
+                                          </div>
+                                        ))
+                                      ) : (
+                                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>No courses</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                );
+                              })()
                             ) : (
-                              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>No courses</span>
+                              <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontStyle: 'italic', border: '1px dashed var(--border)', borderRadius: '0.75rem', padding: '0.75rem' }}>
+                                No registered courses found for the running semester.
+                              </div>
                             )}
                           </div>
-                        </div>
+
+                          {/* Completed Semesters Section */}
+                          <div style={{ marginTop: '0.5rem' }}>
+                            <h5 style={{ margin: '0 0 0.5rem 0', fontSize: '0.85rem', textTransform: 'uppercase', color: 'var(--text-muted)', letterSpacing: '0.05em', fontWeight: 'bold' }}>
+                              Completed Semesters
+                            </h5>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                              {completedSems.length > 0 ? (
+                                completedSems.map(sem => {
+                                  // Calculate SPI
+                                  let totalPoints = 0, totalCredits = 0;
+                                  sem.courses?.forEach(c => {
+                                    const gp = GRADE_POINTS[c.grade];
+                                    if (gp !== null && gp !== undefined && c.credits > 0) {
+                                      totalPoints += gp * parseFloat(c.credits);
+                                      totalCredits += parseFloat(c.credits);
+                                    }
+                                  });
+                                  const spi = totalCredits > 0 ? (totalPoints / totalCredits).toFixed(2) : '—';
+
+                                  // Calculate credits completed
+                                  const completedCredits = sem.courses?.reduce((sum, c) => {
+                                    const gp = GRADE_POINTS[c.grade];
+                                    return (gp !== null && gp !== undefined && gp > 0) ? sum + parseFloat(c.credits) : sum;
+                                  }, 0) || 0;
+
+                                  return (
+                                    <div key={sem.name} style={{ border: '1px solid var(--border)', borderRadius: '0.75rem', padding: '0.75rem' }}>
+                                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                                        <strong style={{ fontSize: '0.9rem', color: 'var(--text)' }}>
+                                          {sem.name}
+                                        </strong>
+                                        <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.75rem' }}>
+                                          <span style={{ background: 'var(--input-bg)', color: 'var(--text-muted)', padding: '0.15rem 0.4rem', borderRadius: '4px' }}>
+                                            {sem.courses?.length || 0} courses
+                                          </span>
+                                          <span style={{ background: 'var(--input-bg)', color: 'var(--text-muted)', padding: '0.15rem 0.4rem', borderRadius: '4px' }}>
+                                            {completedCredits} Credits Completed
+                                          </span>
+                                          <span style={{ background: 'var(--primary)', color: '#fff', padding: '0.15rem 0.4rem', borderRadius: '4px', fontWeight: 'bold' }}>
+                                            SPI: {spi}
+                                          </span>
+                                        </div>
+                                      </div>
+                                      
+                                      {/* Courses List */}
+                                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', paddingLeft: '0.5rem' }}>
+                                        {sem.courses && sem.courses.length > 0 ? (
+                                          sem.courses.map((course, idx) => (
+                                            <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                                              <span>{course.name}</span>
+                                              <span>{course.credits} Cr &bull; Grade: {course.grade || '—'}</span>
+                                            </div>
+                                          ))
+                                        ) : (
+                                          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>No courses</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                })
+                              ) : (
+                                <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', fontStyle: 'italic', border: '1px dashed var(--border)', borderRadius: '0.75rem', padding: '0.75rem' }}>
+                                  No completed semesters recorded.
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </>
                       );
-                    })
+                    })()
                   ) : (
                     <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No semesters found in the backup file.</div>
                   )}
@@ -1863,6 +2253,29 @@ const SettingsPage = ({ darkMode, setDarkMode }) => {
                   if (importedData.certificates) localStorage.setItem('student_certificates', JSON.stringify(importedData.certificates));
                   if (importedData.projects) localStorage.setItem('student_projects', JSON.stringify(importedData.projects));
                   if (importedData.grades) localStorage.setItem(`grades_${currentUser.uid}`, JSON.stringify(importedData.grades));
+                  
+                  if (importedData.timetableCourses) {
+                    localStorage.setItem(`courses_${currentUser.uid}`, JSON.stringify(importedData.timetableCourses));
+                  } else {
+                    // Fallback: reconstruct timetable courses from the running semester in importedData.grades
+                    const runningSemName = importedData.profile?.semester;
+                    const runningSem = importedData.grades?.find(sem => sem.name === runningSemName);
+                    if (runningSem && runningSem.courses) {
+                      const reconstructed = runningSem.courses.map(c => {
+                        const parts = c.name.split(' - ');
+                        const code = parts[0] || 'COURSE';
+                        const title = parts.slice(1).join(' - ') || 'Course Title';
+                        return {
+                          id: c.id || Date.now() + Math.random(),
+                          code: code,
+                          title: title,
+                          credits: c.credits || 0,
+                          slots: []
+                        };
+                      });
+                      localStorage.setItem(`courses_${currentUser.uid}`, JSON.stringify(reconstructed));
+                    }
+                  }
                   
                   // Restore profile details
                   if (importedData.profile) {
