@@ -42,6 +42,11 @@ const CalendarPage = () => {
   const [semFilter, setSemFilter] = useState('all');
 
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [showDayTimetable, setShowDayTimetable] = useState(false);
+
+  useEffect(() => {
+    setShowDayTimetable(false);
+  }, [selectedDate, currentDate]);
 
   const savedTimetable = useMemo(() => {
     if (!currentUser) return null;
@@ -256,8 +261,28 @@ const CalendarPage = () => {
         {/* Date Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border)', paddingBottom: '0.75rem' }}>
           <div>
-            <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: 'var(--text)' }}>
-              {formattedDate}
+            <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <span>{formattedDate}</span>
+              <button 
+                onClick={() => setShowDayTimetable(prev => !prev)}
+                style={{ 
+                  fontSize: '0.68rem', 
+                  padding: '0.15rem 0.45rem', 
+                  borderRadius: '6px', 
+                  background: showDayTimetable ? 'var(--primary)' : 'var(--input-bg)', 
+                  border: '1px solid var(--border)', 
+                  color: showDayTimetable ? '#ffffff' : 'var(--text-muted)', 
+                  cursor: 'pointer', 
+                  fontWeight: 600,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.2rem',
+                  transition: 'all 0.2s ease',
+                  marginLeft: '0.25rem'
+                }}
+              >
+                <Clock size={11} /> {showDayTimetable ? 'Hide Timetable' : 'Show Timetable'}
+              </button>
             </h4>
             <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
               {activeDateStr === todayStr ? 'Today\'s Agenda' : 'Selected Date'}
@@ -279,6 +304,52 @@ const CalendarPage = () => {
             )}
           </div>
         </div>
+
+        {/* Synced Day Timetable (Inline Accordion) */}
+        <AnimatePresence initial={false}>
+          {showDayTimetable && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.25, ease: 'easeInOut' }}
+              style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: '0.5rem', borderBottom: '1px solid var(--border)', paddingBottom: '1rem' }}
+            >
+              <h5 style={{ margin: 0, fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                <Clock size={12} /> Synced Timetable Classes
+              </h5>
+              {isHoliday ? (
+                <div style={{ fontSize: '0.75rem', color: '#ef4444', background: 'rgba(239, 68, 68, 0.04)', padding: '0.45rem 0.65rem', borderRadius: '0.375rem', display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
+                  <strong>Holiday: {dayEvents.holidays[0].name}</strong>
+                  <span style={{ fontSize: '0.68rem', opacity: 0.8 }}>No classes scheduled today! 🎉</span>
+                </div>
+              ) : ['Saturday', 'Sunday'].includes(selectedDayName) ? (
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', background: 'var(--input-bg)', padding: '0.45rem 0.65rem', borderRadius: '0.375rem' }}>
+                  Enjoy your weekend! No classes scheduled. ☕
+                </div>
+              ) : clickedDayClasses.length === 0 ? (
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontStyle: 'italic', padding: '0.15rem 0' }}>
+                  No classes scheduled for {selectedDayName}.
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                  {clickedDayClasses.map((slot, idx) => (
+                    <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.45rem 0.55rem', background: 'var(--input-bg)', borderRadius: '0.375rem', fontSize: '0.75rem', borderLeft: '3px solid var(--primary)', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flex: 1, minWidth: 0 }}>
+                        <GraduationCap size={14} style={{ color: 'var(--primary)', flexShrink: 0 }} />
+                        <div style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <strong style={{ color: 'var(--text)' }}>{slot.entries[0]?.code || 'Course'}</strong>
+                          <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '0.05rem' }}>{slot.entries[0]?.type || 'Lecture'} &bull; {slot.entries[0]?.venue || 'N/A'}</div>
+                        </div>
+                      </div>
+                      <span style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-muted)' }}>{slot.time.split(' – ')[0]}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Dynamic Daily Agenda List */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
@@ -327,42 +398,6 @@ const CalendarPage = () => {
                   <button className="cal-delete-btn" onClick={() => removeEvent(e.id)} style={{ padding: '0.25rem', cursor: 'pointer', background: 'transparent', border: 'none', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
                     <Trash2 size={12} />
                   </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Classes of the Day */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', borderTop: '1px solid var(--border)', paddingTop: '1rem' }}>
-          <h5 style={{ margin: 0, fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-            <Clock size={12} /> Synced Timetable Classes
-          </h5>
-          {isHoliday ? (
-            <div style={{ fontSize: '0.75rem', color: '#ef4444', background: 'rgba(239, 68, 68, 0.04)', padding: '0.45rem 0.65rem', borderRadius: '0.375rem', display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-              <strong>Holiday: {dayEvents.holidays[0].name}</strong>
-              <span style={{ fontSize: '0.68rem', opacity: 0.8 }}>No classes scheduled today! 🎉</span>
-            </div>
-          ) : ['Saturday', 'Sunday'].includes(selectedDayName) ? (
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', background: 'var(--input-bg)', padding: '0.45rem 0.65rem', borderRadius: '0.375rem' }}>
-              Enjoy your weekend! No classes scheduled. ☕
-            </div>
-          ) : clickedDayClasses.length === 0 ? (
-            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontStyle: 'italic', padding: '0.15rem 0' }}>
-              No classes scheduled for {selectedDayName}.
-            </div>
-          ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-              {clickedDayClasses.map((slot, idx) => (
-                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.45rem 0.55rem', background: 'var(--input-bg)', borderRadius: '0.375rem', fontSize: '0.75rem', borderLeft: '3px solid var(--primary)', alignItems: 'center' }}>
-                  <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flex: 1, minWidth: 0 }}>
-                    <GraduationCap size={14} style={{ color: 'var(--primary)', flexShrink: 0 }} />
-                    <div style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      <strong style={{ color: 'var(--text)' }}>{slot.entries[0]?.code || 'Course'}</strong>
-                      <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '0.05rem' }}>{slot.entries[0]?.type || 'Lecture'} &bull; {slot.entries[0]?.venue || 'N/A'}</div>
-                    </div>
-                  </div>
-                  <span style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-muted)' }}>{slot.time.split(' – ')[0]}</span>
                 </div>
               ))}
             </div>
