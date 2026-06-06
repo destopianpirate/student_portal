@@ -183,6 +183,9 @@
   .edit-profile-grid {
     grid-template-columns: 1fr
   }
+  .edit-profile-grid .edit-field {
+    grid-column: span 1 !important;
+  }
   .summary-cards {
     grid-template-columns: 1fr 1fr
   }
@@ -549,4 +552,15 @@
 .admin-role-badge.student {
   color: #22c55e;
   background: #22c55e26
+}
+
+/* Fix mobile toast notifications shifting off-screen on the left */
+@media (max-width: 480px) {
+  .toast-container {
+    right: 1rem !important;
+    left: 1rem !important;
+    bottom: 1rem !important;
+    width: auto !important;
+    max-width: calc(100vw - 2rem) !important;
+  }
 }

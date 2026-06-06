@@ -4,8 +4,6 @@ import { Calendar, Eye, MapPin, AlertCircle, Download, ChevronDown, FileSpreadsh
 import { useAuth } from '../contexts/AuthContext';
 import { fetchAndParseTimetable } from '../utils/parser';
 import { exportToExcel } from '../utils/exporter';
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
 
@@ -45,6 +43,7 @@ const TimetablePage = () => {
   const [isEditing, setIsEditing] = useState(true);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [activeDayTab, setActiveDayTab] = useState('Monday');
+  const [mobileViewMode, setMobileViewMode] = useState('list'); // 'list' or 'grid'
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -116,19 +115,77 @@ const TimetablePage = () => {
       }));
 
       const codes = new Set(src.map(c => c.code));
-      const sel = new Set();
-      courses.forEach((c, i) => { if (codes.has(c.code)) sel.add(i); });
-      setSelectedIds(sel);
+      setSelectedIds(codes);
       hasInitializedSelectedIds.current = true;
     } else if (savedCourses.length === 0 && !loading) {
       hasInitializedSelectedIds.current = true;
     }
   }, [courses, savedCourses, userProfile, loading]);
 
-  const toggleCourse = (id) => { const n = new Set(selectedIds); n.has(id) ? n.delete(id) : n.add(id); setSelectedIds(n); };
-  const removeCourse = (id) => { const n = new Set(selectedIds); n.delete(id); setSelectedIds(n); };
+  const toggleCourse = (code) => {
+    const n = new Set(selectedIds);
+    n.has(code) ? n.delete(code) : n.add(code);
+    setSelectedIds(n);
+  };
+  
+  const removeCourse = (code) => {
+    const n = new Set(selectedIds);
+    n.delete(code);
+    setSelectedIds(n);
+  };
 
-  const selectedCourses = useMemo(() => courses.filter((_, i) => selectedIds.has(i)), [courses, selectedIds]);
+  const handleCancel = () => {
+    try {
+      const sc = localStorage.getItem(`courses_${userKey}`);
+      if (sc) {
+        const parsed = JSON.parse(sc);
+        setSavedCourses(parsed);
+        const codes = new Set(parsed.map(c => c.code));
+        setSelectedIds(codes);
+      } else {
+        setSavedCourses([]);
+        setSelectedIds(new Set());
+      }
+      setIsEditing(false);
+      setPreviewMode(false);
+    } catch (e) {
+      setIsEditing(false);
+    }
+  };
+
+  const handleDirectRemoveCourse = async (courseCode) => {
+    if (window.confirm(`Are you sure you want to remove ${courseCode} from your timetable?`)) {
+      if (isEditing) {
+        const n = new Set(selectedIds);
+        n.delete(courseCode);
+        setSelectedIds(n);
+      } else {
+        const updated = savedCourses.filter(c => c.code.replace(/\s+/g, '').toLowerCase() !== courseCode.replace(/\s+/g, '').toLowerCase());
+        const newGrid = buildGrid(updated);
+        setSavedCourses(updated);
+        setSavedTimetable(newGrid);
+        localStorage.setItem(`timetable_${userKey}`, JSON.stringify(newGrid));
+        localStorage.setItem(`courses_${userKey}`, JSON.stringify(updated));
+
+        const n = new Set(selectedIds);
+        n.delete(courseCode);
+        setSelectedIds(n);
+
+        if (currentUser) {
+          saveTimetable(newGrid, updated).catch(e => console.warn('Firestore:', e.message));
+        }
+
+        confetti({
+          particleCount: 60,
+          spread: 40,
+          origin: { y: 0.8 },
+          colors: ['#ef4444', '#f59e0b']
+        });
+      }
+    }
+  };
+
+  const selectedCourses = useMemo(() => courses.filter(c => selectedIds.has(c.code)), [courses, selectedIds]);
 
   // displayCourses: what to show in the summary — editing uses live selection, view uses saved
   const displayCourses = useMemo(() => isEditing ? selectedCourses : savedCourses, [isEditing, selectedCourses, savedCourses]);
@@ -295,36 +352,116 @@ const TimetablePage = () => {
   };
 
   const handleExportExcel = () => { exportToExcel(activeTimetable, days, orderedTimeSlots, isEditing ? selectedCourses : savedCourses); setShowExportMenu(false); };
-  const handleExportImage = async () => { if (!timetableRef.current) return; const c = await html2canvas(timetableRef.current, { scale: 2, windowWidth: 1200, useCORS: true }); const l = document.createElement('a'); l.download = 'Timetable.png'; l.href = c.toDataURL('image/png'); l.click(); setShowExportMenu(false); };
-  const handleExportPDF = async () => { if (!timetableRef.current) return; const c = await html2canvas(timetableRef.current, { scale: 2, windowWidth: 1200, useCORS: true }); const p = new jsPDF('l', 'mm', 'a4'); const w = p.internal.pageSize.getWidth() - 20; p.addImage(c.toDataURL('image/png'), 'PNG', 10, 10, w, (c.height * w) / c.width); p.save('Timetable.pdf'); setShowExportMenu(false); };
+  const handleExportImage = async () => {
+    if (!timetableRef.current) return;
+    try {
+      const html2canvas = (await import('html2canvas')).default;
+      const c = await html2canvas(timetableRef.current, { scale: 2, windowWidth: 1200, useCORS: true });
+      const l = document.createElement('a');
+      l.download = 'Timetable.png';
+      l.href = c.toDataURL('image/png');
+      l.click();
+    } catch (err) {
+      console.error('Failed to export image:', err);
+    }
+    setShowExportMenu(false);
+  };
+  const handleExportPDF = async () => {
+    if (!timetableRef.current) return;
+    try {
+      const html2canvas = (await import('html2canvas')).default;
+      const { jsPDF } = await import('jspdf');
+      const c = await html2canvas(timetableRef.current, { scale: 2, windowWidth: 1200, useCORS: true });
+      const p = new jsPDF('l', 'mm', 'a4');
+      const w = p.internal.pageSize.getWidth() - 20;
+      p.addImage(c.toDataURL('image/png'), 'PNG', 10, 10, w, (c.height * w) / c.width);
+      p.save('Timetable.pdf');
+    } catch (err) {
+      console.error('Failed to export PDF:', err);
+    }
+    setShowExportMenu(false);
+  };
 
   if (loading) return <div className="page-container" style={{ textAlign: 'center', paddingTop: '4rem' }}><div className="loading-spinner" style={{ margin: '0 auto' }} /></div>;
 
   return (
     <div className="page-container" style={{ paddingBottom: '80px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-        <div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: isMobile && isEditing ? '1rem' : '2rem', flexWrap: 'wrap', gap: '0.75rem', position: 'relative' }}>
+        <div style={{ flex: 1, minWidth: '0', marginRight: isMobile ? '95px' : '0' }}>
           <h2 style={{ margin: 0, fontSize: 'clamp(1.1rem, 3vw, 1.5rem)' }}>{isEditing ? 'Course Selection' : 'Your Timetable'}</h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: '.85rem' }}>{isEditing ? 'Select courses for this semester' : `${displayCourses.length} courses • ${displayCredits} credits`}</p>
+          <p style={{ color: 'var(--text-muted)', fontSize: '.85rem', margin: 0 }}>
+            {isEditing ? 'Select courses for this semester' : `${displayCourses.length} courses • ${displayCredits} credits`}
+          </p>
         </div>
-        <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap' }}>
-          {!isEditing ? (
-            <button className="btn btn-outline" onClick={handleOpenModifyModal}><Edit2 size={16} /> Modify Course</button>
-          ) : savedTimetable && (
-            <button className="btn btn-outline" onClick={() => { setIsEditing(false); setPreviewMode(false); }}>Cancel</button>
+        <div style={{ 
+          display: 'flex', 
+          gap: '.5rem', 
+          flexWrap: 'wrap', 
+          alignItems: 'center',
+          position: isMobile ? 'absolute' : 'static',
+          right: 0,
+          top: 0,
+          zIndex: 100
+        }}>
+          {!isMobile ? (
+            <>
+              {!isEditing ? (
+                <button className="btn btn-outline" onClick={handleOpenModifyModal}><Edit2 size={16} /> Modify Course</button>
+              ) : savedTimetable && (
+                <button className="btn btn-outline" onClick={() => { setIsEditing(false); setPreviewMode(false); }}>Cancel</button>
+              )}
+            </>
+          ) : (
+            !isEditing && (
+              <button 
+                className="btn btn-outline btn-sm" 
+                onClick={handleOpenModifyModal}
+                style={{ padding: '0.4rem 0.6rem', fontSize: '0.75rem', height: '32px', display: 'flex', alignItems: 'center', gap: '2px' }}
+              >
+                <Edit2 size={12} /> Modify
+              </button>
+            )
           )}
           <div style={{ position: 'relative' }}>
-            <button className="btn btn-primary" onClick={() => setShowExportMenu(!showExportMenu)}><Download size={18} /> Export <ChevronDown size={14} /></button>
+            <button 
+              className="btn btn-primary" 
+              onClick={() => setShowExportMenu(!showExportMenu)}
+              style={isMobile ? { 
+                padding: '0.4rem 0.6rem', 
+                fontSize: '0.75rem', 
+                height: '32px',
+                width: '90px',
+                justifyContent: 'center',
+                gap: '4px',
+                display: 'flex',
+                alignItems: 'center'
+              } : {}}
+            >
+              <Download size={isMobile ? 12 : 18} /> {isMobile ? 'Export' : 'Export'} <ChevronDown size={isMobile ? 12 : 14} />
+            </button>
             {showExportMenu && (
-              <div className="export-dropdown">
-                <button onClick={handleExportExcel}><FileSpreadsheet size={16} /> Excel</button>
-                <button onClick={handleExportImage}><ImageIcon size={16} /> Image</button>
-                <button onClick={handleExportPDF}><FileIcon size={16} /> PDF</button>
+              <div className="export-dropdown" style={isMobile ? { right: 0 } : {}}>
+                <button onClick={handleExportExcel}><FileSpreadsheet size={14} /> Excel</button>
+                <button onClick={handleExportImage}><ImageIcon size={14} /> Image</button>
+                <button onClick={handleExportPDF}><FileIcon size={14} /> PDF</button>
               </div>
             )}
           </div>
         </div>
       </div>
+
+      {isMobile && isEditing && (
+        <div className="mobile-search-container" style={{ position: 'relative', width: '100%', marginBottom: '1.25rem' }}>
+          <input 
+            type="text" 
+            placeholder="Search courses..." 
+            value={searchQuery} 
+            onChange={e => setSearchQuery(e.target.value)} 
+            style={{ width: '100%', padding: '.5rem 1rem .5rem 2.4rem', borderRadius: '2rem', border: '1px solid #cbd5e1', background: '#ffffff', fontSize: '.8rem', outline: 'none', color: '#1e293b', boxShadow: '0 2px 6px rgba(0,0,0,0.06)', boxSizing: 'border-box' }} 
+          />
+          <Search size={14} style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: '#64748b' }} />
+        </div>
+      )}
 
       <AnimatePresence mode="wait">
         {isEditing && !previewMode ? (
@@ -341,13 +478,11 @@ const TimetablePage = () => {
                 <span className="selected-chips-empty"><Plus size={14} /> No courses selected — pick from the list below</span>
               ) : (
                 selectedCourses.map((c, i) => {
-                  // Find the original index for this course
-                  const origIdx = courses.findIndex(cc => cc.code === c.code && cc.title === c.title);
                   return (
                     <div key={c.code + i} className="selected-chip">
                       <span>{c.code}</span>
                       <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>({c.credits} Cr)</span>
-                      <button className="chip-remove" onClick={(e) => { e.stopPropagation(); removeCourse(origIdx); }} title="Remove course">
+                      <button className="chip-remove" onClick={(e) => { e.stopPropagation(); removeCourse(c.code); }} title="Remove course">
                         <X size={14} />
                       </button>
                     </div>
@@ -359,22 +494,24 @@ const TimetablePage = () => {
             {/* Course Bucket List */}
             <div className="card course-bucket-card">
               {Object.keys(groupedCourses).map(gn => (
-                <div key={gn} style={{ marginBottom: '2rem' }}>
+                <div key={gn} style={{ marginBottom: isMobile ? '1rem' : '2rem' }}>
                   <div onClick={() => { const n = new Set(collapsedGroups); n.has(gn) ? n.delete(gn) : n.add(gn); setCollapsedGroups(n); }}
-                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', marginBottom: '1rem', borderBottom: '2px solid var(--border)', paddingBottom: '.5rem' }}>
-                    <h3 style={{ fontSize: '1.1rem', margin: 0 }}>{gn}</h3>
-                    {collapsedGroups.has(gn) ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
+                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', marginBottom: isMobile ? '0.5rem' : '1rem', borderBottom: '2px solid var(--border)', paddingBottom: '.5rem' }}>
+                    <h3 style={{ fontSize: isMobile ? '0.95rem' : '1.1rem', margin: 0 }}>{gn}</h3>
+                    {collapsedGroups.has(gn) ? <ChevronDown size={isMobile ? 16 : 20} /> : <ChevronUp size={isMobile ? 16 : 20} />}
                   </div>
                   {!collapsedGroups.has(gn) && (
                     <div className="course-list">
                       {groupedCourses[gn].map(c => (
-                        <div key={c.originalIndex} className={`course-item ${selectedIds.has(c.originalIndex) ? 'selected' : ''}`} onClick={() => toggleCourse(c.originalIndex)}>
-                          <input type="checkbox" checked={selectedIds.has(c.originalIndex)} readOnly />
-                          <div style={{ display: 'flex', flex: 1, gap: '1rem', alignItems: 'center' }}>
-                            <span className="course-code" style={{ minWidth: '80px' }}>{c.code}</span>
-                            <span style={{ minWidth: '50px', color: 'var(--primary)' }}>{c.credits} Cr</span>
-                            <span style={{ flex: 1 }}>{c.title}</span>
-                            <span style={{ minWidth: '120px', textAlign: 'right', fontSize: '.75rem', color: 'var(--text-muted)' }}>{c.instructor}</span>
+                        <div key={c.originalIndex} className={`course-item ${selectedIds.has(c.code) ? 'selected' : ''}`} onClick={() => toggleCourse(c.code)}>
+                          <input type="checkbox" checked={selectedIds.has(c.code)} readOnly />
+                          <div className="course-item-details">
+                            <div className="course-code-row">
+                              <span className="course-code">{c.code}</span>
+                              <span className="course-credits">{c.credits} Cr</span>
+                            </div>
+                            <span className="course-title">{c.title}</span>
+                            {!isMobile && <span className="course-instructor">{c.instructor}</span>}
                           </div>
                         </div>
                       ))}
@@ -393,6 +530,27 @@ const TimetablePage = () => {
             transition={{ duration: 0.25 }}
           >
             {isMobile && (
+              <div className="timetable-view-selector-mobile" style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
+                <button
+                  type="button"
+                  className={`btn btn-sm ${mobileViewMode === 'list' ? 'btn-primary' : 'btn-outline'}`}
+                  onClick={() => setMobileViewMode('list')}
+                  style={{ borderRadius: '20px', padding: '0.4rem 1rem', fontSize: '0.75rem' }}
+                >
+                  Daywise List
+                </button>
+                <button
+                  type="button"
+                  className={`btn btn-sm ${mobileViewMode === 'grid' ? 'btn-primary' : 'btn-outline'}`}
+                  onClick={() => setMobileViewMode('grid')}
+                  style={{ borderRadius: '20px', padding: '0.4rem 1rem', fontSize: '0.75rem' }}
+                >
+                  Gridwise Table
+                </button>
+              </div>
+            )}
+
+            {isMobile && mobileViewMode === 'list' && (
               <div className="timetable-mobile-tabs">
                 {days.map(d => (
                   <button 
@@ -406,7 +564,7 @@ const TimetablePage = () => {
               </div>
             )}
 
-            {isMobile ? (
+            {(isMobile && mobileViewMode === 'list') ? (
               <div className="timetable-mobile-timeline" ref={timetableRef}>
                 {orderedTimeSlots.map(time => {
                   const isActive = isSlotActive(time);
@@ -547,12 +705,29 @@ const TimetablePage = () => {
               <h3>Registered Courses Summary</h3>
               <div className="courses-table-container">
                 <table className="courses-table">
-                  <thead><tr><th>Sr.</th><th>Code</th><th>Name</th><th>Credits</th><th>Instructor</th></tr></thead>
+                  <thead><tr><th>Sr.</th><th>Code</th><th>Name</th><th>Credits</th><th>Instructor</th><th style={{ width: '50px', textAlign: 'center' }}>Action</th></tr></thead>
                   <tbody>
                     {displayCourses.map((c, i) => (
-                      <tr key={i}><td>{i + 1}</td><td style={{ fontWeight: 700, color: 'var(--primary)' }}>{c.code}</td><td>{c.title}</td><td>{c.credits}</td><td>{c.instructor}</td></tr>
+                      <tr key={i}>
+                        <td>{i + 1}</td>
+                        <td style={{ fontWeight: 700, color: 'var(--primary)' }}>{c.code}</td>
+                        <td>{c.title}</td>
+                        <td>{c.credits}</td>
+                        <td>{c.instructor}</td>
+                        <td style={{ textAlign: 'center' }}>
+                          <button
+                            type="button"
+                            className="btn-icon-sm danger"
+                            onClick={(e) => { e.stopPropagation(); handleDirectRemoveCourse(c.code); }}
+                            title="Remove course"
+                            style={{ padding: '0.25rem', border: 'none', background: 'transparent', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </td>
+                      </tr>
                     ))}
-                    <tr className="total-row"><td colSpan={3} style={{ fontWeight: 700 }}>Total Semester Credits</td><td style={{ fontWeight: 800, color: 'var(--primary)' }}>{displayCredits}</td><td /></tr>
+                    <tr className="total-row"><td colSpan={3} style={{ fontWeight: 700 }}>Total Semester Credits</td><td style={{ fontWeight: 800, color: 'var(--primary)' }}>{displayCredits}</td><td /><td /></tr>
                   </tbody>
                 </table>
               </div>
@@ -583,17 +758,37 @@ const TimetablePage = () => {
             <span style={{ fontSize: '.875rem', color: 'var(--text-muted)' }}>Credits:</span>
             <span style={{ fontWeight: 800, marginLeft: '.5rem', color: 'var(--primary)' }}>{displayCredits}</span>
             {isEditing && (
-              <div style={{ position: 'relative', marginLeft: '1.5rem', width: '200px' }}>
-                <input type="text" placeholder="Search..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} style={{ width: '100%', padding: '.5rem 1rem .5rem 2.2rem', borderRadius: '2rem', border: 'none', background: 'var(--input-bg)', fontSize: '.85rem', outline: 'none', color: 'var(--text)' }} />
-                <Search size={16} style={{ position: 'absolute', left: '.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-              </div>
+              isMobile ? (
+                <button 
+                  className="btn btn-outline btn-sm" 
+                  onClick={() => setPreviewMode(!previewMode)}
+                  style={{ marginLeft: '0.75rem', padding: '0.55rem 1rem', fontSize: '0.8rem', height: '42px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                >
+                  {previewMode ? <><Edit2 size={12} /> Select</> : <><Eye size={12} /> Preview</>}
+                </button>
+              ) : (
+                <div style={{ position: 'relative', marginLeft: '1.5rem', width: '200px' }}>
+                  <input type="text" placeholder="Search..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} style={{ width: '100%', padding: '.5rem 1rem .5rem 2.2rem', borderRadius: '2rem', border: 'none', background: 'var(--input-bg)', fontSize: '.85rem', outline: 'none', color: 'var(--text)' }} />
+                  <Search size={16} style={{ position: 'absolute', left: '.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                </div>
+              )
             )}
           </div>
           <div style={{ display: 'flex', gap: '.5rem' }}>
             {isEditing ? (<>
-              <button className="btn btn-outline btn-sm" onClick={() => setSelectedIds(new Set())}><Trash2 size={16} /> Clear</button>
-              <button className="btn btn-outline btn-sm" onClick={() => setPreviewMode(!previewMode)}>{previewMode ? <><Edit2 size={16} /> Select</> : <><Eye size={16} /> Preview</>}</button>
-              <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving || selectedCourses.length === 0}><Save size={16} /> {saving ? 'Saving...' : 'Save Timetable'}</button>
+              <button className="btn btn-outline btn-sm" onClick={() => setSelectedIds(new Set())} style={isMobile ? { height: '42px', padding: '0.55rem 1rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' } : {}}><Trash2 size={16} /> Clear</button>
+              {isMobile ? (
+                <button 
+                  className="btn btn-outline btn-sm" 
+                  onClick={handleCancel}
+                  style={{ padding: '0.55rem 1rem', fontSize: '0.8rem', height: '42px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                >
+                  Cancel
+                </button>
+              ) : (
+                <button className="btn btn-outline btn-sm" onClick={() => setPreviewMode(!previewMode)}>{previewMode ? <><Edit2 size={16} /> Select</> : <><Eye size={16} /> Preview</>}</button>
+              )}
+              <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving || selectedCourses.length === 0} style={isMobile ? { height: '42px', padding: '0.55rem 1rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' } : {}}><Save size={16} /> {saving ? 'Saving...' : 'Save Timetable'}</button>
             </>) : (
               <button className="btn btn-primary btn-sm" onClick={() => setIsEditing(true)}><Plus size={16} /> Modify Courses</button>
             )}
@@ -716,13 +911,24 @@ const TimetablePage = () => {
                     </div>
                   </div>
 
-                  <div style={{ marginTop: '0.5rem' }}>
+                  <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                     <button 
                       className="btn btn-outline btn-sm" 
                       onClick={handleAddSlot}
                       style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', cursor: 'pointer' }}
                     >
                       <Plus size={14} /> Add Slot
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-outline btn-sm danger"
+                      onClick={() => {
+                        handleDirectRemoveCourse(editingCourseCode);
+                        setShowModifyModal(false);
+                      }}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', cursor: 'pointer', borderColor: 'rgba(239, 68, 68, 0.3)', color: 'var(--danger)', background: 'rgba(239, 68, 68, 0.02)' }}
+                    >
+                      <Trash2 size={14} /> Remove Course
                     </button>
                   </div>
                 </>

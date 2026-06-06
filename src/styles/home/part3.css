@@ -135,4 +135,27 @@
   background: rgba(99, 102, 241, 0.05);
 }
 
-
+@media (max-width: 768px) {
+  .crop-editor-layout {
+    flex-direction: column !important;
+    gap: 1rem !important;
+    padding: 1rem 0.75rem !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+  
+  .focal-editor-dock {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+  
+  .dock-presets-row {
+    flex-wrap: wrap !important;
+  }
+  
+  .dock-preset-btn {
+    padding: 0.4rem !important;
+    font-size: 0.7rem !important;
+    flex: 1 1 40% !important;
+  }
+}

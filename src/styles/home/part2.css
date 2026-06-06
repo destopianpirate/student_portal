@@ -369,12 +369,26 @@
 @media (width <= 600px) {
   .avatar-containment-cell {
     grid-area: avatar !important;
-    width: 80px !important;
-    height: 80px !important;
+    width: 95px !important;
+    height: 95px !important;
     margin: 0 !important;
+    border-radius: 50% !important;
+    background: linear-gradient(135deg, var(--primary), var(--accent)) !important;
+    padding: 3px !important;
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
   }
   .avatar-photo-frame {
+    position: relative !important;
+    width: 100% !important;
+    height: 100% !important;
     border-radius: 50% !important;
+    border: 2px solid var(--card-bg) !important;
+    overflow: hidden !important;
+    transform: none !important;
+    box-shadow: none !important;
   }
   .avatar-tech-corner {
     display: none; /* Hide corner brackets on circle image */
@@ -477,7 +491,7 @@
   position: relative;
   width: 150px;
   height: 195px;
-  background: #000;
+  background: #fff;
   border: 2px solid var(--primary);
   box-shadow: 0 4px 20px rgba(99, 102, 241, 0.15);
   overflow: hidden;
@@ -485,6 +499,10 @@
   user-select: none;
   transition: border-color 0.3s, box-shadow 0.3s, border-radius 0.3s, width 0.3s, height 0.3s;
   flex-shrink: 0;
+}
+
+[data-theme=dark] .focal-editor-viewport {
+  background: #000;
 }
 
 .focal-editor-viewport.dragging {

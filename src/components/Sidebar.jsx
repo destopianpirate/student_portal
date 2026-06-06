@@ -17,6 +17,7 @@ const Sidebar = ({ darkMode, setDarkMode, collapsed, setCollapsed, mobileOpen, s
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [miniCalDate, setMiniCalDate] = useState(() => new Date());
   const [isHovered, setIsHovered] = useState(false);
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -94,9 +95,29 @@ const Sidebar = ({ darkMode, setDarkMode, collapsed, setCollapsed, mobileOpen, s
     >
       {/* Sidebar Header (Fixed at the top) */}
       <div className="sidebar-header">
+        {/* Brand Logo & Name */}
+        <div className="sidebar-brand">
+          <div className="sidebar-logo" style={{ overflow: "hidden", background: "none" }}>
+            <img src={darkMode ? "/logo_dark.png" : "/logo_light.png"} alt="AcadX Logo" />
+          </div>
+          {!effectiveCollapsed && <span className="sidebar-brand-name">AcadX</span>}
+        </div>
+
         {/* User Profile Card */}
         {currentUser && (
-          <div className="sidebar-user-card top-profile" onClick={() => navigate('/settings')} title={effectiveCollapsed ? (userProfile?.name || currentUser.displayName || 'Profile') : undefined}>
+          <div 
+            className="sidebar-user-card top-profile" 
+            onClick={(e) => {
+              if (effectiveCollapsed) {
+                e.stopPropagation();
+                setProfileDropdownOpen(!profileDropdownOpen);
+              } else {
+                navigate('/settings');
+              }
+            }} 
+            style={{ position: 'relative', cursor: 'pointer' }}
+            title={effectiveCollapsed ? (userProfile?.name || currentUser.displayName || 'Profile') : undefined}
+          >
             <img src={avatarUrl} alt="" className="sidebar-user-avatar" style={{ objectPosition: photoPosition }} />
             {!effectiveCollapsed && (
               <div className="sidebar-user-info">
@@ -109,6 +130,52 @@ const Sidebar = ({ darkMode, setDarkMode, collapsed, setCollapsed, mobileOpen, s
                 <LogOut size={14} />
               </button>
             )}
+            <AnimatePresence>
+              {effectiveCollapsed && profileDropdownOpen && (
+                <>
+                  <div 
+                    style={{ position: 'fixed', inset: 0, zIndex: 9999 }} 
+                    onClick={(e) => { e.stopPropagation(); setProfileDropdownOpen(false); }} 
+                  />
+                  <motion.div 
+                    className="collapsed-profile-dropdown glass-card"
+                    initial={{ opacity: 0, x: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, x: 0, scale: 1 }}
+                    exit={{ opacity: 0, x: 10, scale: 0.95 }}
+                    transition={{ duration: 0.2 }}
+                    onClick={(e) => e.stopPropagation()}
+                    style={{
+                      position: 'absolute',
+                      left: '55px',
+                      top: '0px',
+                      width: '150px',
+                      background: 'var(--card-bg)',
+                      border: '1px solid var(--border)',
+                      borderRadius: '12px',
+                      boxShadow: 'var(--shadow-lg)',
+                      padding: '0.4rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '0.25rem',
+                      zIndex: 10000
+                    }}
+                  >
+                    <button 
+                      className="profile-menu-dropdown-item" 
+                      onClick={() => { setProfileDropdownOpen(false); navigate('/settings'); }}
+                    >
+                      <Settings size={14} /> Settings
+                    </button>
+                    <button 
+                      className="profile-menu-dropdown-item text-danger" 
+                      onClick={async () => { setProfileDropdownOpen(false); await handleLogout(); }}
+                    >
+                      <LogOut size={14} /> Logout
+                    </button>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
           </div>
         )}
 

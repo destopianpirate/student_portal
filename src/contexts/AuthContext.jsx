@@ -154,27 +154,27 @@ export const AuthProvider = ({ children }) => {
   const loginAsDemo = () => {
     const demoUser = {
       uid: 'demo_user_id',
-      email: 'singh.ayush@iitgn.ac.in',
-      displayName: 'Ayush Singh',
+      email: 'student.demo@iitgn.ac.in',
+      displayName: 'Demo Student',
       emailVerified: true,
       isDemo: true
     };
     const demoProfile = {
       uid: 'demo_user_id',
-      name: 'Ayush Singh',
-      username: 'singh.ayush',
+      name: 'Demo Student',
+      username: 'student.demo',
       rollNumber: '23110001',
       programme: 'B.Tech',
       branch: 'Computer Science & Engineering',
       yearOfAdmission: 2024,
       currentYear: '2nd Year',
       semester: 'Semester 3',
-      avatarUrl: 'https://api.dicebear.com/9.x/thumbs/svg?seed=Ayush',
+      avatarUrl: 'https://api.dicebear.com/9.x/thumbs/svg?seed=Demo',
       phone: '+91 98765 43210',
-      gmail: 'singh.ayush.personal@gmail.com',
-      github: 'https://github.com/singh-ayush',
-      linkedin: 'https://linkedin.com/in/singh-ayush',
-      instagram: 'https://instagram.com/singh-ayush',
+      gmail: 'student.demo.personal@gmail.com',
+      github: 'https://github.com',
+      linkedin: 'https://linkedin.com',
+      instagram: 'https://instagram.com',
       privacy: { phone: false, email: false, social: true },
       notifications: { email: true, push: false, updates: true },
       preferences: { librarySeat: 'A-12', defaultView: 'Grid', accent: 'indigo' },
@@ -210,19 +210,13 @@ export const AuthProvider = ({ children }) => {
       }
     ];
 
-    const demoCourses = [
-      { id: 301, code: 'CS 201', title: 'Data Structures and Algorithms', credits: 4, slots: [{ day: 'Monday', time: '09:00 – 10:30', venue: 'LHC-101' }, { day: 'Wednesday', time: '09:00 – 10:30', venue: 'LHC-101' }] },
-      { id: 302, code: 'CS 202', title: 'Discrete Mathematics', credits: 4, slots: [{ day: 'Tuesday', time: '10:30 – 12:00', venue: 'LHC-102' }, { day: 'Thursday', time: '10:30 – 12:00', venue: 'LHC-102' }] },
-      { id: 303, code: 'EE 201', title: 'Signals and Systems', credits: 4, slots: [{ day: 'Monday', time: '14:00 – 15:30', venue: 'LHC-103' }, { day: 'Wednesday', time: '14:00 – 15:30', venue: 'LHC-103' }] },
-      { id: 304, code: 'MA 201', title: 'Differential Equations', credits: 3, slots: [{ day: 'Tuesday', time: '09:00 – 10:00', venue: 'LHC-104' }, { day: 'Friday', time: '09:00 – 10:00', venue: 'LHC-104' }] },
-      { id: 305, code: 'HS 201', title: 'Sociology & Technology', credits: 3, slots: [{ day: 'Wednesday', time: '11:00 – 12:00', venue: 'LHC-105' }, { day: 'Friday', time: '11:00 – 12:00', venue: 'LHC-105' }] },
-      { id: 306, code: 'CS 291', title: 'Programming Laboratory', credits: 3, slots: [{ day: 'Thursday', time: '14:00 – 17:00', venue: 'CC-Lab' }] }
-    ];
+    const demoCourses = [];
 
     localStorage.setItem('demo_user', JSON.stringify(demoUser));
     localStorage.setItem(`profile_${demoUser.uid}`, JSON.stringify(demoProfile));
     localStorage.setItem(`grades_${demoUser.uid}`, JSON.stringify(demoGrades));
     localStorage.setItem(`courses_${demoUser.uid}`, JSON.stringify(demoCourses));
+    localStorage.setItem(`timetable_${demoUser.uid}`, JSON.stringify({}));
     setCurrentUser(demoUser);
     setUserProfile(demoProfile);
   };

@@ -31,57 +31,122 @@ const ProfileSection = ({
     >
       {/* LEFT 30% - Avatar & Identity */}
       <motion.div className="profile-left" variants={itemVariants} style={{ zIndex: 10, position: 'relative' }}>
-        <h2 className="profile-username">{userProfile?.username || currentUser?.displayName || 'Student'}</h2>
-        
-        <div className="avatar-containment-cell">
-          {/* Tech targeting bracket corners */}
-          <div className="avatar-tech-corner top-left" />
-          <div className="avatar-tech-corner top-right" />
-          <div className="avatar-tech-corner bottom-left" />
-          <div className="avatar-tech-corner bottom-right" />
-          
-          {/* Futuristic ambient back glow */}
-          <div className="avatar-ambient-glow" />
-          
-          {/* Floating double orbit rings */}
-          <div className="avatar-orbital-ring ring-outer" />
-          <div className="avatar-orbital-ring ring-inner" />
-          
-          {/* Main photo frame */}
-          <div className={`avatar-photo-frame aspect-${userProfile?.photoAspectRatio || 'card'}`}>
-            <img 
-              src={avatarUrl} 
-              alt="Profile" 
-              className="profile-avatar-large" 
-              style={{ 
-                objectPosition: photoPosition,
-                '--img-zoom': (userProfile?.photoZoom ?? 100) / 100,
-                '--img-rot': `${userProfile?.photoRotation ?? 0}deg`
-              }} 
-            />
-            <div className="avatar-hologram-sheen" />
-          </div>
-        </div>
+        {isMobile ? (
+          <div className="profile-mobile-layout">
+            <div className="profile-mobile-avatar-col">
+              <div className="avatar-containment-cell">
+                {/* Tech targeting bracket corners */}
+                <div className="avatar-tech-corner top-left" />
+                <div className="avatar-tech-corner top-right" />
+                <div className="avatar-tech-corner bottom-left" />
+                <div className="avatar-tech-corner bottom-right" />
+                
+                {/* Futuristic ambient back glow */}
+                <div className="avatar-ambient-glow" />
+                
+                {/* Floating double orbit rings */}
+                <div className="avatar-orbital-ring ring-outer" />
+                <div className="avatar-orbital-ring ring-inner" />
+                
+                {/* Main photo frame */}
+                <div className={`avatar-photo-frame aspect-${userProfile?.photoAspectRatio || 'card'}`}>
+                  <img 
+                    src={avatarUrl} 
+                    alt="Profile" 
+                    className="profile-avatar-large" 
+                    style={{ 
+                      objectPosition: photoPosition,
+                      '--img-zoom': (userProfile?.photoZoom ?? 100) / 100,
+                      '--img-rot': `${userProfile?.photoRotation ?? 0}deg`
+                    }} 
+                  />
+                  <div className="avatar-hologram-sheen" />
+                </div>
+              </div>
+            </div>
 
-        <div className="profile-student-id">ID: {userProfile?.rollNumber || '—'}</div>
+            <div className="profile-mobile-info-col">
+              <div className="profile-mobile-badge-top">Student Member</div>
+              <h2 className="profile-username">{userProfile?.username || currentUser?.displayName || 'Student'}</h2>
+              
+              <div className="profile-student-id">ID: {userProfile?.rollNumber || '—'}</div>
+              
+              <div className="profile-mobile-meta">
+                {userProfile?.branch && <span className="profile-meta-badge">{userProfile.branch}</span>}
+                {userProfile?.semester && <span className="profile-meta-badge">Sem {userProfile.semester}</span>}
+                {userProfile?.cgpa && <span className="profile-meta-badge cgpa">CGPA: {userProfile.cgpa}</span>}
+              </div>
 
-        {/* QR / ID Card Toggle Button */}
-        {userProfile?.messQrBase64 || userProfile?.studentIdBase64 ? (
-          <div className="qr-id-dropdown" style={{ width: '100%', marginTop: '0.75rem' }}>
-            <button className="qr-id-toggle" onClick={handleToggleQr} style={{ cursor: 'pointer', width: '100%', whiteSpace: 'nowrap' }}>
-              <CreditCard size={13} /> {showQrId ? 'Hide My Cards' : 'Show My Cards'} <ChevronDown size={13} style={{ transform: showQrId ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
-            </button>
+              {/* QR / ID Card Toggle Button */}
+              {userProfile?.messQrBase64 || userProfile?.studentIdBase64 ? (
+                <button className="qr-id-toggle-mobile" onClick={handleToggleQr}>
+                  <CreditCard size={12} /> {showQrId ? 'Hide Cards' : 'View ID & QR'}
+                </button>
+              ) : (
+                <button 
+                  className="qr-id-upload-mobile" 
+                  onClick={() => navigate('/settings', { state: { openSection: 'messqr' } })}
+                >
+                  <QrCode size={12} /> Upload Cards
+                </button>
+              )}
+            </div>
           </div>
         ) : (
-          <div className="qr-id-upload-prompt" style={{ marginTop: '0.75rem', width: '100%' }}>
-            <button 
-              className="btn btn-outline btn-sm" 
-              style={{ fontSize: '0.75rem', gap: '0.4rem', width: '100%', cursor: 'pointer', whiteSpace: 'nowrap' }}
-              onClick={() => navigate('/settings', { state: { openSection: 'messqr' } })}
-            >
-              <QrCode size={14} /> Upload QR & ID Card
-            </button>
-          </div>
+          <>
+            <h2 className="profile-username">{userProfile?.username || currentUser?.displayName || 'Student'}</h2>
+            
+            <div className="avatar-containment-cell">
+              {/* Tech targeting bracket corners */}
+              <div className="avatar-tech-corner top-left" />
+              <div className="avatar-tech-corner top-right" />
+              <div className="avatar-tech-corner bottom-left" />
+              <div className="avatar-tech-corner bottom-right" />
+              
+              {/* Futuristic ambient back glow */}
+              <div className="avatar-ambient-glow" />
+              
+              {/* Floating double orbit rings */}
+              <div className="avatar-orbital-ring ring-outer" />
+              <div className="avatar-orbital-ring ring-inner" />
+              
+              {/* Main photo frame */}
+              <div className={`avatar-photo-frame aspect-${userProfile?.photoAspectRatio || 'card'}`}>
+                <img 
+                  src={avatarUrl} 
+                  alt="Profile" 
+                  className="profile-avatar-large" 
+                  style={{ 
+                    objectPosition: photoPosition,
+                    '--img-zoom': (userProfile?.photoZoom ?? 100) / 100,
+                    '--img-rot': `${userProfile?.photoRotation ?? 0}deg`
+                  }} 
+                />
+                <div className="avatar-hologram-sheen" />
+              </div>
+            </div>
+
+            <div className="profile-student-id">ID: {userProfile?.rollNumber || '—'}</div>
+
+            {/* QR / ID Card Toggle Button */}
+            {userProfile?.messQrBase64 || userProfile?.studentIdBase64 ? (
+              <div className="qr-id-dropdown" style={{ width: '100%', marginTop: '0.75rem' }}>
+                <button className="qr-id-toggle" onClick={handleToggleQr} style={{ cursor: 'pointer', width: '100%', whiteSpace: 'nowrap' }}>
+                  <CreditCard size={13} /> {showQrId ? 'Hide My Cards' : 'Show My Cards'} <ChevronDown size={13} style={{ transform: showQrId ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                </button>
+              </div>
+            ) : (
+              <div className="qr-id-upload-prompt" style={{ marginTop: '0.75rem', width: '100%' }}>
+                <button 
+                  className="btn btn-outline btn-sm" 
+                  style={{ fontSize: '0.75rem', gap: '0.4rem', width: '100%', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                  onClick={() => navigate('/settings', { state: { openSection: 'messqr' } })}
+                >
+                  <QrCode size={14} /> Upload QR & ID Card
+                </button>
+              </div>
+            )}
+          </>
         )}
       </motion.div>
 

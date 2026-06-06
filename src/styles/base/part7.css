@@ -520,25 +520,32 @@
   cursor: pointer;
   text-align: center;
   border-radius: 30px;
-  padding: .4rem .9rem;
+  padding: .5rem 1rem;
   font-size: .75rem;
-  font-weight: 600;
-  transition: all .25s cubic-bezier(.4, 0, .2, 1);
+  font-weight: 700;
+  transition: all .3s cubic-bezier(.4, 0, .2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  white-space: nowrap;
 }
 
 .home-day-tab-btn:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.08);
   color: var(--text);
+  transform: translateY(-1px) scale(1.02);
 }
 
 [data-theme=light] .home-day-tab-btn:hover {
-  background: rgba(0, 0, 0, 0.03);
+  background: rgba(0, 0, 0, 0.04);
 }
 
 .home-day-tab-btn.active {
-  background: var(--primary) !important;
-  color: #fff;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  background: linear-gradient(135deg, var(--primary), var(--accent)) !important;
+  color: #fff !important;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+  transform: translateY(-1px);
 }
 
 .marker-label {
@@ -596,5 +603,57 @@
   animation: 1.2s ease-in-out infinite live-blink;
   display: inline-block;
   box-shadow: 0 0 8px #22c55e
+}
+
+.profile-menu-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.profile-menu-dropdown-item:hover {
+  background: var(--input-bg);
+  color: var(--primary);
+  transform: translateX(2px);
+}
+
+.profile-menu-dropdown-item.text-danger {
+  color: #ef4444;
+}
+
+.profile-menu-dropdown-item.text-danger:hover {
+  background: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+}
+
+@media (max-width: 600px) {
+  .home-day-tabs {
+    display: flex !important;
+    width: 100% !important;
+    justify-content: space-between !important;
+    padding: 0.15rem !important;
+    gap: 2px !important;
+    border-radius: 30px !important;
+  }
+  .home-day-tab-btn {
+    flex: 1 !important;
+    padding: 0.35rem 0.15rem !important;
+    font-size: 0.62rem !important;
+    text-align: center !important;
+    border-radius: 15px !important;
+    justify-content: center !important;
+    min-width: 0 !important;
+  }
 }
 

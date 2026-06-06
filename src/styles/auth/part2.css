@@ -872,3 +872,31 @@
   font-size: 0.62rem !important;
   padding: 0.15rem 0.45rem !important;
 }
+
+@media (max-width: 900px) {
+  .auth-page {
+    height: auto !important;
+    min-height: 100vh !important;
+    max-height: none !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+  }
+
+  .auth-form-panel {
+    height: auto !important;
+    min-height: 100vh !important;
+    align-items: flex-start !important;
+    justify-content: center !important;
+    padding: 2rem 1.25rem !important;
+    overflow-y: visible !important;
+    flex: 1 !important;
+  }
+
+  .auth-form-panel .auth-card {
+    margin: 2rem auto !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+}
+

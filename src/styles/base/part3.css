@@ -128,51 +128,95 @@
 }
 
 .summary-cards {
-  grid-template-columns: 1fr 1fr;
-  gap: .75rem;
-  display: grid
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 1rem !important;
+  overflow-x: auto !important;
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  padding: 0.5rem 0.25rem 1.25rem 0.25rem !important;
+  grid-template-columns: none !important;
+  margin: 0;
+  -webkit-overflow-scrolling: touch;
+}
+
+.summary-cards::-webkit-scrollbar {
+  height: 6px;
+}
+
+.summary-cards::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 10px;
+}
+
+[data-theme=light] .summary-cards::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.summary-cards::-webkit-scrollbar-thumb {
+  background: var(--border-glass);
+  border-radius: 10px;
+  transition: background 0.3s;
+}
+
+.summary-cards:hover::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  opacity: 0.8;
+}
+
+.summary-card {
+  flex: 0 0 210px !important;
+  max-width: 210px !important;
+  grid-column: auto !important;
 }
 
 .summary-card {
   background: var(--card-bg-glass);
-  border: none;
+  border: 1px solid var(--border);
   backdrop-filter: var(--glass-blur);
   -webkit-backdrop-filter: var(--glass-blur);
-  text-align: center;
-  border-radius: .75rem;
-  padding: 1rem;
-  transition: all .4s cubic-bezier(.4, 0, .2, 1);
-  animation: .5s both scaleIn;
+  border-radius: 1rem;
+  padding: 1rem 1.25rem;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: 0.5s both scaleIn;
   position: relative;
-  overflow: hidden
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  z-index: 1;
 }
 
-.summary-card:first-child {
-  animation-delay: 50ms
-}
-
-.summary-card:nth-child(2) {
-  animation-delay: .1s
-}
-
-.summary-card:nth-child(3) {
-  animation-delay: .15s
-}
-
-.summary-card:nth-child(4) {
-  animation-delay: .2s
-}
+.summary-card:first-child { animation-delay: 50ms; }
+.summary-card:nth-child(2) { animation-delay: 0.1s; }
+.summary-card:nth-child(3) { animation-delay: 0.15s; }
+.summary-card:nth-child(4) { animation-delay: 0.2s; }
+.summary-card:nth-child(5) { animation-delay: 0.25s; }
 
 .summary-card:before {
   content: "";
   border-radius: inherit;
   opacity: 0;
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(244, 114, 182, 0.08));
-  transition: opacity .3s;
+  transition: opacity 0.3s;
   position: absolute;
   inset: 0;
   z-index: 0;
+  pointer-events: none;
 }
+
+.summary-card.cgpa-card:before { background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(99, 102, 241, 0.05)); }
+.summary-card.credits-card:before { background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(59, 130, 246, 0.05)); }
+.summary-card.courses-card:before { background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(244, 114, 182, 0.05)); }
+.summary-card.semester-card:before { background: linear-gradient(135deg, rgba(236, 72, 153, 0.08), rgba(245, 158, 11, 0.05)); }
+.summary-card.classes-card:before { background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(16, 185, 129, 0.05)); }
+.summary-card.attendance-card:before { background: linear-gradient(135deg, rgba(20, 184, 166, 0.08), rgba(99, 102, 241, 0.05)); }
+.summary-card.assignments-card:before { background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(239, 68, 68, 0.05)); }
+.summary-card.goals-card:before { background: linear-gradient(135deg, rgba(244, 114, 182, 0.08), rgba(245, 158, 11, 0.05)); }
+.summary-card.study-hours-card:before { background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(6, 182, 212, 0.05)); }
+.summary-card.streak-card:before { background: linear-gradient(135deg, rgba(249, 115, 22, 0.08), rgba(239, 68, 68, 0.05)); }
+.summary-card.projects-card:before { background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(16, 185, 129, 0.05)); }
+.summary-card.certificates-card:before { background: linear-gradient(135deg, rgba(168, 85, 247, 0.08), rgba(236, 72, 153, 0.05)); }
+.summary-card.notes-card:before { background: linear-gradient(135deg, rgba(34, 197, 94, 0.08), rgba(234, 179, 8, 0.05)); }
 
 .summary-card::after {
   content: "";
@@ -184,7 +228,7 @@
   background: linear-gradient(
     90deg,
     rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.25) 50%,
+    rgba(255, 255, 255, 0.15) 50%,
     rgba(255, 255, 255, 0) 100%
   );
   transform: skewX(-25deg);
@@ -197,7 +241,7 @@
   background: linear-gradient(
     90deg,
     rgba(255, 255, 255, 0) 0%,
-    rgba(255, 255, 255, 0.12) 50%,
+    rgba(255, 255, 255, 0.08) 50%,
     rgba(255, 255, 255, 0) 100%
   );
 }
@@ -207,36 +251,118 @@
 }
 
 .summary-card:hover:before {
-  opacity: 1
+  opacity: 1;
 }
 
 .summary-card:hover {
-  transform: translateY(-4px) scale(1.02);
-  box-shadow: 0 12px 30px -10px rgba(99, 102, 241, 0.3);
+  transform: translateY(-4px);
+}
+
+.summary-card.cgpa-card:hover { border-color: rgba(245, 158, 11, 0.4); box-shadow: 0 12px 30px -10px rgba(245, 158, 11, 0.25); }
+.summary-card.credits-card:hover { border-color: rgba(16, 185, 129, 0.4); box-shadow: 0 12px 30px -10px rgba(16, 185, 129, 0.25); }
+.summary-card.courses-card:hover { border-color: rgba(99, 102, 241, 0.4); box-shadow: 0 12px 30px -10px rgba(99, 102, 241, 0.25); }
+.summary-card.semester-card:hover { border-color: rgba(236, 72, 153, 0.4); box-shadow: 0 12px 30px -10px rgba(236, 72, 153, 0.25); }
+.summary-card.classes-card:hover { border-color: rgba(59, 130, 246, 0.4); box-shadow: 0 12px 30px -10px rgba(59, 130, 246, 0.25); }
+.summary-card.attendance-card:hover { border-color: rgba(20, 184, 166, 0.4); box-shadow: 0 12px 30px -10px rgba(20, 184, 166, 0.25); }
+.summary-card.assignments-card:hover { border-color: rgba(139, 92, 246, 0.4); box-shadow: 0 12px 30px -10px rgba(139, 92, 246, 0.25); }
+.summary-card.goals-card:hover { border-color: rgba(244, 114, 182, 0.4); box-shadow: 0 12px 30px -10px rgba(244, 114, 182, 0.25); }
+.summary-card.study-hours-card:hover { border-color: rgba(99, 102, 241, 0.4); box-shadow: 0 12px 30px -10px rgba(99, 102, 241, 0.25); }
+.summary-card.streak-card:hover { border-color: rgba(249, 115, 22, 0.4); box-shadow: 0 12px 30px -10px rgba(249, 115, 22, 0.25); }
+.summary-card.projects-card:hover { border-color: rgba(245, 158, 11, 0.4); box-shadow: 0 12px 30px -10px rgba(245, 158, 11, 0.25); }
+.summary-card.certificates-card:hover { border-color: rgba(168, 85, 247, 0.4); box-shadow: 0 12px 30px -10px rgba(168, 85, 247, 0.25); }
+.summary-card.notes-card:hover { border-color: rgba(34, 197, 94, 0.4); box-shadow: 0 12px 30px -10px rgba(34, 197, 94, 0.25); }
+
+.summary-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+  z-index: 1;
+}
+
+.cgpa-card .summary-icon { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+.credits-card .summary-icon { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+.courses-card .summary-icon { background: rgba(99, 102, 241, 0.1); color: var(--primary); }
+.semester-card .summary-icon { background: rgba(236, 72, 153, 0.1); color: #ec4899; }
+.classes-card .summary-icon { background: rgba(59, 130, 246, 0.1); color: #3b82f6; }
+.attendance-card .summary-icon { background: rgba(20, 184, 166, 0.1); color: #14b8a6; }
+.assignments-card .summary-icon { background: rgba(139, 92, 246, 0.1); color: #8b5cf6; }
+.goals-card .summary-icon { background: rgba(244, 114, 182, 0.1); color: #f472b6; }
+.study-hours-card .summary-icon { background: rgba(99, 102, 241, 0.1); color: var(--primary); }
+.streak-card .summary-icon { background: rgba(249, 115, 22, 0.1); color: #f97316; }
+.projects-card .summary-icon { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+.certificates-card .summary-icon { background: rgba(168, 85, 247, 0.1); color: #a855f7; }
+.notes-card .summary-icon { background: rgba(34, 197, 94, 0.1); color: #22c55e; }
+
+.summary-card:hover .summary-icon {
+  transform: scale(1.1);
+}
+
+.cgpa-card:hover .summary-icon { background: #f59e0b; color: #fff; box-shadow: 0 0 12px rgba(245, 158, 11, 0.4); }
+.credits-card:hover .summary-icon { background: #10b981; color: #fff; box-shadow: 0 0 12px rgba(16, 185, 129, 0.4); }
+.courses-card:hover .summary-icon { background: var(--primary); color: #fff; box-shadow: 0 0 12px rgba(99, 102, 241, 0.4); }
+.semester-card:hover .summary-icon { background: #ec4899; color: #fff; box-shadow: 0 0 12px rgba(236, 72, 153, 0.4); }
+.classes-card:hover .summary-icon { background: #3b82f6; color: #fff; box-shadow: 0 0 12px rgba(59, 130, 246, 0.4); }
+.attendance-card:hover .summary-icon { background: #14b8a6; color: #fff; box-shadow: 0 0 12px rgba(20, 184, 166, 0.4); }
+.assignments-card:hover .summary-icon { background: #8b5cf6; color: #fff; box-shadow: 0 0 12px rgba(139, 92, 246, 0.4); }
+.goals-card:hover .summary-icon { background: #f472b6; color: #fff; box-shadow: 0 0 12px rgba(244, 114, 182, 0.4); }
+.study-hours-card:hover .summary-icon { background: var(--primary); color: #fff; box-shadow: 0 0 12px rgba(99, 102, 241, 0.4); }
+.streak-card:hover .summary-icon { background: #f97316; color: #fff; box-shadow: 0 0 12px rgba(249, 115, 22, 0.4); }
+.projects-card:hover .summary-icon { background: #f59e0b; color: #fff; box-shadow: 0 0 12px rgba(245, 158, 11, 0.4); }
+.certificates-card:hover .summary-icon { background: #a855f7; color: #fff; box-shadow: 0 0 12px rgba(168, 85, 247, 0.4); }
+.notes-card:hover .summary-icon { background: #22c55e; color: #fff; box-shadow: 0 0 12px rgba(34, 197, 94, 0.4); }
+
+.summary-info {
+  display: flex;
+  flex-direction: column;
+  z-index: 1;
 }
 
 .summary-card .summary-value {
-  color: var(--primary);
-  z-index: 1;
-  font-size: 1.5rem;
-  font-weight: 800;
-  transition: all .3s;
-  position: relative
+  color: var(--text);
+  font-size: 1.45rem;
+  font-weight: 900;
+  line-height: 1.1;
+  transition: all 0.3s;
 }
 
-.summary-card:hover .summary-value {
-  animation: 1.5s infinite numberGlow
+.summary-card.cgpa-card .summary-value {
+  background: linear-gradient(135deg, var(--text) 30%, #f59e0b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.summary-card.credits-card .summary-value {
+  background: linear-gradient(135deg, var(--text) 30%, #10b981 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.summary-card.courses-card .summary-value {
+  background: linear-gradient(135deg, var(--text) 30%, var(--primary) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.summary-card.semester-card .summary-value {
+  background: linear-gradient(135deg, var(--text) 30%, #ec4899 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.summary-card.classes-card .summary-value {
+  background: linear-gradient(135deg, var(--text) 30%, #3b82f6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .summary-card .summary-label {
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: .04em;
-  z-index: 1;
-  margin-top: .25rem;
-  font-size: .7rem;
-  font-weight: 600;
-  position: relative
+  letter-spacing: 0.05em;
+  margin-top: 0.15rem;
+  font-size: 0.65rem;
+  font-weight: 700;
 }
 
 .home-full-width {

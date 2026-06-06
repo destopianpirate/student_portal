@@ -2,10 +2,97 @@ import React, { useState, useRef } from 'react';
 import { Camera, Upload, User, ZoomIn, ZoomOut, RotateCw, Grid, RefreshCw } from 'lucide-react';
 import { convertGDriveUrl } from '../../utils/avatarUtils';
 
-const AVATAR_SEEDS = [
-  'Felix', 'Aneka', 'Milo', 'Luna', 'Pepper', 'Oscar', 'Bella', 'Shadow',
-  'Simba', 'Nala', 'Oreo', 'Coco', 'Buddy', 'Daisy', 'Max', 'Ruby',
-  'Charlie', 'Olive', 'Leo', 'Willow'
+const AVATAR_OPTIONS = [
+  // 1. Bottts (Cool Robots)
+  { type: 'bottts', seed: 'Robo1' },
+  { type: 'bottts', seed: 'Robo2' },
+  { type: 'bottts', seed: 'Robo3' },
+  { type: 'bottts', seed: 'Gizmo' },
+  { type: 'bottts', seed: 'Buster' },
+  // 2. Pixel Art (Retro game characters)
+  { type: 'pixel-art', seed: 'Pixel1' },
+  { type: 'pixel-art', seed: 'Pixel2' },
+  { type: 'pixel-art', seed: 'Retro' },
+  { type: 'pixel-art', seed: 'Arcade' },
+  { type: 'pixel-art', seed: 'Classic' },
+  // 3. Adventurer (Anime Style)
+  { type: 'adventurer', seed: 'Adventurer1' },
+  { type: 'adventurer', seed: 'Adventurer2' },
+  { type: 'adventurer', seed: 'Hero' },
+  { type: 'adventurer', seed: 'Explorer' },
+  { type: 'adventurer', seed: 'Shadow' },
+  // 4. Avataaars (Illustrated Cartoon People)
+  { type: 'avataaars', seed: 'Felix' },
+  { type: 'avataaars', seed: 'Aneka' },
+  { type: 'avataaars', seed: 'Luna' },
+  { type: 'avataaars', seed: 'Max' },
+  { type: 'avataaars', seed: 'Bella' },
+  // 5. Lorelei (Charming sketches)
+  { type: 'lorelei', seed: 'Lorelei1' },
+  { type: 'lorelei', seed: 'Lorelei2' },
+  { type: 'lorelei', seed: 'Grace' },
+  { type: 'lorelei', seed: 'Amber' },
+  // 6. Micah (Artistic profiles)
+  { type: 'micah', seed: 'Micah1' },
+  { type: 'micah', seed: 'Micah2' },
+  { type: 'micah', seed: 'Art' },
+  { type: 'micah', seed: 'Abstract' },
+  // 7. Open Peeps (Sketchy people)
+  { type: 'open-peeps', seed: 'Peep1' },
+  { type: 'open-peeps', seed: 'Peep2' },
+  { type: 'open-peeps', seed: 'Sketch' },
+  { type: 'open-peeps', seed: 'Casual' },
+  // 8. Big Smile (Animated emojis)
+  { type: 'big-smile', seed: 'Smile1' },
+  { type: 'big-smile', seed: 'Smile2' },
+  { type: 'big-smile', seed: 'Happy' },
+  { type: 'big-smile', seed: 'Beam' },
+  // 9. Fun Emoji (Sticker emoji styles)
+  { type: 'fun-emoji', seed: 'Joy' },
+  { type: 'fun-emoji', seed: 'Cool' },
+  { type: 'fun-emoji', seed: 'Love' },
+  { type: 'fun-emoji', seed: 'Blush' },
+  { type: 'fun-emoji', seed: 'Fearless' },
+  // 10. Notionists (Notion-style illustrations)
+  { type: 'notionists', seed: 'Aiden' },
+  { type: 'notionists', seed: 'Maya' },
+  { type: 'notionists', seed: 'Nico' },
+  { type: 'notionists', seed: 'Zoe' },
+  { type: 'notionists', seed: 'Leo' },
+  // 11. Personas (Modern vector personas)
+  { type: 'personas', seed: 'Leo' },
+  { type: 'personas', seed: 'Mia' },
+  { type: 'personas', seed: 'Kai' },
+  { type: 'personas', seed: 'Eva' },
+  { type: 'personas', seed: 'Jack' },
+  // 12. Rings (Cool abstract rings)
+  { type: 'rings', seed: 'Abstract1' },
+  { type: 'rings', seed: 'Abstract2' },
+  { type: 'rings', seed: 'Rings' },
+  // 13. Shapes (Modern geometric shapes)
+  { type: 'shapes', seed: 'Shape1' },
+  { type: 'shapes', seed: 'Shape2' },
+  { type: 'shapes', seed: 'Shapes' },
+  // 14. Croodles (Fun hand-drawn figures)
+  { type: 'croodles', seed: 'Croodle1' },
+  { type: 'croodles', seed: 'Croodle2' },
+  { type: 'croodles', seed: 'Doodle' },
+  { type: 'croodles', seed: 'Sketchy' },
+  // 15. Big Ears (Playful cartoon ears)
+  { type: 'big-ears', seed: 'Ears1' },
+  { type: 'big-ears', seed: 'Ears2' },
+  { type: 'big-ears', seed: 'Spiky' },
+  { type: 'big-ears', seed: 'Curly' },
+  // 16. Miniavs (Minimalist character blocks)
+  { type: 'miniavs', seed: 'Mini1' },
+  { type: 'miniavs', seed: 'Mini2' },
+  { type: 'miniavs', seed: 'Chibi' },
+  { type: 'miniavs', seed: 'Tiny' },
+  // 17. Thumbs (Simple thumb silhouettes)
+  { type: 'thumbs', seed: 'Thumb1' },
+  { type: 'thumbs', seed: 'Thumb2' },
+  { type: 'thumbs', seed: 'Iconic' },
+  { type: 'thumbs', seed: 'Stamp' }
 ];
 
 const EditProfilePhoto = ({
@@ -28,8 +115,8 @@ const EditProfilePhoto = ({
     }
     if (activePhotoTab === 'dicebear' && form.avatarUrl) return form.avatarUrl;
     return currentUser?.email 
-      ? `https://api.dicebear.com/9.x/thumbs/svg?seed=${currentUser.email}` 
-      : 'https://api.dicebear.com/9.x/thumbs/svg?seed=default';
+      ? `https://api.dicebear.com/9.x/avataaars/svg?seed=${currentUser.uid || currentUser.email}` 
+      : 'https://api.dicebear.com/9.x/avataaars/svg?seed=default';
   };
 
   const previewPosition = `${form.photoPositionX}% ${form.photoPositionY}%`;
@@ -92,8 +179,8 @@ const EditProfilePhoto = ({
         </button>
       </div>
       
-      <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', marginTop: '0.75rem', width: '100%' }}>
-        <div style={{ flex: '0 1 350px', minWidth: '280px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+      <div className="photo-editor-main-row">
+        <div className="photo-editor-source-panel">
           {activePhotoTab === 'upload' && (
             <label className="file-upload-area" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, minHeight: '235px', margin: 0, width: '100%' }}>
               <Upload size={32} style={{ color: 'var(--primary)', marginBottom: '0.5rem' }} />
@@ -103,17 +190,17 @@ const EditProfilePhoto = ({
           )}
           
           {activePhotoTab === 'dicebear' && (
-            <div style={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-              <p style={{ fontSize: '.75rem', color: 'var(--text-muted)', marginBottom: '.5rem', textAlign: 'center' }}>Select a dynamic avatar seed:</p>
-              <div className="avatar-scroll-container">
-                {AVATAR_SEEDS.map(seed => {
-                  const url = `https://api.dicebear.com/9.x/thumbs/svg?seed=${seed}`;
+            <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
+              <p style={{ fontSize: '.75rem', color: 'var(--text-muted)', marginBottom: '.5rem', textAlign: 'center' }}>Select a dynamic avatar style &amp; seed:</p>
+              <div className="avatar-scroll-container" style={{ flex: 1, minHeight: '235px' }}>
+                {AVATAR_OPTIONS.map((opt, idx) => {
+                  const url = `https://api.dicebear.com/9.x/${opt.type}/svg?seed=${opt.seed}`;
                   const isSelected = form.avatarUrl === url;
                   return (
                     <img 
-                      key={seed} 
+                      key={`${opt.type}-${opt.seed}-${idx}`} 
                       src={url} 
-                      alt={seed}
+                      alt={opt.seed}
                       className={`avatar-option-img ${isSelected ? 'selected' : ''}`}
                       onClick={() => { update('avatarUrl', url); update('customPhotoUrl', ''); update('profilePhotoBase64', ''); }} 
                     />
@@ -124,7 +211,7 @@ const EditProfilePhoto = ({
           )}
         </div>
         
-        <div style={{ flex: '0 1 450px', minWidth: '320px', display: 'flex', flexDirection: 'column', gap: '0.75rem', alignItems: 'center', width: '100%' }}>
+        <div className="photo-editor-crop-panel">
           <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', width: '100%', textAlign: 'center' }}>Interactive Focus &amp; Crop Editor</label>
           
           <div className="crop-editor-layout">

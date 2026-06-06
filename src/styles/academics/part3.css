@@ -310,12 +310,12 @@
 
 .mess-tabs {
   background: var(--input-bg);
+  border: 1px solid var(--border);
   border-radius: 30px;
   padding: 0.25rem;
   gap: 0.25rem;
   margin-bottom: 1.25rem;
   display: inline-flex;
-  border: 1px solid var(--border-glass);
 }
 
 .mess-tab-btn {
@@ -324,30 +324,49 @@
   background: transparent;
   border: none;
   align-items: center;
-  gap: .35rem;
-  padding: .5rem 1.25rem;
+  gap: 0.45rem;
+  padding: 0.5rem 1.25rem;
   font-family: inherit;
-  font-size: .82rem;
-  font-weight: 600;
+  font-size: 0.8rem;
+  font-weight: 700;
   border-radius: 20px;
-  transition: all .25s cubic-bezier(.4, 0, .2, 1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
-  position: relative
+  justify-content: center;
+  position: relative;
+  white-space: nowrap;
+}
+
+.mess-tab-btn .meal-tab-icon {
+  opacity: 0.75;
+  transition: opacity 0.3s, transform 0.3s;
 }
 
 .mess-tab-btn:hover {
   color: var(--text);
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.08);
+  transform: translateY(-1px) scale(1.02);
+}
+
+.mess-tab-btn:hover .meal-tab-icon {
+  opacity: 1;
+  transform: scale(1.1);
 }
 
 [data-theme=light] .mess-tab-btn:hover {
-  background: rgba(0, 0, 0, 0.03);
+  background: rgba(0, 0, 0, 0.04);
 }
 
 .mess-tab-btn.active {
   color: #fff !important;
-  background: var(--primary) !important;
-  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+  background: linear-gradient(135deg, var(--primary), var(--accent)) !important;
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+  transform: translateY(-1px);
+}
+
+.mess-tab-btn.active .meal-tab-icon {
+  opacity: 1;
+  transform: scale(1.05);
 }
 
 .mess-tab-btn.active:after {
@@ -355,13 +374,60 @@
 }
 
 @media (width<=768px) {
+  .mess-tabs {
+    display: flex !important;
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+    scrollbar-width: none !important;
+    border-radius: 30px !important;
+    width: 100% !important;
+  }
+  .mess-tabs::-webkit-scrollbar {
+    display: none !important;
+  }
+  .mess-tab-btn {
+    flex: 1 !important;
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+    justify-content: center !important;
+    padding: 0.5rem 0.75rem !important;
+    font-size: 0.78rem !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .mess-tabs {
+    display: flex !important;
+    overflow-x: hidden !important;
+    width: 100% !important;
+    padding: 0.2rem !important;
+    gap: 2px !important;
+    border-radius: 30px !important;
+  }
+  .mess-tab-btn {
+    flex: 1 !important;
+    flex-shrink: 1 !important;
+    padding: 0.45rem 0.15rem !important;
+    font-size: 0.7rem !important;
+    justify-content: center !important;
+    min-width: 0 !important;
+  }
+  .mess-tab-btn .meal-tab-icon {
+    display: none !important;
+  }
+}
+
+@media (width<=768px) {
   .profile-left {
-    min-height: auto;
-    padding: 1.25rem;
-    min-width: 0;
-    max-width: 100%;
-    box-sizing: border-box;
-    overflow: hidden;
+    min-height: auto !important;
+    padding: 1rem !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
   }
   .profile-avatar-large {
     width: 90px;
@@ -381,37 +447,11 @@
   @media (width<=600px) {
     .profile-left {
       text-align: left!important;
-      grid-template-columns: 80px 1fr!important;
-      grid-template-areas: "avatar username""avatar id""dropdown dropdown"!important;
-      align-items: center!important;
-      gap: .4rem 1rem!important;
-      padding: 1.25rem!important;
-      display: grid!important
-    }
-    .profile-avatar-large {
-      border-radius: 50%!important;
-      grid-area: avatar!important;
-      width: 80px!important;
-      height: 80px!important;
-      margin: 0!important
-    }
-    .profile-username {
-      grid-area: username!important;
-      align-self: end!important;
-      margin: 0!important;
-      font-size: 1.2rem!important
-    }
-    .profile-student-id {
-      color: var(--text-muted)!important;
-      grid-area: id!important;
-      align-self: start!important;
-      margin: 0!important;
-      font-size: .8rem!important
-    }
-    .qr-id-dropdown, .qr-id-upload-prompt {
-      grid-area: dropdown!important;
-      width: 100%!important;
-      margin-top: .4rem!important
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: stretch !important;
+      gap: 0 !important;
+      padding: 1rem !important;
     }
     .profile-details-grid {
       grid-template-columns: 1fr!important;
@@ -497,14 +537,19 @@
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     flex-wrap: nowrap;
-    padding-bottom: .35rem;
+    padding: 0.4rem 0.6rem !important;
+    min-height: auto !important;
+    margin-bottom: 0.75rem !important;
     overflow-x: auto
   }
   .selected-chips::-webkit-scrollbar {
     display: none
   }
   .selected-chip {
-    flex-shrink: 0
+    flex-shrink: 0;
+    padding: 0.2rem 0.5rem !important;
+    font-size: 0.72rem !important;
+    gap: 0.25rem !important;
   }
   .course-item {
     padding: .6rem .75rem

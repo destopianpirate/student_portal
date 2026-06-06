@@ -238,8 +238,9 @@ const SignupPage = () => {
       const result = await loginWithGoogle();
       const googleEmail = result.user?.email || '';
 
-      // Domain check for Google signup
-      if (!googleEmail.toLowerCase().endsWith('@iitgn.ac.in')) {
+      // Domain check for Google signup (bypass on localhost for testing)
+      const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      if (!isLocalhost && !googleEmail.toLowerCase().endsWith('@iitgn.ac.in')) {
         await logout();
         setDomainModalMessage(
           `Google authentication succeeded, but the account "${googleEmail}" is restricted. You must sign up using your official IIT Gandhinagar Google Workspace ID (@iitgn.ac.in).`

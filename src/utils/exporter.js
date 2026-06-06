@@ -1,7 +1,6 @@
-import ExcelJS from 'exceljs';
-import { saveAs } from 'file-saver';
-
 export const exportToExcel = async (timetable, days, timeslots, selectedCourses) => {
+  const ExcelJS = (await import('exceljs')).default;
+  const { saveAs } = await import('file-saver');
   const workbook = new ExcelJS.Workbook();
   
   // --- Sheet 1: Timetable ---

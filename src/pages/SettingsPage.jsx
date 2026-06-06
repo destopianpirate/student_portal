@@ -25,7 +25,7 @@ const applyThemeAccent = (accent) => {
   const presets = {
     indigo: { primary: '#6366f1', hover: '#4f46e5', accent: '#ec4899' },
     emerald: { primary: '#10b981', hover: '#059669', accent: '#3b82f6' },
-    purple: { primary: '#a855f7', hover: '#9333ea', accent: '#f43f5e' },
+    black: { primary: '#000000', hover: '#18181b', accent: '#71717a' },
     orange: { primary: '#f59e0b', hover: '#d97706', accent: '#10b981' },
     pink: { primary: '#ec4899', hover: '#db2777', accent: '#8b5cf6' },
     blue: { primary: '#0284c7', hover: '#0369a1', accent: '#f59e0b' }
@@ -51,7 +51,7 @@ const SettingsPage = ({ darkMode, setDarkMode }) => {
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
   const [form, setForm] = useState({
-    name: '', firstName: '', surname: '', username: '', rollNumber: '', programme: '', branch: '',
+    name: '', firstName: '', surname: '', username: '', gender: '', rollNumber: '', programme: '', branch: '',
     yearOfAdmission: '', avatarUrl: '', customPhotoUrl: '', profilePhotoBase64: '',
     photoPositionX: 50, photoPositionY: 50,
     photoZoom: 100, photoRotation: 0, photoAspectRatio: 'card',
@@ -83,6 +83,7 @@ const SettingsPage = ({ darkMode, setDarkMode }) => {
         firstName: userProfile.firstName || parts[0] || '',
         surname: userProfile.surname || parts.slice(1).join(' ') || '',
         username: userProfile.username || '',
+        gender: userProfile.gender || '',
         rollNumber: userProfile.rollNumber || '', programme: userProfile.programme || '',
         branch: userProfile.branch || '', yearOfAdmission: userProfile.yearOfAdmission || '',
         avatarUrl: userProfile.avatarUrl || '',
@@ -268,7 +269,7 @@ const SettingsPage = ({ darkMode, setDarkMode }) => {
     
     // Compare basic fields
     const keys = [
-      'name', 'firstName', 'surname', 'username', 'rollNumber', 'programme', 'branch',
+      'name', 'firstName', 'surname', 'username', 'gender', 'rollNumber', 'programme', 'branch',
       'yearOfAdmission', 'avatarUrl', 'customPhotoUrl', 'profilePhotoBase64',
       'photoPositionX', 'photoPositionY', 'photoZoom', 'photoRotation', 'photoAspectRatio',
       'github', 'instagram', 'linkedin', 'phone', 'gmail',
@@ -462,7 +463,7 @@ const SettingsPage = ({ darkMode, setDarkMode }) => {
             </div>
             
             <p style={{ color: 'var(--text-muted)', fontSize: '.8rem', marginBottom: '1rem', marginTop: '0.25rem' }}>
-              Signed in as <strong>{currentUser?.email || 'singh.ayush@iitgn.ac.in'}</strong>
+              Signed in as <strong>{currentUser?.email || 'student.demo@iitgn.ac.in'}</strong>
             </p>
             
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>

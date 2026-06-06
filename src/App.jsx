@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import Sidebar from './components/Sidebar';
 import Navbar from './components/Navbar';
 import CommandPalette from './components/CommandPalette';
-import { Menu, X, Sun, Moon } from 'lucide-react';
+import { Menu, X, Sun, Moon, Settings, LogOut } from 'lucide-react';
 import ToastContainer from './components/ToastContainer';
 import ErrorBoundary from './components/ErrorBoundary';
 import { useAuth } from './contexts/AuthContext';
@@ -53,13 +53,27 @@ const GUEST_PATHS = ['/login', '/signup', '/profile-setup'];
 function App() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { currentUser, userProfile, loading } = useAuth();
-  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('theme') === 'dark');
+  const { currentUser, userProfile, logout, loading } = useAuth();
+  const [darkMode, rawSetDarkMode] = useState(() => localStorage.getItem('theme') === 'dark');
+  
+  const savedAccent = userProfile?.preferences?.accent || localStorage.getItem('theme_accent') || 'indigo';
+
+  const setDarkMode = (val) => {
+    if (savedAccent === 'black') {
+      const targetVal = typeof val === 'function' ? val(darkMode) : val;
+      if (targetVal === true) {
+        return;
+      }
+    }
+    rawSetDarkMode(val);
+  };
+
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     try { return localStorage.getItem('sidebar_collapsed') === 'true'; } catch { return false; }
   });
   const [cmdOpen, setCmdOpen] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
 
   useEffect(() => {
     setMobileSidebarOpen(false);
@@ -76,10 +90,13 @@ function App() {
 
   useEffect(() => {
     const savedAccent = userProfile?.preferences?.accent || localStorage.getItem('theme_accent') || 'indigo';
+    if (savedAccent === 'black' && darkMode) {
+      rawSetDarkMode(false);
+    }
     const presets = {
       indigo: { primary: '#6366f1', hover: '#4f46e5', accent: '#ec4899' },
       emerald: { primary: '#10b981', hover: '#059669', accent: '#3b82f6' },
-      purple: { primary: '#a855f7', hover: '#9333ea', accent: '#f43f5e' },
+      black: { primary: '#000000', hover: '#18181b', accent: '#71717a' },
       orange: { primary: '#f59e0b', hover: '#d97706', accent: '#10b981' },
       pink: { primary: '#ec4899', hover: '#db2777', accent: '#8b5cf6' },
       blue: { primary: '#0284c7', hover: '#0369a1', accent: '#f59e0b' }
@@ -89,7 +106,7 @@ function App() {
     root.style.setProperty('--primary', selected.primary);
     root.style.setProperty('--primary-hover', selected.hover);
     root.style.setProperty('--accent', selected.accent);
-  }, [userProfile]);
+  }, [userProfile, darkMode]);
 
   useEffect(() => {
     localStorage.setItem('sidebar_collapsed', sidebarCollapsed);
@@ -157,17 +174,66 @@ function App() {
             </div>
             <span className="mobile-app-name">AcadX</span>
           </div>
-          <div className="mobile-app-actions">
+          <div className="mobile-app-actions" style={{ position: 'relative' }}>
             <button className="theme-toggle" onClick={() => setDarkMode(!darkMode)} title="Toggle theme">
               {darkMode ? <Sun size={18} /> : <Moon size={18} />}
             </button>
             {currentUser && (
-              <img 
-                src={getAvatarUrl(userProfile, currentUser.email)} 
-                alt="Profile" 
-                className="mobile-avatar"
-                onClick={() => navigate('/settings')}
-              />
+              <div className="mobile-profile-menu-container" style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <img 
+                  src={getAvatarUrl(userProfile, currentUser.email)} 
+                  alt="Profile" 
+                  className="mobile-avatar"
+                  onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+                  style={{ cursor: 'pointer' }}
+                />
+                <AnimatePresence>
+                  {profileMenuOpen && (
+                    <>
+                      <div 
+                        style={{ position: 'fixed', inset: 0, zIndex: 999 }} 
+                        onClick={() => setProfileMenuOpen(false)} 
+                      />
+                      <motion.div 
+                        className="mobile-profile-dropdown glass-card"
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        transition={{ duration: 0.2 }}
+                        style={{
+                          position: 'absolute',
+                          top: '100%',
+                          right: 0,
+                          marginTop: '0.5rem',
+                          width: '160px',
+                          background: 'var(--card-bg)',
+                          border: '1px solid var(--border)',
+                          borderRadius: '12px',
+                          boxShadow: 'var(--shadow-lg)',
+                          padding: '0.4rem',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '0.25rem',
+                          zIndex: 1000
+                        }}
+                      >
+                        <button 
+                          className="profile-menu-dropdown-item" 
+                          onClick={() => { setProfileMenuOpen(false); navigate('/settings'); }}
+                        >
+                          <Settings size={14} /> Settings
+                        </button>
+                        <button 
+                          className="profile-menu-dropdown-item text-danger" 
+                          onClick={async () => { setProfileMenuOpen(false); await logout(); navigate('/'); }}
+                        >
+                          <LogOut size={14} /> Logout
+                        </button>
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
+              </div>
             )}
           </div>
         </header>

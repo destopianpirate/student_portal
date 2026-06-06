@@ -162,8 +162,9 @@ const LoginPage = () => {
       const result = await loginWithGoogle();
       const email = result.user?.email || '';
 
-      // Check if logged in Google email matches college domain
-      if (!email.toLowerCase().endsWith('@iitgn.ac.in')) {
+      // Check if logged in Google email matches college domain (bypass on localhost for testing)
+      const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+      if (!isLocalhost && !email.toLowerCase().endsWith('@iitgn.ac.in')) {
         await logout();
         setDomainModalMessage(
           `Google authentication succeeded, but the account "${email}" is restricted. You must log in using your official IIT Gandhinagar Google Workspace ID (@iitgn.ac.in).`
@@ -188,14 +189,16 @@ const LoginPage = () => {
   };
 
   const handleForgot = async () => {
-    if (!identifier) { 
-      setError('Enter your username or email first'); 
-      triggerShake(); 
-      return; 
+    let email = identifier.trim();
+    if (!email) {
+      const promptEmail = window.prompt("Please enter your registered college email or username to reset your password:");
+      if (!promptEmail) return;
+      email = promptEmail.trim();
     }
     
-    let email = identifier.trim();
     try {
+      setLoading(true);
+      setError('');
       if (!email.includes('@')) { 
         email = await lookupEmailByUsername(email); 
       }
@@ -205,6 +208,7 @@ const LoginPage = () => {
           `Cannot request password reset. The email "${email}" associated with this account does not belong to the IIT Gandhinagar domain (@iitgn.ac.in).`
         );
         setShowDomainModal(true);
+        setLoading(false);
         return;
       }
 
@@ -213,7 +217,13 @@ const LoginPage = () => {
       setError('');
     } catch (err) {
       triggerShake();
-      setError(err.message || 'Failed to send reset email');
+      const cleanMsg = err.message
+        ?.replace('Firebase: ', '')
+        ?.replace(/\(auth\/.*\)/, '')
+        ?.trim() || 'Failed to send reset email';
+      setError(cleanMsg);
+    } finally {
+      setLoading(false);
     }
   };
 

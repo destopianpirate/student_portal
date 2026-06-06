@@ -105,10 +105,24 @@ const EditProfileDetails = ({
               <User className="premium-input-icon" size={16} />
             </div>
           </div>
-          <div className="edit-field" style={{ gridColumn: 'span 2' }}>
+          <div className="edit-field">
             <label>Username</label>
             <div className="premium-input-wrapper">
               <input value={form.username} onChange={e => update('username', e.target.value)} />
+              <User className="premium-input-icon" size={16} />
+            </div>
+          </div>
+          <div className="edit-field">
+            <label>Gender</label>
+            <div className="premium-input-wrapper">
+              <select value={form.gender || ''} onChange={e => update('gender', e.target.value)}>
+                <option value="">Select Gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+                <option value="Prefer not to say">Prefer not to say</option>
+              </select>
+              <ChevronDown className="premium-select-chevron" size={14} />
               <User className="premium-input-icon" size={16} />
             </div>
           </div>

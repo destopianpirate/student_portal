@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Book, Link as LinkIcon, Globe, Phone, AlertCircle, Clock, Calendar, Moon, Sunrise, Sun, Sunset } from 'lucide-react';
+import { Book, Link as LinkIcon, Globe, Phone, AlertCircle, Clock, Calendar, Moon, Sunrise, Sun, Sunset, Award, BookOpen, Layers, Bookmark, Flame, Trophy, FileText, Folder, ClipboardList, Target, Percent } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useCalendar } from '../contexts/CalendarContext';
 import { fetchAndParseMessMenu } from '../utils/messParser';
@@ -125,6 +125,94 @@ const HomePage = () => {
     if (!currentUser) return null;
     try { return JSON.parse(localStorage.getItem(`timetable_${currentUser.uid}`)) || userProfile?.timetable || null; } catch { return null; }
   }, [currentUser, userProfile]);
+
+  const attendancePercentage = useMemo(() => {
+    if (!currentUser) return null;
+    try {
+      const courses = JSON.parse(localStorage.getItem(`attendance_${currentUser.uid}`)) || [];
+      let total = 0, present = 0, late = 0;
+      courses.forEach(c => {
+        const totalC = c.records?.length || 0;
+        const presentC = c.records?.filter(r => r.status === 'present').length || 0;
+        const lateC = c.records?.filter(r => r.status === 'late').length || 0;
+        total += totalC;
+        present += presentC;
+        late += lateC;
+      });
+      if (total === 0) return null;
+      return parseFloat(((present + late * 0.5) / total * 100).toFixed(1));
+    } catch {
+      return null;
+    }
+  }, [currentUser]);
+
+  const assignmentsStats = useMemo(() => {
+    if (!currentUser) return { pending: 0, total: 0 };
+    try {
+      const list = JSON.parse(localStorage.getItem(`assignments_${currentUser.uid}`)) || [];
+      const pending = list.filter(a => !a.completed).length;
+      return { pending, total: list.length };
+    } catch {
+      return { pending: 0, total: 0 };
+    }
+  }, [currentUser]);
+
+  const goalsStats = useMemo(() => {
+    if (!currentUser) return { active: 0, total: 0 };
+    try {
+      const list = JSON.parse(localStorage.getItem(`goals_${currentUser.uid}`)) || [];
+      const active = list.filter(g => g.current < g.target).length;
+      return { active, total: list.length };
+    } catch {
+      return { active: 0, total: 0 };
+    }
+  }, [currentUser]);
+
+  const studyStats = useMemo(() => {
+    if (!currentUser) return { hours: 0, streak: 0 };
+    try {
+      const logs = JSON.parse(localStorage.getItem(`studylog_${currentUser.uid}`)) || [];
+      const hours = logs.reduce((sum, l) => sum + (parseFloat(l.hours) || 0), 0);
+      
+      const dates = [...new Set(logs.map(l => l.date))].sort().reverse();
+      let streak = 0;
+      const today = new Date();
+      for (let i = 0; i < dates.length; i++) {
+        const expected = new Date(today);
+        expected.setDate(expected.getDate() - i);
+        const expStr = expected.toISOString().split('T')[0];
+        if (dates[i] === expStr) streak++;
+        else break;
+      }
+      return { hours: parseFloat(hours.toFixed(1)), streak };
+    } catch {
+      return { hours: 0, streak: 0 };
+    }
+  }, [currentUser]);
+
+  const projectsCount = useMemo(() => {
+    try {
+      return (JSON.parse(localStorage.getItem('student_projects') || '[]')).length;
+    } catch {
+      return 0;
+    }
+  }, []);
+
+  const certificatesCount = useMemo(() => {
+    try {
+      return (JSON.parse(localStorage.getItem('student_certificates') || '[]')).length;
+    } catch {
+      return 0;
+    }
+  }, []);
+
+  const notesCount = useMemo(() => {
+    try {
+      return (JSON.parse(localStorage.getItem('student_notes') || '[]')).length;
+    } catch {
+      return 0;
+    }
+  }, []);
 
   const hudInfo = useMemo(() => {
     return calculateHudInfo(hudTime, savedTimetable, holidays, customEvents, academicEvents);
@@ -577,28 +665,124 @@ const HomePage = () => {
 
       {/* QUICK LINKS & SUMMARY */}
       <div className="home-extras">
-        <motion.div className="today-section" variants={itemVariants}>
+        <motion.div className="today-section academic-summary-section" variants={itemVariants}>
           <h3 className="section-title"><Book size={20} /> Academic Summary</h3>
           <div className="summary-cards">
-            <div className="summary-card">
-              <div className="summary-value">{savedCourses.length}</div>
-              <div className="summary-label">Registered Courses</div>
+            {/* 1. CGPA */}
+            <div className="summary-card cgpa-card">
+              <div className="summary-icon"><Award size={18} /></div>
+              <div className="summary-info">
+                <div className="summary-value">{userProfile?.cgpa || '—'}</div>
+                <div className="summary-label">CGPA</div>
+              </div>
             </div>
-            <div className="summary-card">
-              <div className="summary-value">{totalCredits}</div>
-              <div className="summary-label">Total Credits</div>
+            
+            {/* 2. Attendance */}
+            <div className="summary-card attendance-card">
+              <div className="summary-icon"><Percent size={18} /></div>
+              <div className="summary-info">
+                <div className="summary-value">{attendancePercentage !== null ? `${attendancePercentage}%` : '—'}</div>
+                <div className="summary-label">Attendance</div>
+              </div>
             </div>
-            <div className="summary-card">
-              <div className="summary-value">{userProfile?.cgpa || '—'}</div>
-              <div className="summary-label">CGPA</div>
+
+            {/* 3. Pending Assignments */}
+            <div className="summary-card assignments-card">
+              <div className="summary-icon"><ClipboardList size={18} /></div>
+              <div className="summary-info">
+                <div className="summary-value">{assignmentsStats.pending}</div>
+                <div className="summary-label">Assignments</div>
+              </div>
             </div>
-            <div className="summary-card">
-              <div className="summary-value">{userProfile?.semester || '—'}</div>
-              <div className="summary-label">Current Semester</div>
+
+            {/* 4. Active Goals */}
+            <div className="summary-card goals-card">
+              <div className="summary-icon"><Target size={18} /></div>
+              <div className="summary-info">
+                <div className="summary-value">{goalsStats.active}</div>
+                <div className="summary-label">Active Goals</div>
+              </div>
             </div>
-            <div className="summary-card">
-              <div className="summary-value">{todaySchedule.length}</div>
-              <div className="summary-label">Classes Today</div>
+
+            {/* 5. Study Hours */}
+            <div className="summary-card study-hours-card">
+              <div className="summary-icon"><Clock size={18} /></div>
+              <div className="summary-info">
+                <div className="summary-value">{studyStats.hours}h</div>
+                <div className="summary-label">Study Logged</div>
+              </div>
+            </div>
+
+            {/* 6. Focus Streak */}
+            <div className="summary-card streak-card">
+              <div className="summary-icon"><Flame size={18} /></div>
+              <div className="summary-info">
+                <div className="summary-value">{studyStats.streak}d</div>
+                <div className="summary-label">Study Streak</div>
+              </div>
+            </div>
+
+            {/* 7. Total Credits */}
+            <div className="summary-card credits-card">
+              <div className="summary-icon"><Bookmark size={18} /></div>
+              <div className="summary-info">
+                <div className="summary-value">{totalCredits}</div>
+                <div className="summary-label">Total Credits</div>
+              </div>
+            </div>
+
+            {/* 8. Registered Courses */}
+            <div className="summary-card courses-card">
+              <div className="summary-icon"><BookOpen size={18} /></div>
+              <div className="summary-info">
+                <div className="summary-value">{savedCourses.length}</div>
+                <div className="summary-label">Courses</div>
+              </div>
+            </div>
+
+            {/* 9. Current Semester */}
+            <div className="summary-card semester-card">
+              <div className="summary-icon"><Layers size={18} /></div>
+              <div className="summary-info">
+                <div className="summary-value">{userProfile?.semester || '—'}</div>
+                <div className="summary-label">Current Sem</div>
+              </div>
+            </div>
+
+            {/* 10. Projects */}
+            <div className="summary-card projects-card">
+              <div className="summary-icon"><Folder size={18} /></div>
+              <div className="summary-info">
+                <div className="summary-value">{projectsCount}</div>
+                <div className="summary-label">Projects</div>
+              </div>
+            </div>
+
+            {/* 11. Certificates */}
+            <div className="summary-card certificates-card">
+              <div className="summary-icon"><Trophy size={18} /></div>
+              <div className="summary-info">
+                <div className="summary-value">{certificatesCount}</div>
+                <div className="summary-label">Certificates</div>
+              </div>
+            </div>
+
+            {/* 12. Academic Notes */}
+            <div className="summary-card notes-card">
+              <div className="summary-icon"><FileText size={18} /></div>
+              <div className="summary-info">
+                <div className="summary-value">{notesCount}</div>
+                <div className="summary-label">Notes</div>
+              </div>
+            </div>
+
+            {/* 13. Classes Today */}
+            <div className="summary-card classes-card">
+              <div className="summary-icon"><Clock size={18} /></div>
+              <div className="summary-info">
+                <div className="summary-value">{todaySchedule.length}</div>
+                <div className="summary-label">Classes Today</div>
+              </div>
             </div>
           </div>
         </motion.div>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Shield, CheckCircle2, LogOut, RotateCw, Trash2 } from 'lucide-react';
+import { Shield, CheckCircle2, AlertTriangle, LogOut, Trash2, Mail, Lock, Laptop, Key, User } from 'lucide-react';
 
 const AccountSecuritySection = ({
   currentUser,
@@ -10,6 +10,7 @@ const AccountSecuritySection = ({
   setShowDeleteModal,
   setDeleteConfirmText
 }) => {
+  // Device details helper
   const getDeviceDetails = () => {
     const ua = navigator.userAgent;
     let browser = "Unknown Browser";
@@ -34,173 +35,237 @@ const AccountSecuritySection = ({
     return `${browser} on ${os}`;
   };
 
+  // Calculate Security Score
+  const isEmailVerified = currentUser?.emailVerified || currentUser?.isDemo;
+  const isSSO = currentUser?.providerId === 'google.com';
+  const isInstituteEmail = currentUser?.email?.toLowerCase().endsWith('@iitgn.ac.in');
+  const hasLastLogin = !!currentUser?.metadata?.lastSignInTime;
+
+  let securityScore = 0;
+  if (isInstituteEmail) securityScore += 25;
+  if (isEmailVerified) securityScore += 25;
+  if (isSSO) securityScore += 25; else securityScore += 15;
+  if (hasLastLogin) securityScore += 25;
+
+  // Visual score category
+  let scoreColorClass = 'strong';
+  let scoreLabel = 'Excellent';
+  if (securityScore < 65) {
+    scoreColorClass = 'weak';
+    scoreLabel = 'Action Needed';
+  } else if (securityScore < 90) {
+    scoreColorClass = 'medium';
+    scoreLabel = 'Fair';
+  }
+
+  // SVG ring properties
+  const radius = 36;
+  const circumference = 2 * Math.PI * radius;
+  const strokeOffset = circumference - (securityScore / 100) * circumference;
+
   return (
-    <div>
-      <div className="settings-card" style={{ marginBottom: '1.5rem', padding: '1.5rem' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          
-          {/* Account Metadata Grid */}
+    <div className="security-section-wrapper">
+      
+      {/* Security Health Widget */}
+      <div className="security-health-widget-new">
+        <div className="security-health-header">
+          <Shield className="shield-icon-glow" size={20} />
           <div>
-            <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.75rem', borderBottom: '1px solid var(--border)', paddingBottom: '0.5rem' }}>
-              Account Identity & Status
-            </h4>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.25rem' }}>
-              <div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>Logged In User</div>
-                <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text)', marginTop: '0.15rem' }}>{currentUser?.email || 'singh.ayush@iitgn.ac.in'}</div>
-              </div>
-              <div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>Account Sync Mode</div>
-                <div style={{ fontSize: '0.85rem', fontWeight: 600, color: currentUser?.isDemo ? 'var(--warning)' : 'var(--success)', marginTop: '0.15rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                  <span style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: currentUser?.isDemo ? 'var(--warning)' : 'var(--success)' }} />
-                  {currentUser?.isDemo ? 'Local Sandboxed Demo' : 'Cloud Synchronized'}
-                </div>
-              </div>
-              <div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>Identity Provider</div>
-                <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text)', marginTop: '0.15rem' }}>
-                  {currentUser?.providerId === 'google.com' ? 'Google SSO' : 'Email & Password'}
-                </div>
-              </div>
+            <h4>Security Health Center</h4>
+            <p>Real-time analysis of your student portal credentials and verification status</p>
+          </div>
+        </div>
+
+        <div className="security-health-dashboard">
+          {/* SVG Circular Progress Ring */}
+          <div className="security-gauge-container">
+            <svg className="security-progress-svg" viewBox="0 0 90 90">
+              <circle 
+                className="security-progress-bg-circle" 
+                cx="45" cy="45" r={radius} 
+                strokeWidth="7"
+              />
+              <circle 
+                className={`security-progress-circle ${scoreColorClass}`} 
+                cx="45" cy="45" r={radius} 
+                strokeWidth="7"
+                strokeDasharray={circumference}
+                strokeDashoffset={strokeOffset}
+              />
+            </svg>
+            <div className="gauge-overlay-text">
+              <span className="gauge-score">{securityScore}</span>
+              <span className="gauge-percent">%</span>
             </div>
+            <span className={`gauge-badge ${scoreColorClass}`}>{scoreLabel}</span>
           </div>
 
-          {/* Email Verification Status */}
-          <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.25rem' }}>
-            <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.5rem' }}>Email Verification</h4>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', justifyContent: 'space-between' }}>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: 0, lineHeight: '1.4', flex: 1, minWidth: '240px' }}>
-                Verify your email address to secure your account and recover data in case of credential loss.
-              </p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                {(currentUser?.emailVerified || currentUser?.isDemo) ? (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.25rem 0.6rem', background: 'rgba(34, 197, 94, 0.1)', color: '#22c55e', borderRadius: '0.375rem', fontSize: '0.75rem', fontWeight: 700 }}>
-                    <CheckCircle2 size={12} /> Verified
-                  </span>
-                ) : (
-                  <>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', padding: '0.25rem 0.6rem', background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444', borderRadius: '0.375rem', fontSize: '0.75rem', fontWeight: 700 }}>
-                      Unverified
-                    </span>
-                    <button 
-                      type="button"
-                      className="btn btn-outline btn-sm" 
-                      onClick={handleSendVerification} 
-                      style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem' }}
-                    >
-                      Send Link
-                    </button>
-                  </>
-                )}
+          {/* Security Parameter Checklist */}
+          <div className="security-checklist-new">
+            <div className={`security-check-row ${isInstituteEmail ? 'passed' : 'failed'}`}>
+              <span className="status-marker" />
+              <div className="checklist-details">
+                <h6>IITGN Academic Domain</h6>
+                <p>{isInstituteEmail ? 'Identified as a genuine institute academic mailbox (@iitgn.ac.in).' : 'Registered under personal mailbox domain. Sandbox session limits apply.'}</p>
+              </div>
+            </div>
+            <div className={`security-check-row ${isEmailVerified ? 'passed' : 'failed'}`}>
+              <span className="status-marker" />
+              <div className="checklist-details">
+                <h6>Email Identity Verification</h6>
+                <p>{isEmailVerified ? 'Mailbox confirmation complete. Direct credentials recovery is safe.' : 'Mailbox unconfirmed. Confirm ownership to prevent accidental lockouts.'}</p>
+              </div>
+            </div>
+            <div className={`security-check-row ${isSSO ? 'passed' : 'info'}`}>
+              <span className="status-marker" />
+              <div className="checklist-details">
+                <h6>Enterprise SSO Security</h6>
+                <p>{isSSO ? 'Protected by Google Single Sign-On federation.' : 'Using standard password. Connect with Google SSO for higher protection.'}</p>
+              </div>
+            </div>
+            <div className={`security-check-row ${hasLastLogin ? 'passed' : 'failed'}`}>
+              <span className="status-marker" />
+              <div className="checklist-details">
+                <h6>Authorized Session Token</h6>
+                <p>{hasLastLogin ? 'Active login credentials verified within normal expiry period.' : 'Sandbox database session credentials active.'}</p>
               </div>
             </div>
           </div>
-
-          {/* Password Reset Section */}
-          <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.25rem' }}>
-            <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.5rem' }}>Password Management</h4>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap', justifyContent: 'space-between' }}>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: 0, lineHeight: '1.4', flex: 1, minWidth: '240px' }}>
-                {currentUser?.providerId === 'google.com' 
-                  ? 'Your password is securely managed via Google SSO connection. Credentials cannot be modified here.' 
-                  : 'Request a secure email link to change or reset your password.'
-                }
-              </p>
-              {currentUser?.providerId !== 'google.com' && (
-                <button 
-                  type="button"
-                  className="btn btn-outline btn-sm" 
-                  onClick={handlePasswordReset} 
-                  style={{ fontSize: '0.75rem', padding: '0.35rem 0.75rem' }}
-                >
-                  Send Reset Email
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Device & Session Details */}
-          <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.25rem' }}>
-            <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.5rem' }}>Active Session Details</h4>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-              <div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Logged-in Device</div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--text)', fontWeight: 500, marginTop: '0.15rem' }}>{getDeviceDetails()}</div>
-              </div>
-              <div>
-                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>Last Login Time</div>
-                <div style={{ fontSize: '0.8rem', color: 'var(--text)', fontWeight: 500, marginTop: '0.15rem' }}>
-                  {currentUser?.metadata?.lastSignInTime 
-                    ? new Date(currentUser.metadata.lastSignInTime).toLocaleString() 
-                    : new Date().toLocaleString() + ' (This Session)'
-                  }
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Session Management */}
-          <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-            <div>
-              <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.25rem' }}>Session Management</h4>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: 0, lineHeight: '1.4' }}>
-                Securely log out of this active device session.
-              </p>
-            </div>
-            <button 
-              type="button"
-              className="btn btn-outline" 
-              onClick={handleLogout} 
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
-            >
-              <LogOut size={16} /> Logout Session
-            </button>
-          </div>
-
-          {/* Reset Local Cache */}
-          <div style={{ borderTop: '1px solid var(--border)', paddingTop: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-            <div>
-              <h4 style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text)', marginBottom: '0.25rem' }}>Reset Local Cache</h4>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: 0, lineHeight: '1.4' }}>
-                Clear cached databases, timetables, note summaries, and logs stored locally.
-              </p>
-            </div>
-            <button 
-              type="button"
-              className="btn btn-outline danger" 
-              onClick={() => {
-                if (window.confirm('Are you sure you want to clear all local data? This will log you out and reset cached timetables, grades, and notes.')) {
-                  localStorage.clear();
-                  window.location.href = '/login';
-                }
-              }} 
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
-            >
-              <RotateCw size={16} /> Reset Local Data
-            </button>
-          </div>
-          
         </div>
       </div>
 
-      {/* Danger Zone */}
-      <div className="danger-zone" style={{ border: '1px solid rgba(239, 68, 68, 0.25)', borderRadius: '1rem', padding: '1.5rem', background: 'rgba(239, 68, 68, 0.02)' }}>
-        <h4 style={{ color: '#ef4444', margin: '0 0 0.5rem 0', fontWeight: 800 }}>Danger Zone</h4>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', margin: '0 0 1.25rem 0', lineHeight: '1.4' }}>
-          Permanently delete your student profile, grades database, timetable mappings, notes, and all digital assets. This operation is immediate and irreversible.
-        </p>
-        <button 
-          type="button"
-          className="btn btn-danger" 
-          onClick={() => {
-            setShowDeleteModal(true);
-            setDeleteConfirmText('');
-          }}
-          style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', boxShadow: '0 4px 12px rgba(239, 68, 68, 0.15)' }}
-        >
-          <Trash2 size={16} /> Delete Account
-        </button>
+      {/* Modern Credentials & Identity Cards Grid */}
+      <div className="security-cards-grid">
+        
+        {/* Card 1: Identity Card */}
+        <div className="security-card-item">
+          <div className="card-item-header">
+            <User size={18} className="card-icon" />
+            <h5>Student Profile Identity</h5>
+          </div>
+          
+          <div className="card-content-fields">
+            <div className="profile-sec-field">
+              <label>Logged-in ID</label>
+              <div>{currentUser?.email || 'student.demo@iitgn.ac.in'}</div>
+            </div>
+            <div className="profile-sec-field">
+              <label>Account Sync Mode</label>
+              <div className="sync-mode-indicator">
+                <span className={`dot-status ${currentUser?.isDemo ? 'warning' : 'success'}`} />
+                {currentUser?.isDemo ? 'Local Sandboxed Demo' : 'Cloud Synchronized'}
+              </div>
+            </div>
+          </div>
+
+          <div className="card-footer-action">
+            {isEmailVerified ? (
+              <span className="verified-success-label">
+                <CheckCircle2 size={12} /> Email is Verified
+              </span>
+            ) : (
+              <button 
+                type="button"
+                className="btn btn-primary btn-sm flex-center"
+                onClick={handleSendVerification}
+              >
+                <Mail size={12} /> Verify Email Address
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Card 2: Password Management */}
+        <div className="security-card-item">
+          <div className="card-item-header">
+            <Key size={18} className="card-icon" />
+            <h5>Authentication Settings</h5>
+          </div>
+
+          <p className="card-item-description">
+            {isSSO 
+              ? 'Your account is connected via Google SSO. Password controls are managed by Google authentication.' 
+              : 'Keep your login password updated to prevent unauthorized portal access.'
+            }
+          </p>
+
+          <div className="card-footer-action flex-end">
+            {!isSSO && (
+              <button 
+                type="button"
+                className="btn btn-outline btn-sm flex-center"
+                onClick={handlePasswordReset}
+              >
+                <Lock size={12} /> Send Reset Link
+              </button>
+            )}
+            {isSSO && (
+              <span className="sso-active-badge">Google SSO Active</span>
+            )}
+          </div>
+        </div>
+
+        {/* Card 3: Session Details */}
+        <div className="security-card-item">
+          <div className="card-item-header">
+            <Laptop size={18} className="card-icon" />
+            <h5>Active Device Session</h5>
+          </div>
+
+          <div className="card-content-fields">
+            <div className="profile-sec-field">
+              <label>Browser &amp; OS</label>
+              <div>{getDeviceDetails()}</div>
+            </div>
+            <div className="profile-sec-field">
+              <label>Last Authentication</label>
+              <div>
+                {currentUser?.metadata?.lastSignInTime 
+                  ? new Date(currentUser.metadata.lastSignInTime).toLocaleString() 
+                  : new Date().toLocaleString() + ' (Current Session)'
+                }
+              </div>
+            </div>
+          </div>
+
+          <div className="card-footer-action">
+            <button 
+              type="button"
+              className="btn btn-outline btn-sm danger flex-center"
+              onClick={handleLogout}
+            >
+              <LogOut size={12} /> Terminate Session
+            </button>
+          </div>
+        </div>
+
+
+
       </div>
+
+      {/* Danger Zone */}
+      <div className="danger-zone-revamped">
+        <div className="danger-zone-header">
+          <AlertTriangle className="danger-icon" size={20} />
+          <div>
+            <h4>Danger Zone</h4>
+            <p>Irreversibly delete your student profile metadata, grade spreadsheets, timetable files, and authentication records.</p>
+          </div>
+        </div>
+        <div className="danger-action-block">
+          <button 
+            type="button"
+            className="btn btn-danger delete-btn-new"
+            onClick={() => {
+              setShowDeleteModal(true);
+              setDeleteConfirmText('');
+            }}
+          >
+            <Trash2 size={14} /> Delete Profile Account
+          </button>
+        </div>
+      </div>
+
     </div>
   );
 };
