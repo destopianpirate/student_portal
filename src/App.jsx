@@ -68,6 +68,10 @@ function App() {
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light');
     localStorage.setItem('theme', darkMode ? 'dark' : 'light');
+    const link = document.querySelector("link[rel~='icon']");
+    if (link) {
+      link.href = darkMode ? "/logo_dark.png" : "/logo_light.png";
+    }
   }, [darkMode]);
 
   useEffect(() => {
@@ -148,7 +152,9 @@ function App() {
             {mobileSidebarOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
           <div className="mobile-app-brand" onClick={() => navigate('/')}>
-            <div className="mobile-app-logo" style={{ overflow: "hidden" }}><img src="/logo.png" alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /></div>
+            <div className="mobile-app-logo" style={{ overflow: "hidden", background: "none" }}>
+              <img src={darkMode ? "/logo_dark.png" : "/logo_light.png"} alt="AcadX Logo" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            </div>
             <span className="mobile-app-name">AcadX</span>
           </div>
           <div className="mobile-app-actions">

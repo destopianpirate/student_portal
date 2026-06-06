@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   ArrowRight,
@@ -19,6 +19,19 @@ import FaqSection from '../components/landing/FaqSection';
 
 const LandingPage = () => {
   const navigate = useNavigate();
+
+  // Listen to global data-theme changes to toggle the mockup and footer logo theme
+  const [isDark, setIsDark] = useState(() => {
+    return document.documentElement.getAttribute('data-theme') === 'dark' || localStorage.getItem('theme') === 'dark';
+  });
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.getAttribute('data-theme') === 'dark');
+    });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <div className="landing-page">
@@ -105,7 +118,7 @@ const LandingPage = () => {
                 {/* Sidebar Mockup */}
                 <div style={{ borderRight: "1px solid var(--border)", padding: "0.75rem", display: "flex", flexDirection: "column", gap: "0.4rem", alignItems: "flex-start", background: "var(--input-bg)" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontWeight: "850", fontSize: "0.9rem", marginBottom: "1.25rem", color: "var(--primary)" }}>
-                    <div style={{ width: "22px", height: "22px", background: "linear-gradient(135deg, var(--primary), var(--accent))", color: "#fff", borderRadius: "6px", display: "flex", alignItems: "center", justify: "center", fontSize: "0.75rem", fontWeight: "950", overflow: "hidden" }}><img src="/logo.png" alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /></div>
+                    <div style={{ width: "22px", height: "22px", background: "linear-gradient(135deg, var(--primary), var(--accent))", color: "#fff", borderRadius: "6px", display: "flex", alignItems: "center", justify: "center", fontSize: "0.75rem", fontWeight: "950", overflow: "hidden" }}><img src={isDark ? "/logo_dark.png" : "/logo_light.png"} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /></div>
                     <span style={{ letterSpacing: "-0.02em", background: "linear-gradient(135deg, var(--text) 50%, var(--text-muted) 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>AcadX</span>
                   </div>
                   {[
@@ -528,7 +541,7 @@ const LandingPage = () => {
       {/* Footer */}
       <footer className="landing-footer">
         <div className="footer-brand">
-          <div className="footer-logo" style={{ overflow: "hidden" }}><img src="/logo.png" alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /></div>
+          <div className="footer-logo" style={{ overflow: "hidden" }}><img src={isDark ? "/logo_dark.png" : "/logo_light.png"} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /></div>
           <span className="footer-name">AcadX</span>
         </div>
         <div className="footer-credits">
