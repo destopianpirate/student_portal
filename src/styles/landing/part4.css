@@ -1,0 +1,504 @@
+
+.mini-gpa-bar-wrapper {
+  flex: 1;
+  height: 6px;
+  background: var(--input-bg);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.mini-gpa-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  border-radius: 10px;
+}
+
+.mini-gpa-val {
+  color: var(--text-muted);
+  min-width: 25px;
+  text-align: right;
+}
+
+/* 3. Calendar countdown visual */
+.mini-calendar-countdown {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.mini-calendar-sheet {
+  background: var(--card-bg);
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  flex-shrink: 0;
+}
+
+.mini-calendar-sheet-header {
+  background: #ef4444;
+  height: 13px;
+  width: 100%;
+  font-size: 0.48rem;
+  font-weight: 950;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-transform: uppercase;
+}
+
+.mini-calendar-sheet-day {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  font-weight: 900;
+  color: var(--text);
+  font-family: 'Space Grotesk', sans-serif;
+  line-height: 1;
+}
+
+.mini-calendar-countdown-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.15rem;
+  text-align: left;
+}
+
+.mini-calendar-countdown-title {
+  font-size: 0.72rem;
+  font-weight: 850;
+  color: var(--text);
+}
+
+.mini-calendar-countdown-subtitle {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+/* 4. Notes mockup visual */
+.mini-notes-mockup {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 0.55rem;
+  width: 100%;
+  text-align: left;
+}
+
+.mini-notes-list {
+  border-right: 1px solid var(--border);
+  padding-right: 0.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.mini-note-item {
+  font-size: 0.55rem;
+  font-weight: 750;
+  padding: 0.15rem 0.3rem;
+  border-radius: 4px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background: var(--input-bg);
+}
+
+.mini-note-item.active {
+  background: rgba(99, 102, 241, 0.08);
+  color: var(--primary);
+  border: 1px solid rgba(99, 102, 241, 0.15);
+}
+
+.mini-note-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding-left: 0.1rem;
+}
+
+.mini-note-editor-title {
+  font-size: 0.65rem;
+  font-weight: 850;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mini-note-editor-body {
+  font-size: 0.52rem;
+  color: var(--text-muted);
+  line-height: 1.35;
+}
+
+.mini-note-editor-tags {
+  display: flex;
+  gap: 0.2rem;
+  margin-top: 0.05rem;
+}
+
+.mini-note-tag {
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  padding: 0.02rem 0.25rem;
+  border-radius: 3px;
+  font-size: 0.46rem;
+  font-weight: 800;
+  color: var(--text-muted);
+}
+
+/* 5. Repositories visual */
+.mini-repos-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.mini-repo-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.mini-repo-name {
+  font-size: 0.62rem;
+  font-weight: 850;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mini-repo-desc {
+  font-size: 0.5rem;
+  color: var(--text-muted);
+  line-height: 1.25;
+  height: 2.5em;
+  overflow: hidden;
+}
+
+.mini-repo-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.48rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  margin-top: 0.1rem;
+}
+
+.mini-repo-lang {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.mini-repo-lang-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+}
+
+.mini-repo-lang-dot.js { background: #f1e05a; }
+.mini-repo-lang-dot.python { background: #3572a5; }
+
+/* 6. Utilities visual checklist */
+.mini-utilities-visual {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 0.65rem;
+  width: 100%;
+  text-align: left;
+}
+
+.mini-utilities-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  justify-content: center;
+}
+
+.mini-utilities-item {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.55rem;
+  font-weight: 750;
+  color: var(--text);
+}
+
+.mini-utilities-checkbox {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.44rem;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.mini-utilities-checkbox.checked {
+  background: #10b981;
+  border-color: #10b981;
+}
+
+.mini-utilities-attendance {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.4rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+}
+
+.mini-attendance-value {
+  font-size: 0.8rem;
+  font-weight: 900;
+  color: #10b981;
+  font-family: 'Space Grotesk', sans-serif;
+  line-height: 1;
+}
+
+.mini-attendance-label {
+  font-size: 0.46rem;
+  font-weight: 850;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.mini-attendance-bar {
+  width: 100%;
+  height: 2.5px;
+  background: var(--input-bg);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.mini-attendance-fill {
+  height: 100%;
+  background: #10b981;
+  border-radius: 10px;
+}
+
+/* IITGN spotlight section */
+.spotlight-container {
+  max-width: 960px;
+  width: 100%;
+  margin-bottom: 6rem;
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.04) 0%, rgba(99, 102, 241, 0.04) 100%), var(--card-bg-glass);
+  border: 1px solid var(--border-glass);
+  border-radius: 1.5rem;
+  padding: 3rem;
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  align-items: center;
+}
+
+.spotlight-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1.25rem;
+}
+
+.spotlight-badge {
+  background: rgba(249, 115, 22, 0.1);
+  color: #f97316;
+  border: 1px solid rgba(249, 115, 22, 0.2);
+  border-radius: 20px;
+  padding: 0.3rem 0.8rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.spotlight-title {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.spotlight-desc {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.spotlight-integrations {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+}
+
+.spotlight-item {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  transition: all 0.3s;
+}
+
+.spotlight-item:hover {
+  border-color: rgba(249, 115, 22, 0.3);
+  transform: translateX(5px);
+}
+
+.spotlight-item-icon {
+  background: rgba(249, 115, 22, 0.08);
+  color: #f97316;
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.spotlight-item-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.spotlight-item-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.spotlight-item-desc {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+/* Steps Timeline */
+.steps-container {
+  max-width: 900px;
+  width: 100%;
+  margin-bottom: 6rem;
+}
+
+.steps-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  position: relative;
+}
+
+.steps-list::before {
+  content: "";
+  position: absolute;
+  top: 35px;
+  left: 10%;
+  right: 10%;
+  height: 2px;
+  background: var(--border);
+  z-index: 0;
+}
+
+.step-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  z-index: 1;
+}
+
+.step-number {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: var(--card-bg);
+  border: 3px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  margin-bottom: 1.25rem;
+  transition: all 0.3s;
+  box-shadow: var(--shadow);
+}
+
+.step-card:hover .step-number {
+  border-color: var(--primary);
+  color: var(--primary);
+  transform: scale(1.05);
+}
+
+.step-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.step-desc {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  line-height: 1.6;
+}
+
+/* Testimonials */
+.testimonials-container {
+  max-width: 960px;
+  width: 100%;
+  margin-bottom: 6rem;
+}
+
+.testimonials-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.testimonial-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
+  padding: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+  position: relative;
+}
+
+.testimonial-quote {
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: var(--text);
+  font-style: italic;
+}

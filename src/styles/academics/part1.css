@@ -1,0 +1,603 @@
+.mess-tabs {
+  background: var(--input-bg);
+  z-index: 1;
+  border-radius: 2rem;
+  gap: .35rem;
+  margin-bottom: 1.25rem;
+  padding: .3rem;
+  display: flex;
+  position: relative
+}
+
+.mess-tab-btn {
+  color: var(--text-muted);
+  cursor: pointer;
+  background: 0 0;
+  border: none;
+  border-radius: 2rem;
+  flex: 1;
+  justify-content: center;
+  align-items: center;
+  gap: .35rem;
+  padding: .45rem .75rem;
+  font-family: inherit;
+  font-size: .8rem;
+  font-weight: 600;
+  transition: all .3s cubic-bezier(.4, 0, .2, 1);
+  display: flex
+}
+
+.mess-tab-btn:hover:not(.active) {
+  color: var(--text);
+  background: #fff3
+}
+
+[data-theme=dark] .mess-tab-btn:hover:not(.active) {
+  background: #ffffff0d
+}
+
+.mess-tab-btn.active {
+  background: var(--card-bg);
+  color: var(--primary);
+  box-shadow: 0 4px 12px -3px #6366f126
+}
+
+[data-theme=dark] .mess-tab-btn.active {
+  color: #fff;
+  box-shadow: 0 4px 12px -3px #00000080
+}
+
+.mess-tab-btn.is-now {
+  border-bottom: 2px solid var(--warning);
+  border-bottom-right-radius: 0;
+  border-bottom-left-radius: 0
+}
+
+.mess-meal-card {
+  -webkit-backdrop-filter: blur(8px);
+  background: #f1f5f959;
+  border-left: 4px solid #0000;
+  border-radius: .85rem;
+  padding: 1.25rem;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 12px -5px #00000008;
+  transition: all .4s cubic-bezier(.4, 0, .2, 1)!important
+}
+
+.mess-meal-card:hover {
+  background: #f1f5f98c;
+  transform: translateY(-3px)scale(1.01);
+  box-shadow: 0 10px 25px -8px #6366f11f
+}
+
+[data-theme=dark] .mess-meal-card {
+  background: #11182740;
+  box-shadow: 0 4px 12px -5px #0003
+}
+
+[data-theme=dark] .mess-meal-card:hover {
+  background: #11182773;
+  box-shadow: 0 10px 25px -8px #6366f12e
+}
+
+.mess-meal-card.active-meal {
+  border-left: 4px solid var(--warning);
+  background: linear-gradient(135deg, #f59e0b0a 0%, #f472b605 100%), #f59e0b05;
+  animation: 3.5s ease-in-out infinite glowPulseWarning;
+  box-shadow: 0 10px 30px -10px #f59e0b33
+}
+
+.mess-meal-card.active-meal:hover {
+  background: linear-gradient(135deg, #f59e0b0f 0%, #f472b608 100%), #f59e0b08;
+  box-shadow: 0 12px 35px -8px #f59e0b4d
+}
+
+[data-theme=dark] .mess-meal-card.active-meal {
+  background: linear-gradient(135deg, #f59e0b14 0%, #f472b608 100%), #f59e0b08
+}
+
+.course-bucket-card {
+  max-height: 460px;
+  overflow-y: auto
+}
+
+.course-bucket-card::-webkit-scrollbar {
+  width: 6px
+}
+
+.course-bucket-card::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px
+}
+
+.course-list {
+  flex-direction: column;
+  gap: .25rem;
+  display: flex
+}
+
+.course-item {
+  cursor: pointer;
+  background: var(--card-bg);
+  border: none;
+  border-radius: .5rem;
+  align-items: center;
+  gap: 1rem;
+  padding: .5rem 1rem;
+  transition: all .25s;
+  display: flex
+}
+
+.course-item:hover {
+  box-shadow: var(--shadow);
+  transform: translate(4px)
+}
+
+.course-item.selected {
+  box-shadow: 0 0 0 1px var(--primary);
+  background: #6366f10f
+}
+
+.course-code {
+  color: var(--primary);
+  font-size: .875rem;
+  font-weight: 700
+}
+
+.selected-courses-trigger:hover {
+  background: var(--input-bg)
+}
+
+.timetable-container {
+  background: var(--card-bg);
+  width: 100%;
+  box-shadow: var(--shadow);
+  border-radius: 1.25rem;
+  display: flex;
+  overflow: hidden
+}
+
+.timetable {
+  border-collapse: collapse;
+  table-layout: fixed;
+  width: 100%
+}
+
+.timetable th, .timetable td {
+  text-align: center;
+  vertical-align: top;
+  border: 1px solid #6366f10f;
+  padding: 0;
+  overflow: hidden
+}
+
+.timetable th {
+  background: var(--input-bg);
+  color: var(--text-muted);
+  vertical-align: middle;
+  height: 3.5vh;
+  font-size: 2vh;
+  font-weight: 700
+}
+
+.timetable-lunch {
+  background: var(--input-bg);
+  color: var(--text-muted);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  vertical-align: middle;
+  font-size: 1.5vh;
+  font-weight: 600
+}
+
+.time-slot-cell {
+  white-space: nowrap;
+  vertical-align: middle;
+  background: var(--input-bg);
+  font-size: 1.9vh;
+  font-weight: 700
+}
+
+.timetable-cell {
+  text-align: left;
+  background: hsla(var(--hue),  70%,  90%,  .7);
+  width: calc(100% - .6rem);
+  min-height: 8.5vh;
+  color: hsl(var(--hue),  80%,  25%);
+  border-left: 4px solid hsl(var(--hue),  75%,  60%);
+  box-shadow: 0 4px 12px -3px hsla(var(--hue),  70%,  50%,  .15);
+  border: 1px solid hsla(var(--hue),  70%,  50%,  .1);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  border-radius: .5rem;
+  flex-direction: column;
+  justify-content: center;
+  margin: .3rem;
+  padding: .6rem .8rem;
+  transition: all .3s cubic-bezier(.4, 0, .2, 1);
+  display: flex
+}
+
+.timetable-cell:hover {
+  filter: brightness(1.05);
+  box-shadow: 0 8px 20px -4px hsla(var(--hue),  75%,  50%,  .35);
+  z-index: 2;
+  transform: translateY(-2px)scale(1.03)
+}
+
+.timetable-cell .code {
+  color: hsl(var(--hue),  80%,  20%);
+  font-size: 1.6vh;
+  font-weight: 800;
+  display: block
+}
+
+.timetable-cell .title {
+  color: hsl(var(--hue),  75%,  30%);
+  margin-bottom: .1vh;
+  font-size: 1.2vh;
+  line-height: 1.2;
+  display: block
+}
+
+.timetable-cell .type {
+  color: hsl(var(--hue),  60%,  40%);
+  font-size: 1.1vh;
+  font-style: italic
+}
+
+.timetable-cell .venue {
+  color: hsl(var(--hue),  70%,  35%);
+  align-items: center;
+  margin-top: .2vh;
+  font-size: 1.2vh;
+  font-weight: 600;
+  display: flex
+}
+
+[data-theme=dark] .timetable-cell {
+  background: hsla(var(--hue),  65%,  12%,  .45);
+  color: hsl(var(--hue),  85%,  85%);
+  border: 1px solid hsla(var(--hue),  60%,  50%,  .18);
+  box-shadow: 0 4px 12px -3px hsla(var(--hue),  60%,  50%,  .25);
+  border-left: 4px solid hsl(var(--hue),  75%,  60%)
+}
+
+[data-theme=dark] .timetable-cell .code {
+  color: hsl(var(--hue),  95%,  90%)
+}
+
+[data-theme=dark] .timetable-cell .title {
+  color: hsl(var(--hue),  90%,  80%)
+}
+
+[data-theme=dark] .timetable-cell .type {
+  color: hsl(var(--hue),  70%,  75%)
+}
+
+[data-theme=dark] .timetable-cell .venue {
+  color: hsl(var(--hue),  85%,  80%)
+}
+
+.courses-table-container {
+  background: var(--card-bg);
+  box-shadow: var(--shadow);
+  border-radius: 1rem;
+  margin-top: 1rem;
+  animation: .5s both fadeIn;
+  overflow-x: auto
+}
+
+.courses-table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: .85rem
+}
+
+.courses-table th, .courses-table td {
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  padding: .75rem 1rem
+}
+
+.courses-table th {
+  background: var(--input-bg);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  font-size: .75rem;
+  font-weight: 600
+}
+
+.courses-table tbody tr {
+  transition: all .2s
+}
+
+.courses-table tbody tr:hover {
+  background: var(--input-bg);
+  transform: translate(2px)
+}
+
+.courses-table .total-row {
+  background: var(--input-bg)
+}
+
+.time-slot-cell.active-slot {
+  font-weight: 800;
+  color: var(--primary)!important;
+  border-right: 3px solid var(--primary)!important;
+  background: linear-gradient(135deg, #6366f114 0%, #f472b60a 100%)!important
+}
+
+[data-theme=dark] .time-slot-cell.active-slot {
+  color: var(--primary)!important;
+  background: linear-gradient(135deg, #6366f126 0%, #f472b614 100%)!important
+}
+
+.timetable-cell {
+  transition: transform .25s cubic-bezier(.4, 0, .2, 1), box-shadow .25s;
+  position: relative
+}
+
+.timetable-cell:hover {
+  box-shadow: 0 6px 16px -4px rgba(var(--hue),  .3);
+  z-index: 10;
+  transform: translateY(-2px)scale(1.02)
+}
+
+.timetable-hover-tooltip {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 999;
+  text-align: left;
+  border-radius: .75rem;
+  min-width: 220px;
+  padding: .85rem;
+  font-family: Inter, system-ui, sans-serif;
+  transition: opacity .2s, transform .2s;
+  position: absolute;
+  bottom: 110%;
+  left: 50%;
+  transform: translate(-50%)translateY(8px);
+  box-shadow: 0 10px 25px -5px #00000026
+}
+
+[data-theme=dark] .timetable-hover-tooltip {
+  background: #111827;
+  box-shadow: 0 10px 25px -5px #00000080
+}
+
+.timetable-cell:hover .timetable-hover-tooltip {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%)translateY(0)
+}
+
+.grades-stats-row {
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  display: grid
+}
+
+.grade-stat-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  text-align: center;
+  border-radius: 1rem;
+  padding: 1.25rem;
+  transition: all .3s;
+  position: relative;
+  overflow: hidden
+}
+
+.grade-stat-card:before {
+  content: "";
+  background: linear-gradient(90deg,  var(--primary),  var(--accent));
+  opacity: 0;
+  height: 3px;
+  transition: opacity .3s;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0
+}
+
+.grade-stat-card:hover:before {
+  opacity: 1
+}
+
+.grade-stat-card:hover {
+  box-shadow: var(--shadow);
+  transform: translateY(-2px)
+}
+
+.grade-stat-card.cgpa-card {
+  border-left: 3px solid var(--primary)
+}
+
+.grade-stat-icon {
+  color: var(--primary);
+  margin-bottom: .5rem
+}
+
+.grade-stat-value {
+  color: var(--text);
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1.2
+}
+
+.grade-stat-label {
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: .5px;
+  margin-top: .25rem;
+  font-size: .7rem;
+  font-weight: 600
+}
+
+.grades-chart-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 1.5rem
+}
+
+.grade-dist-row {
+  flex-wrap: wrap;
+  gap: .5rem;
+  display: flex
+}
+
+.grade-dist-chip {
+  border: 1px solid;
+  border-radius: .75rem;
+  align-items: center;
+  gap: .35rem;
+  padding: .4rem .75rem;
+  font-size: .8rem;
+  font-weight: 600;
+  display: flex
+}
+
+.grade-dist-letter {
+  font-weight: 800
+}
+
+.grade-dist-count {
+  opacity: .7;
+  font-size: .7rem
+}
+
+.semester-course-count {
+  color: var(--text-muted);
+  font-size: .75rem
+}
+
+.grade-course-row {
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .5rem;
+  margin-bottom: .5rem;
+  display: flex
+}
+
+.grade-course-input {
+  border: 1px solid var(--border);
+  background: var(--input-bg);
+  color: var(--text);
+  border-radius: .5rem;
+  padding: .5rem .75rem;
+  font-size: .85rem;
+  transition: border-color .2s
+}
+
+.grade-course-input:focus {
+  border-color: var(--primary);
+  outline: none
+}
+
+.grade-course-input.name {
+  flex: 3;
+  min-width: 120px
+}
+
+.grade-course-input.credits {
+  flex-shrink: 0;
+  width: 60px
+}
+
+.grade-course-input.grade {
+  flex-shrink: 0;
+  width: 80px
+}
+
+.attendance-course-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  margin-bottom: .75rem;
+  transition: all .3s;
+  overflow: hidden
+}
+
+.attendance-course-card:hover {
+  box-shadow: var(--shadow)
+}
+
+.attendance-course-card.expanded {
+  border-color: var(--primary)
+}
+
+.attendance-course-header {
+  cursor: pointer;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  display: flex
+}
+
+.attendance-course-info {
+  flex: 1
+}
+
+.attendance-course-info h4 {
+  margin: 0 0 .5rem;
+  font-size: .95rem
+}
+
+.attendance-bar-container {
+  background: var(--input-bg);
+  border-radius: 3px;
+  height: 6px;
+  margin-bottom: .5rem;
+  overflow: hidden
+}
+
+.attendance-bar-fill {
+  border-radius: 3px;
+  height: 100%;
+  transition: width .6s cubic-bezier(.4, 0, .2, 1)
+}
+
+.attendance-quick-stats {
+  gap: .75rem;
+  font-size: .75rem;
+  font-weight: 600;
+  display: flex
+}
+
+.attendance-mark-section {
+  padding: 0 1.25rem 1.25rem
+}
+
+.attendance-mark-btns {
+  gap: .5rem;
+  display: flex
+}
+
+.attendance-mark-btn {
+  border: 1px solid var(--border);
+  color: var(--text);
+  cursor: pointer;
+  background: 0 0;
+  border-radius: .75rem;
+  align-items: center;
+  gap: .35rem;
+  padding: .5rem 1rem;
+  font-size: .8rem;
+  font-weight: 600;
+  transition: all .2s;
+  display: flex
+}
+
+.attendance-mark-btn.present:hover, .attendance-mark-btn.present.active {
+  color: #22c55e;
+  background: #22c55e26;
+  border-color: #22c55e
+}

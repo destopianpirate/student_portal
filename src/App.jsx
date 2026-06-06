@@ -148,8 +148,8 @@ function App() {
             {mobileSidebarOpen ? <X size={22} /> : <Menu size={22} />}
           </button>
           <div className="mobile-app-brand" onClick={() => navigate('/')}>
-            <div className="mobile-app-logo">S</div>
-            <span className="mobile-app-name">StudentOS</span>
+            <div className="mobile-app-logo" style={{ overflow: "hidden" }}><img src="/logo.png" alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /></div>
+            <span className="mobile-app-name">AcadX</span>
           </div>
           <div className="mobile-app-actions">
             <button className="theme-toggle" onClick={() => setDarkMode(!darkMode)} title="Toggle theme">

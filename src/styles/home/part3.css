@@ -1,0 +1,138 @@
+
+.viewport-target-reticle {
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 12px; height: 12px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 2;
+}
+
+.viewport-target-reticle::before,
+.viewport-target-reticle::after {
+  content: "";
+  position: absolute;
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
+}
+
+.viewport-target-reticle::before {
+  top: 50%; left: -6px; right: -6px; height: 1px;
+}
+.viewport-target-reticle::after {
+  left: 50%; top: -6px; bottom: -6px; width: 1px;
+}
+
+/* Tech Info Labels */
+.viewport-tech-info {
+  position: absolute;
+  font-family: monospace;
+  font-size: 7px;
+  color: rgba(255, 255, 255, 0.6);
+  background: rgba(0, 0, 0, 0.4);
+  padding: 2px 4px;
+  border-radius: 3px;
+  z-index: 3;
+  pointer-events: none;
+  letter-spacing: 0.5px;
+}
+.top-left-info { top: 4px; left: 4px; }
+.bottom-right-info { bottom: 4px; right: 4px; }
+
+/* Controls Dock */
+.focal-editor-dock {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 200px;
+}
+
+.dock-control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.dock-group-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dock-presets-row {
+  display: flex;
+  gap: 0.4rem;
+  width: 100%;
+}
+
+.dock-preset-btn {
+  flex: 1;
+  padding: 0.45rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+  text-align: center;
+}
+
+.dock-preset-btn:hover {
+  background: var(--input-bg);
+  border-color: var(--text-muted);
+}
+
+.dock-preset-btn.active {
+  color: #fff;
+  background: var(--primary);
+  border-color: var(--primary);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+}
+
+.slider-row-new {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.slider-row-new input[type=range] {
+  flex: 1;
+  accent-color: var(--primary);
+  cursor: pointer;
+  height: 4px;
+  border-radius: 2px;
+}
+
+.dock-utility-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.4rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.dock-utility-btn:hover {
+  color: var(--text);
+  border-color: var(--text-muted);
+  background: var(--card-bg);
+}
+
+.dock-utility-btn.active {
+  color: var(--primary);
+  border-color: var(--primary);
+  background: rgba(99, 102, 241, 0.05);
+}
+
+

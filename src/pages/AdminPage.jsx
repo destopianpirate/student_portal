@@ -303,7 +303,7 @@ const AdminPage = () => {
           </div>
           <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'var(--input-bg)', borderRadius: '.75rem' }}>
             <h4 style={{ fontSize: '.85rem', marginBottom: '.5rem' }}>App Version</h4>
-            <p style={{ color: 'var(--text-muted)', fontSize: '.8rem' }}>Smart Student Portal v2.0.0</p>
+            <p style={{ color: 'var(--text-muted)', fontSize: '.8rem' }}>AcadX v2.0.0</p>
             <p style={{ color: 'var(--text-muted)', fontSize: '.75rem', marginTop: '.25rem' }}>React 19 • Vite 8 • Firebase 11 • Framer Motion 12</p>
           </div>
         </motion.div>

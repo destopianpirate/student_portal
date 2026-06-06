@@ -9,8 +9,8 @@ const Navbar = ({ darkMode, setDarkMode }) => {
     <nav className="guest-navbar">
       <div className="guest-navbar-inner">
         <div className="guest-navbar-brand" onClick={() => navigate('/')}>
-          <div className="guest-navbar-logo">S</div>
-          <span className="guest-navbar-name">StudentOS</span>
+          <div className="guest-navbar-logo" style={{ overflow: "hidden" }}><img src="/logo.png" alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /></div>
+          <span className="guest-navbar-name">AcadX</span>
         </div>
         <div className="guest-navbar-actions">
           <button className="theme-toggle" onClick={() => setDarkMode(!darkMode)} title="Toggle theme">

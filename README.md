@@ -1,6 +1,6 @@
-# StudentOS — The Ultimate Student Workspace
+# AcadX — The Ultimate Student Workspace
 
-StudentOS is a modern, responsive, and feature-rich web portal designed to streamline university life. Built using **React**, **Vite**, **Framer Motion**, and **Tailwind CSS/Custom CSS**, it provides students with a single glassmorphic dashboard to track schedules, manage assignments, log grades, compute attendance, and study with an integrated AI companion.
+AcadX is a modern, responsive, and feature-rich web portal designed to streamline university life. Built using **React**, **Vite**, **Framer Motion**, and **Tailwind CSS/Custom CSS**, it provides students with a single glassmorphic dashboard to track schedules, manage assignments, log grades, compute attendance, and study with an integrated AI companion.
 
 ---
 
@@ -43,7 +43,7 @@ StudentOS is a modern, responsive, and feature-rich web portal designed to strea
 
 ## 🚀 Setup & Installation
 
-Follow these steps to run StudentOS locally:
+Follow these steps to run AcadX locally:
 
 1.  **Clone the Repository**:
     ```bash

@@ -4,6 +4,9 @@ import { useNotifications } from '../contexts/NotificationContext';
 import { motion } from 'framer-motion';
 import { Award, Plus, Trash2, TrendingUp, BookOpen, BarChart3, Download, ChevronDown, ChevronUp, CalendarDays } from 'lucide-react';
 import { fetchAndParseTimetable, isEvenSemester } from '../utils/parser';
+import CGPAForecaster from '../components/grades/CGPAForecaster';
+import SemesterCard from '../components/grades/SemesterCard';
+import WeeklySchedule from '../components/grades/WeeklySchedule';
 
 const GRADE_POINTS = {
   'A+': 11, 'A': 10, 'A-': 9, 'B': 8, 'B-': 7, 'C': 6,
@@ -399,183 +402,27 @@ const GradesPage = () => {
       <div className="academics-summary-grid">
         <div className="academics-summary-main">
           {/* Semesters list */}
-          {semesters.map((sem, semIdx) => {
-            const isExpanded = expandedSem === semIdx;
-            const sgpa = calculateSGPA(sem.courses);
-            const semCredits = sem.courses.reduce((sum, c) => sum + (parseFloat(c.credits) || 0), 0);
-            const completedCredits = sem.courses.reduce((sum, c) => {
-              const gp = GRADE_POINTS[c.grade];
-              return (gp !== null && gp !== undefined && gp > 0) ? sum + (parseFloat(c.credits) || 0) : sum;
-            }, 0);
-            return (
-              <motion.div 
-                id={`sem-card-${sem.id}`}
-                key={sem.id} 
-                className={`compact-semester-card ${sem.isSynced ? 'is-synced-card' : ''} ${activeHighlightSem === sem.id ? 'semester-glow-highlight' : ''}`} 
-                variants={itemVariants}
-              >
-                <div className="compact-semester-header" onClick={() => setExpandedSem(isExpanded ? null : semIdx)}>
-                  <div className="semester-header-left">
-                    <h3>{sem.name}</h3>
-                    {sem.isSynced && (
-                      <span className="semester-synced-badge">
-                        Synced with Timetable
-                      </span>
-                    )}
-                    <span className="semester-sgpa-badge">SPI: {sem.isSynced ? '—' : sgpa}</span>
-                    <span className="semester-course-count">
-                      {sem.courses.length} courses
-                      {sem.courses.length > 0 && (
-                        <span className="header-grade-dots" title="Grade profile quick-view">
-                          {sem.courses.map((c) => {
-                            if (!c.grade) return null;
-                            const dotColor = GRADE_COLORS[c.grade] || '#6366f1';
-                            return (
-                              <span 
-                                key={c.id} 
-                                className="header-grade-dot" 
-                                style={{ backgroundColor: dotColor }}
-                                title={`${c.name.split(' - ')[0] || 'Course'}: ${c.grade}`}
-                              />
-                            );
-                          })}
-                        </span>
-                      )}
-                    </span>
-                    <span className="semester-credits-badge">
-                      {sem.isSynced ? `${semCredits} Credits (Registered)` : `${completedCredits} Credits Completed`}
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', gap: '.5rem', alignItems: 'center' }}>
-                    <button 
-                      className="btn-icon-sm danger" 
-                      onClick={(e) => { e.stopPropagation(); removeSemester(semIdx); }} 
-                      title={sem.isSynced ? "Synced semester cannot be deleted" : "Delete semester"}
-                      disabled={sem.isSynced}
-                      style={{ opacity: sem.isSynced ? 0.5 : 1, cursor: sem.isSynced ? 'not-allowed' : 'pointer' }}
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                    {isExpanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                  </div>
-                </div>
-
-                {isExpanded && (
-                  <motion.div
-                    className="compact-semester-body"
-                    initial={{ opacity: 0, height: 0, overflow: 'hidden' }}
-                    animate={{ opacity: 1, height: 'auto', transitionEnd: { overflow: 'visible' } }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    {sem.courses.length === 0 && (
-                      <p style={{ color: 'var(--text-muted)', textAlign: 'center', padding: '1rem', fontSize: '.85rem' }}>No courses added yet</p>
-                    )}
-                    {sem.courses.map((course, cIdx) => (
-                      <div key={course.id} className={`compact-course-row ${sem.isSynced ? 'is-synced-row' : ''}`}>
-                        <div className="course-input-wrapper" style={{ flex: 3, position: 'relative' }}>
-                          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                            <input
-                              className="compact-course-input name"
-                              placeholder="Course name (e.g. CS 201 - Data Structures)"
-                              value={course.name}
-                              onChange={e => {
-                                updateCourse(semIdx, cIdx, 'name', e.target.value);
-                                setActiveSearch({ semIdx, courseIdx: cIdx, query: e.target.value });
-                              }}
-                              onFocus={() => setActiveSearch({ semIdx, courseIdx: cIdx, query: course.name })}
-                              onBlur={() => {
-                                setTimeout(() => {
-                                  setActiveSearch(prev => prev.semIdx === semIdx && prev.courseIdx === cIdx ? { semIdx: null, courseIdx: null, query: '' } : prev);
-                                }, 200);
-                              }}
-                              disabled={sem.isSynced}
-                              style={{
-                                width: '100%',
-                                paddingLeft: sem.isSynced ? '2.25rem' : '0.85rem',
-                                fontWeight: sem.isSynced ? 600 : 'normal'
-                              }}
-                            />
-                            {sem.isSynced && (
-                              <span style={{ position: 'absolute', left: '0.75rem', color: 'var(--primary)', display: 'flex', alignItems: 'center' }} title="Synced from registration/timetable">
-                                <BookOpen size={14} />
-                              </span>
-                            )}
-                          </div>
-                          
-                          {activeSearch.semIdx === semIdx && activeSearch.courseIdx === cIdx && filteredSuggestions.length > 0 && (
-                            <div className="course-suggestions-dropdown" style={{ zIndex: 1000 }}>
-                              {filteredSuggestions.map((sugCourse) => (
-                                <button
-                                  key={sugCourse.code}
-                                  className="course-suggestion-item"
-                                  type="button"
-                                  onMouseDown={(e) => {
-                                    e.preventDefault();
-                                    handleSelectSuggestion(semIdx, cIdx, sugCourse);
-                                  }}
-                                >
-                                  <span className="course-sug-code">{sugCourse.code}</span>
-                                  <span className="course-sug-title">{sugCourse.title}</span>
-                                  <span className="course-sug-credits">{sugCourse.credits} Cr</span>
-                                </button>
-                              ))}
-                            </div>
-                          )}
-                        </div>
-                        
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', flexShrink: 0 }}>
-                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Credits:</span>
-                          <input
-                            className="compact-course-input credits"
-                            type="number"
-                            min="1"
-                            max="12"
-                            placeholder="Cr"
-                            value={course.credits}
-                            onChange={e => updateCourse(semIdx, cIdx, 'credits', parseInt(e.target.value) || 0)}
-                            disabled={sem.isSynced}
-                            style={{ fontWeight: 'bold' }}
-                          />
-                        </div>
-                        
-                        {sem.isSynced ? (
-                          <span className="grade-course-running" style={{ padding: '0.35rem 0.55rem', fontSize: '0.75rem', color: 'var(--primary)', background: 'rgba(99, 102, 241, 0.08)', borderRadius: '0.4rem', fontWeight: 700, minWidth: '85px', textAlign: 'center', border: '1px solid rgba(99, 102, 241, 0.15)', display: 'inline-block' }}>
-                            In Progress
-                          </span>
-                        ) : (
-                          <select
-                            className="compact-course-input grade"
-                            value={course.grade}
-                            onChange={e => updateCourse(semIdx, cIdx, 'grade', e.target.value)}
-                            style={{ fontWeight: 'bold' }}
-                          >
-                            <option value="">Grade</option>
-                            {Object.keys(GRADE_POINTS).map(g => (
-                              <option key={g} value={g}>{g}</option>
-                            ))}
-                          </select>
-                        )}
-                        
-                        <button 
-                          className="btn-icon-sm danger" 
-                          onClick={() => removeCourse(semIdx, cIdx)}
-                          disabled={sem.isSynced}
-                          style={{ opacity: sem.isSynced ? 0.4 : 1, cursor: sem.isSynced ? 'not-allowed' : 'pointer' }}
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      </div>
-                    ))}
-                    {!sem.isSynced && (
-                      <button className="btn btn-outline btn-sm" style={{ marginTop: '.5rem', padding: '0.35rem 0.75rem' }} onClick={() => addCourse(semIdx)}>
-                        <Plus size={14} /> Add Course
-                      </button>
-                    )}
-                  </motion.div>
-                )}
-              </motion.div>
-            );
-          })}
+          {semesters.map((sem, semIdx) => (
+            <SemesterCard
+              key={sem.id}
+              sem={sem}
+              semIdx={semIdx}
+              expandedSem={expandedSem}
+              setExpandedSem={setExpandedSem}
+              calculateSGPA={calculateSGPA}
+              GRADE_POINTS={GRADE_POINTS}
+              GRADE_COLORS={GRADE_COLORS}
+              removeSemester={removeSemester}
+              addCourse={addCourse}
+              removeCourse={removeCourse}
+              updateCourse={updateCourse}
+              activeSearch={activeSearch}
+              setActiveSearch={setActiveSearch}
+              filteredSuggestions={filteredSuggestions}
+              handleSelectSuggestion={handleSelectSuggestion}
+              itemVariants={itemVariants}
+            />
+          ))}
 
           {/* Add Semester */}
           {showAddSem ? (
@@ -641,75 +488,11 @@ const GradesPage = () => {
 
           {/* Synced Weekly Schedule & Workload Card */}
           {timetableCourses.length > 0 && (
-            <motion.div 
-              className="grades-chart-card glass-card" 
-              variants={itemVariants}
-              style={{ marginTop: '1.25rem', padding: '1.25rem', marginBottom: '0.5rem' }}
-            >
-              <h3 style={{ marginBottom: '1rem', fontSize: '0.9rem', fontWeight: 800, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <CalendarDays size={16} style={{ color: 'var(--primary)' }} /> Synced Active Semester Weekly Schedule
-              </h3>
-              
-              {/* Workload Stats Row */}
-              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
-                <div style={{ flex: 1, minWidth: '90px', background: 'var(--input-bg)', padding: '0.5rem 0.75rem', borderRadius: '0.4rem', border: '1px solid var(--border)' }}>
-                  <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Registered Courses</div>
-                  <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--primary)', marginTop: '0.15rem' }}>{timetableCourses.length}</div>
-                </div>
-                <div style={{ flex: 1, minWidth: '90px', background: 'var(--input-bg)', padding: '0.5rem 0.75rem', borderRadius: '0.4rem', border: '1px solid var(--border)' }}>
-                  <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Semester Credits</div>
-                  <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--primary)', marginTop: '0.15rem' }}>
-                    {timetableCourses.reduce((sum, c) => sum + (parseInt(c.credits) || 0), 0)}
-                  </div>
-                </div>
-                <div style={{ flex: 1, minWidth: '90px', background: 'var(--input-bg)', padding: '0.5rem 0.75rem', borderRadius: '0.4rem', border: '1px solid var(--border)' }}>
-                  <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>Workload / Week</div>
-                  <div style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--primary)', marginTop: '0.15rem' }}>
-                    {timetableCourses.reduce((sum, c) => sum + (c.slots?.length || 0) * 1.5, 0)} hrs
-                  </div>
-                </div>
-              </div>
-
-              {/* Daily Schedule List (Horizontal) */}
-              <div className="weekly-schedule-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.4rem', overflowX: 'auto', paddingBottom: '0.25rem' }}>
-                {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'].map((day) => {
-                  const dayClasses = weeklySchedule[day] || [];
-                  return (
-                    <div key={day} style={{ background: 'rgba(99, 102, 241, 0.01)', border: '1px dashed var(--border)', borderRadius: '0.5rem', padding: '0.4rem', minWidth: '105px' }}>
-                      <div style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--text)', borderBottom: '1px solid var(--border)', paddingBottom: '0.2rem', marginBottom: '0.35rem', textAlign: 'center' }}>
-                        {day.substring(0, 3)}
-                      </div>
-                      {dayClasses.length === 0 ? (
-                        <div style={{ fontSize: '0.6rem', color: 'var(--text-muted)', textAlign: 'center', fontStyle: 'italic', padding: '0.75rem 0' }}>
-                          No classes
-                        </div>
-                      ) : (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
-                          {dayClasses.map((cls, idx) => (
-                            <div 
-                              key={idx} 
-                              style={{ 
-                                background: 'var(--card-bg)', 
-                                border: '1px solid var(--border)', 
-                                borderLeft: '3px solid var(--primary)', 
-                                borderRadius: '0.25rem', 
-                                padding: '0.25rem 0.35rem', 
-                                fontSize: '0.6rem',
-                                lineHeight: '1.2'
-                              }}
-                            >
-                              <div style={{ fontWeight: 800, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={cls.code + ' - ' + cls.title}>{cls.code}</div>
-                              <div style={{ color: 'var(--text-muted)', marginTop: '0.05rem', fontSize: '0.55rem' }}>{cls.time.split(' – ')[0]}</div>
-                              <div style={{ color: 'var(--primary)', fontWeight: 600, fontSize: '0.5rem', marginTop: '0.05rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }} title={cls.venue}>{cls.venue}</div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </motion.div>
+            <WeeklySchedule
+              timetableCourses={timetableCourses}
+              weeklySchedule={weeklySchedule}
+              itemVariants={itemVariants}
+            />
           )}
         </div>
 
@@ -853,59 +636,15 @@ const GradesPage = () => {
 
           {/* CGPA Goal Forecaster */}
           {cgpa !== '—' && (
-            <motion.div className="cgpa-forecaster-card glass-card" variants={itemVariants}>
-              <h3 style={{ marginBottom: '0.75rem', fontSize: '0.85rem', fontWeight: 800, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                <TrendingUp size={15} style={{ color: 'var(--primary)' }} /> CGPA Goal Forecaster
-              </h3>
-              <p style={{ margin: '0 0 1rem 0', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
-                Simulate the SPI required in remaining credits to achieve your target CGPA.
-              </p>
-              
-              <div className="forecaster-slider-container">
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', fontWeight: 'bold' }}>
-                  <span>Target CGPA:</span>
-                  <span style={{ color: 'var(--primary)' }}>{targetCgpa.toFixed(2)}</span>
-                </div>
-                <input
-                  type="range"
-                  className="forecaster-slider"
-                  min={(parseFloat(cgpa) || 0.01).toFixed(2)}
-                  max="11.00"
-                  step="0.05"
-                  value={targetCgpa}
-                  onChange={e => setTargetCgpa(parseFloat(e.target.value))}
-                />
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', marginTop: '0.5rem' }}>
-                <span style={{ color: 'var(--text-muted)' }}>Remaining Credits:</span>
-                <input
-                  type="number"
-                  className="compact-course-input"
-                  style={{ width: '60px', height: '26px', fontSize: '0.75rem', textAlign: 'center', padding: '0.2rem' }}
-                  min="1"
-                  max="120"
-                  value={remainingCredits}
-                  onChange={e => setRemainingCredits(Math.max(1, parseInt(e.target.value) || 1))}
-                />
-              </div>
-
-              <div className={`forecaster-result ${requiredSPI > 11.0 ? 'impossible' : requiredSPI <= 4.0 ? 'perfect' : ''}`}>
-                <div style={{ fontSize: '0.65rem', textTransform: 'uppercase', color: 'var(--text-muted)', fontWeight: 700 }}>
-                  Required Future SPI
-                </div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 900, color: requiredSPI > 11.0 ? '#ef4444' : 'var(--primary)' }}>
-                  {requiredSPI > 11.0 ? 'N/A' : requiredSPI.toFixed(2)}
-                </div>
-                <div style={{ fontSize: '0.65rem', marginTop: '0.25rem', fontWeight: 600, color: requiredSPI > 11.0 ? '#ef4444' : requiredSPI <= 4.0 ? '#22c55e' : 'var(--text-muted)' }}>
-                  {requiredSPI > 11.0 
-                    ? '⚠️ Mathematically Impossible (> 11.00)' 
-                    : requiredSPI <= 4.0 
-                      ? '🎉 Highly Achievable! (SPI ≤ 4.00)' 
-                      : `SPI of ${requiredSPI.toFixed(2)} average required.`}
-                </div>
-              </div>
-            </motion.div>
+            <CGPAForecaster
+              cgpa={cgpa}
+              targetCgpa={targetCgpa}
+              setTargetCgpa={setTargetCgpa}
+              remainingCredits={remainingCredits}
+              setRemainingCredits={setRemainingCredits}
+              requiredSPI={requiredSPI}
+              itemVariants={itemVariants}
+            />
           )}
         </div>
       </div>

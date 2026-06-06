@@ -1,0 +1,320 @@
+.digital-card-container:hover {
+  border-color: rgba(99, 102, 241, 0.25);
+  box-shadow: 0 8px 24px -6px rgba(99, 102, 241, 0.08);
+}
+
+.digital-card-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+}
+
+.digital-card-body {
+  width: 100%;
+  aspect-ratio: 1.58 / 1;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid var(--border);
+  background: var(--input-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.digital-card-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transition: transform 0.4s ease;
+}
+
+.digital-card-body:hover .digital-card-image {
+  transform: scale(1.03);
+}
+
+.digital-card-empty {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  padding: 1rem;
+  text-align: center;
+}
+
+.digital-card-empty:hover {
+  border-color: var(--primary);
+  background: rgba(99, 102, 241, 0.02);
+  color: var(--primary);
+}
+
+.digital-card-empty p {
+  margin: 0;
+  font-size: 0.72rem;
+}
+
+.digital-card-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  z-index: 10;
+}
+
+.digital-card-body:hover .digital-card-overlay {
+  opacity: 1;
+}
+
+.card-overlay-btn {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: white;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0;
+}
+
+.card-overlay-btn:hover {
+  background: white;
+  color: var(--primary);
+  transform: scale(1.1);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.5);
+}
+
+.card-overlay-btn.btn-delete:hover {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: white;
+  box-shadow: 0 0 12px rgba(239, 68, 68, 0.5);
+}
+
+/* Premium Info Inputs & Grid Styling */
+.premium-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.premium-input-wrapper input,
+.premium-input-wrapper select {
+  width: 100%;
+  padding-left: 2.5rem !important;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: inherit;
+  font-size: 0.85rem;
+}
+
+.premium-input-wrapper select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 2rem !important;
+}
+
+.premium-input-wrapper input:focus,
+.premium-input-wrapper select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+  background: var(--card-bg);
+}
+
+.premium-input-icon {
+  position: absolute;
+  left: 0.85rem;
+  color: var(--text-muted);
+  pointer-events: none;
+  transition: color 0.25s ease;
+  z-index: 5;
+}
+
+.premium-select-chevron {
+  position: absolute;
+  right: 0.85rem;
+  color: var(--text-muted);
+  pointer-events: none;
+  transition: color 0.25s ease;
+  z-index: 5;
+}
+
+/* Sibling active focus states */
+.premium-input-wrapper input:focus ~ .premium-input-icon,
+.premium-input-wrapper select:focus ~ .premium-input-icon {
+  color: var(--primary);
+}
+
+.premium-input-wrapper select:focus ~ .premium-select-chevron {
+  color: var(--primary);
+}
+
+/* Single Panel Unified Accordion Container */
+.settings-accordion-panel {
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 4px 20px -6px rgba(0, 0, 0, 0.05);
+}
+
+.settings-accordion-panel .settings-accordion-item {
+  border: none;
+  border-radius: 0;
+  margin-bottom: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.settings-accordion-panel .settings-accordion-item:not(:last-child) {
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-accordion-panel .settings-accordion-header:hover {
+  background: rgba(99, 102, 241, 0.04);
+}
+
+[data-theme=dark] .settings-accordion-panel .settings-accordion-header:hover {
+  background: rgba(99, 102, 241, 0.08);
+}
+
+
+
+/* Settings Page Form Revamp Grouping */
+.settings-form-group {
+  background: var(--card-bg-glass);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme=dark] .settings-form-group {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+}
+
+.settings-form-subtitle {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--primary);
+  margin-top: 0;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* UI Theme Accent presets selection styles */
+.accent-presets-container {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-start;
+  margin-top: 0.25rem;
+}
+
+.accent-preset-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 0.35rem 0.65rem;
+  font-size: 0.75rem;
+  font-weight: 550;
+  color: var(--text);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.accent-preset-btn:hover {
+  border-color: var(--preset-color);
+  transform: translateY(-1px);
+  background: var(--card-bg-glass);
+}
+
+.accent-preset-btn.active {
+  border-color: var(--preset-color);
+  box-shadow: 0 0 0 2px var(--preset-color);
+  background: var(--input-bg);
+}
+
+.accent-color-bubble {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+}
+
+.accent-check-icon {
+  stroke-width: 3.5px;
+}
+
+.accent-color-name {
+  font-size: 0.7rem;
+}
+
+/* External iCal feed subscription copy layout */
+.ical-sync-wrapper {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+  align-items: center;
+}
+
+.ical-sync-input {
+  flex: 1;
+  font-family: var(--font-mono, monospace);
+  font-size: 0.75rem;
+  background: var(--input-bg) !important;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem;
+  height: 34px;
+  outline: none;
+  cursor: text;
+}
+
+.ical-copy-btn {
+  white-space: nowrap;
+  padding: 0 1rem;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 8px;
+}
+
+
+

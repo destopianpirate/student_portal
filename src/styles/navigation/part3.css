@@ -1,0 +1,106 @@
+
+/* Ensure mobile-app-header is hidden on desktop */
+.mobile-app-header {
+  display: none
+}
+
+@media (width<=768px) {
+  .mobile-app-header {
+    background: var(--navbar-bg);
+    -webkit-backdrop-filter: blur(20px) saturate(1.5);
+    border-bottom: 1px solid var(--border);
+    z-index: 998;
+    justify-content: space-between;
+    align-items: center;
+    height: 56px;
+    padding: 0 1rem;
+    display: flex;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0
+  }
+  .mobile-menu-toggle-btn {
+    color: var(--text);
+    cursor: pointer;
+    background: 0 0;
+    border: none;
+    border-radius: 8px;
+    justify-content: center;
+    align-items: center;
+    padding: .5rem;
+    transition: background .2s;
+    display: flex
+  }
+  .mobile-menu-toggle-btn:hover {
+    background: var(--input-bg)
+  }
+  .mobile-app-brand {
+    cursor: pointer;
+    align-items: center;
+    gap: .5rem;
+    display: flex
+  }
+  .mobile-app-logo {
+    background: linear-gradient(135deg,  var(--primary),  var(--accent));
+    color: #fff;
+    border-radius: 6px;
+    justify-content: center;
+    align-items: center;
+    width: 28px;
+    height: 28px;
+    font-size: .8rem;
+    font-weight: 800;
+    display: flex
+  }
+  .mobile-app-name {
+    color: var(--text);
+    font-size: 1rem;
+    font-weight: 700
+  }
+  .mobile-app-actions {
+    align-items: center;
+    gap: .75rem;
+    display: flex
+  }
+  .mobile-app-actions .theme-toggle {
+    color: var(--text-muted);
+    cursor: pointer;
+    background: 0 0;
+    border: none;
+    border-radius: 8px;
+    justify-content: center;
+    align-items: center;
+    padding: .4rem;
+    transition: background-color .2s, color .2s;
+    display: flex
+  }
+  .mobile-app-actions .theme-toggle:hover {
+    background: var(--input-bg);
+    color: var(--text)
+  }
+  .mobile-avatar {
+    object-fit: cover;
+    border: 1.5px solid var(--border);
+    cursor: pointer;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    transition: border-color .2s
+  }
+  .mobile-avatar:hover {
+    border-color: var(--primary)
+  }
+  .app-layout.with-sidebar .main-content {
+    padding-top: 56px!important
+  }
+  .mobile-sidebar-toggle {
+    display: none!important
+  }
+}
+
+.sidebar.collapsed:hover {
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+}
+
+

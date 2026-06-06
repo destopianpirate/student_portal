@@ -1,328 +1,24 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  GraduationCap,
   ArrowRight,
   Calendar,
   BookOpen,
   User,
-  Sparkles,
   CalendarDays,
   ClipboardList,
   Utensils,
-  Clock,
   ShieldCheck,
-  HelpCircle,
-  ChevronDown,
   Quote,
   Layers,
-  Compass,
-  BookOpenCheck,
   Wrench
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
+import ShowcaseSection from '../components/landing/ShowcaseSection';
+import FaqSection from '../components/landing/FaqSection';
 
 const LandingPage = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('schedule');
-  const [expandedFaq, setExpandedFaq] = useState(null);
-
-  // Tabs definitions
-  const SHOWCASE_TABS = [
-    {
-      id: 'schedule',
-      label: 'Smart Timetable',
-      icon: Clock,
-      tag: 'Academic Routine Mapping',
-      title: 'Never miss a slot again.',
-      desc: 'Our intelligent slot scheduler automatically generates your weekly schedule. It marks your current running classes, counts down to the next lecture, and factors in standard lunch breaks.',
-      bullets: [
-        'Automatic slot-to-time mapping scheme',
-        'Current class live highlighting and venue markers',
-        'Direct links to professor contact logs'
-      ],
-      visual: (
-        <div className="showcase-card-wrapper timetable-widget">
-          <div className="timeline-connector-line"></div>
-
-          <div className="timeline-widget-card active-card">
-            <div className="timeline-card-header">
-              <span className="live-pill"><span className="pulse-dot"></span> LIVE NOW</span>
-            </div>
-            <h4 className="class-name">CS 201 - Data Structures & Algorithms</h4>
-            <div className="class-meta">
-              <span>📍 LHC-101</span>
-              <span>👤 Prof. Amit Pradhan</span>
-            </div>
-
-            <div className="class-progress-container">
-              <div className="class-progress-track">
-                <div className="class-progress-fill" style={{ width: '65%' }}></div>
-              </div>
-              <div className="class-progress-labels">
-                <span>10:00 AM</span>
-                <span>65% completed</span>
-                <span>11:20 AM</span>
-              </div>
-            </div>
-          </div>
-
-          <div className="timeline-widget-card upcoming-card">
-            <div className="timeline-card-header">
-              <span className="upcoming-pill">NEXT UP - 11:30 AM</span>
-            </div>
-            <h4 className="class-name">MA 201 - Linear Algebra</h4>
-            <div className="class-meta">
-              <span>📍 LHC-102</span>
-              <span>👤 Prof. Sunita Rao</span>
-            </div>
-            <div className="class-time-tag">Starts in 30 mins</div>
-          </div>
-        </div>
-      )
-    },
-    {
-      id: 'grades',
-      label: 'Academic Tracker',
-      icon: BookOpenCheck,
-      tag: 'Progress & Planning',
-      title: 'Know where you stand in your curriculum.',
-      desc: 'Keep track of all your semesters, credits earned, and grade logs in one consolidated interface. Compute your cumulative and semester-wise GPA dynamically.',
-      bullets: [
-        'Dynamically updated SGPA/CGPA calculations',
-        'Visual credit breakdown indicators',
-        'Audit status and course details logs'
-      ],
-      visual: (
-        <div className="showcase-card-wrapper grades-widget">
-          <div className="grades-header-row">
-            <div className="grades-stat-card">
-              <span className="stat-label">CUMULATIVE CGPA</span>
-              <div className="stat-value-group">
-                <span className="stat-value text-gradient">9.12</span>
-                <span className="stat-trend positive">▲ +0.32</span>
-              </div>
-            </div>
-
-            <div className="grades-stat-card">
-              <span className="stat-label">CREDITS EARNED</span>
-              <div className="credit-progress-box">
-                <svg className="radial-progress-svg" viewBox="0 0 36 36">
-                  <path className="radial-track" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                  <path className="radial-fill" strokeDasharray="41, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
-                </svg>
-                <div className="credit-value">
-                  <span className="current">68</span>
-                  <span className="total">/164</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="grades-chart-card">
-            <div className="chart-header">
-              <span>GPA TRAJECTORY</span>
-              <span className="chart-subtitle">Across Semesters</span>
-            </div>
-            <div className="chart-container">
-              <svg viewBox="0 0 200 80" className="gpa-curve-svg">
-                <defs>
-                  <linearGradient id="chartGlow" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="var(--primary)" stopOpacity="0.25" />
-                    <stop offset="100%" stopColor="var(--primary)" stopOpacity="0.0" />
-                  </linearGradient>
-                </defs>
-
-                <line x1="10" y1="10" x2="190" y2="10" stroke="var(--border)" strokeWidth="0.5" strokeDasharray="2" />
-                <line x1="10" y1="40" x2="190" y2="40" stroke="var(--border)" strokeWidth="0.5" strokeDasharray="2" />
-                <line x1="10" y1="70" x2="190" y2="70" stroke="var(--border)" strokeWidth="0.5" />
-
-                <path d="M15,70 L15,48 L70,30 L125,22 L180,10 L180,70 Z" fill="url(#chartGlow)" />
-                <path d="M15,48 L70,30 L125,22 L180,10" fill="none" stroke="var(--primary)" strokeWidth="2.5" strokeLinecap="round" />
-
-                <circle cx="15" cy="48" r="3.5" fill="var(--card-bg)" stroke="var(--primary)" strokeWidth="2" />
-                <circle cx="70" cy="30" r="3.5" fill="var(--card-bg)" stroke="var(--primary)" strokeWidth="2" />
-                <circle cx="125" cy="22" r="3.5" fill="var(--card-bg)" stroke="var(--primary)" strokeWidth="2" />
-                <circle cx="180" cy="10" r="3.5" fill="var(--card-bg)" stroke="var(--accent)" strokeWidth="2" />
-
-                <text x="15" y="78" className="chart-label">Sem 1</text>
-                <text x="70" y="78" className="chart-label">Sem 2</text>
-                <text x="125" y="78" className="chart-label">Sem 3</text>
-                <text x="180" y="78" className="chart-label">Sem 4</text>
-
-                <text x="23" y="44" className="chart-value">8.2</text>
-                <text x="78" y="26" className="chart-value">8.8</text>
-                <text x="133" y="18" className="chart-value">9.0</text>
-                <text x="165" y="6" className="chart-value highlight">9.5</text>
-              </svg>
-            </div>
-          </div>
-        </div>
-      )
-    },
-    {
-      id: 'mess',
-      label: 'Mess Parser',
-      icon: Utensils,
-      tag: 'IITGN Integration',
-      title: "What's on the menu today?",
-      desc: "Say goodbye to looking up messy PDFs or spreadsheets. StudentOS parses the official hostel mess menu and displays exactly what's currently cooking for Breakfast, Lunch, High Tea, or Dinner.",
-      bullets: [
-        'Automatic Excel/PDF cell-mapping configurations',
-        'Live Meal tab detection based on local time',
-        'Live meal window alerts and chef specialties'
-      ],
-      visual: (
-        <div className="showcase-card-wrapper mess-widget">
-          <div className="mess-menu-card">
-            <img src="/gourmet_thali.png" alt="Meal Preview" className="mess-card-hero-img" style={{ width: '100%', height: '140px', objectFit: 'cover', borderBottom: '1px solid var(--border)' }} />
-            <div className="mess-menu-header">
-              <div className="meal-tag-group">
-                <span className="meal-pill">LUNCH SPECIAL 🍲</span>
-                <span className="time-badge">12:30 PM – 2:30 PM</span>
-              </div>
-              <div className="menu-rating">
-                <span className="star-icon">★</span>
-                <span className="rating-value">4.8</span>
-                <span className="rating-count">(124 reviews)</span>
-              </div>
-            </div>
-
-            <div className="menu-items-list">
-              <div className="menu-item-row">
-                <div className="menu-item-name-group">
-                  <span className="menu-item-bullet">•</span>
-                  <span className="menu-item-name">Paneer Butter Masala</span>
-                </div>
-                <span className="menu-item-category chef-choice">CHEF'S CHOICE</span>
-              </div>
-
-              <div className="menu-item-row">
-                <div className="menu-item-name-group">
-                  <span className="menu-item-bullet">•</span>
-                  <span className="menu-item-name">Dal Tadka & Steamed Rice</span>
-                </div>
-                <span className="menu-item-category regular">STAPLE</span>
-              </div>
-
-              <div className="menu-item-row">
-                <div className="menu-item-name-group">
-                  <span className="menu-item-bullet">•</span>
-                  <span className="menu-item-name">Kashmiri Pulao</span>
-                </div>
-                <span className="menu-item-category special">SPECIAL</span>
-              </div>
-
-              <div className="menu-item-row last">
-                <div className="menu-item-name-group">
-                  <span className="menu-item-bullet">•</span>
-                  <span className="menu-item-name">Gulab Jamun (1 pc)</span>
-                </div>
-                <span className="menu-item-category dessert">DESSERT</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )
-    },
-    {
-      id: 'ai',
-      label: 'AI Study Tools',
-      icon: Sparkles,
-      tag: 'Intelligent Assistant',
-      title: 'Supercharge your preparation.',
-      desc: 'Draft summaries, parse complex class notes, structure outlines, and create dynamic flashcards for revisions using integrated local or remote AI text summaries.',
-      bullets: [
-        'Class note summarization tools',
-        'Interactive AI chat for study support',
-        'Personal workspace task logs integration'
-      ],
-      visual: (
-        <div className="showcase-card-wrapper ai-widget">
-          <div className="ai-chat-window">
-            <div className="chat-window-header">
-              <div className="ai-avatar-group">
-                <span className="ai-avatar-sparkle">✨</span>
-                <div className="ai-name-group">
-                  <span className="ai-name">StudentOS AI</span>
-                  <span className="ai-status">Active</span>
-                </div>
-              </div>
-              <span className="ai-model-badge">GPT-4o</span>
-            </div>
-
-            <div className="chat-conversation-area">
-              <div className="chat-message user-bubble">
-                Explain Big-O complexity for QuickSort?
-              </div>
-
-              <div className="chat-message assistant-bubble">
-                <div className="assistant-bubble-intro">
-                  ✨ Average case is <strong>O(n log n)</strong>.
-                </div>
-                <div className="ai-code-block">
-                  <div className="code-header">Python</div>
-                  <pre><code>{`# Worst Case: O(n²)
-# Average Case: O(n log n)
-def quicksort(arr):
-    if len(arr) <= 1:
-        return arr
-    pivot = arr[len(arr) // 2]
-    ...`}</code></pre>
-                </div>
-              </div>
-            </div>
-
-            <div className="chat-suggestions-area">
-              <span className="suggestion-chip">✨ Summarize Note</span>
-              <span className="suggestion-chip">📇 Flashcards</span>
-            </div>
-          </div>
-        </div>
-      )
-    }
-  ];
-
-  // FAQ definitions
-  const FAQS = [
-    {
-      q: 'Do I need an official IITGN email address to use this?',
-      a: 'Yes, portal access is strictly restricted to valid IIT Gandhinagar student credentials. This maintains the privacy of portal databases, custom timetables, and academic events.'
-    },
-    {
-      q: 'How does the auto-generated timetable mapping work?',
-      a: 'During profile setup or in settings, select your courses. StudentOS maps these courses against the standard IIT Gandhinagar slot matrix (e.g. Slot A, B, C etc.), instantly constructing your custom schedule without requiring manual entry.'
-    },
-    {
-      q: 'Can I view the portal on my phone?',
-      a: 'Absolutely. The entire application is built using responsive web standards. Every layout adapts dynamically to smartphones, tablets, and desktop devices for on-the-go routine checks.'
-    },
-    {
-      q: 'Is my academic and grade data secure?',
-      a: 'Yes, all personal records, grade registers, and custom tasks are cached in your local web storage and secured through Firebase Authentication. Your GPA logs are visible only to you.'
-    },
-    {
-      q: 'Can I upload files or export records?',
-      a: 'Yes. You can manage study notes with direct file attachments, record certificates in your profile page, and back up or download all of your student account data locally in structured JSON logs at any time.'
-    }
-  ];
-
-  const handleToggleFaq = (index) => {
-    setExpandedFaq(expandedFaq === index ? null : index);
-  };
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 15 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
-  };
-
-  const ActiveIcon = SHOWCASE_TABS.find(t => t.id === activeTab)?.icon || Sparkles;
-  const currentShowcase = SHOWCASE_TABS.find(t => t.id === activeTab);
 
   return (
     <div className="landing-page">
@@ -403,14 +99,14 @@ def quicksort(arr):
                 <div className="mockup-dot" />
                 <div className="mockup-dot" />
                 <div className="mockup-dot" />
-                <div className="mockup-address">studentos.iitgn.ac.in</div>
+                <div className="mockup-address">acadx.iitgn.ac.in</div>
               </div>
               <div className="landing-mockup-content">
                 {/* Sidebar Mockup */}
                 <div style={{ borderRight: "1px solid var(--border)", padding: "0.75rem", display: "flex", flexDirection: "column", gap: "0.4rem", alignItems: "flex-start", background: "var(--input-bg)" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontWeight: "850", fontSize: "0.9rem", marginBottom: "1.25rem", color: "var(--primary)" }}>
-                    <div style={{ width: "22px", height: "22px", background: "linear-gradient(135deg, var(--primary), var(--accent))", color: "#fff", borderRadius: "6px", display: "flex", alignItems: "center", justify: "center", fontSize: "0.75rem", fontWeight: "950" }}>S</div>
-                    <span style={{ letterSpacing: "-0.02em", background: "linear-gradient(135deg, var(--text) 50%, var(--text-muted) 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>StudentOS</span>
+                    <div style={{ width: "22px", height: "22px", background: "linear-gradient(135deg, var(--primary), var(--accent))", color: "#fff", borderRadius: "6px", display: "flex", alignItems: "center", justify: "center", fontSize: "0.75rem", fontWeight: "950", overflow: "hidden" }}><img src="/logo.png" alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /></div>
+                    <span style={{ letterSpacing: "-0.02em", background: "linear-gradient(135deg, var(--text) 50%, var(--text-muted) 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>AcadX</span>
                   </div>
                   {[
                     { label: "Dashboard", active: true },
@@ -482,68 +178,7 @@ def quicksort(arr):
         </div>
       </section>
 
-      <section className="showcase-container">
-        <div className="landing-section-title-wrap">
-          <h2 className="landing-section-title">Designed for Everyday Student Life</h2>
-          <p className="landing-section-subtitle">Take a look at the powerful features standard with every student account</p>
-        </div>
-
-        <div className="showcase-tabs">
-          {SHOWCASE_TABS.map((tab) => {
-            const TabIcon = tab.icon;
-            const isActive = activeTab === tab.id;
-            return (
-              <button
-                key={tab.id}
-                className={`showcase-tab ${isActive ? 'active' : ''}`}
-                onClick={() => setActiveTab(tab.id)}
-              >
-                {isActive && (
-                  <motion.span
-                    layoutId="activeShowcaseTab"
-                    className="showcase-tab-bg"
-                    transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                  />
-                )}
-                <span className="showcase-tab-content">
-                  <TabIcon size={16} /> {tab.label}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="showcase-display">
-          <div className="showcase-info">
-            <span className="showcase-tag">{currentShowcase.tag}</span>
-            <h3 className="showcase-title">{currentShowcase.title}</h3>
-            <p className="showcase-desc">{currentShowcase.desc}</p>
-            <div className="showcase-bullets">
-              {currentShowcase.bullets.map((bullet, i) => (
-                <div key={i} className="showcase-bullet">
-                  <ShieldCheck size={16} />
-                  <span>{bullet}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="showcase-visual">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={activeTab}
-                initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                transition={{ duration: 0.3 }}
-                style={{ width: '100%', maxWidth: '380px' }}
-              >
-                {currentShowcase.visual}
-              </motion.div>
-            </AnimatePresence>
-          </div>
-        </div>
-      </section>
+      <ShowcaseSection />
 
       {/* Feature Grid */}
       <section className="features-grid-container">
@@ -682,7 +317,7 @@ def quicksort(arr):
             <div className="feature-card-visual">
               <div className="mini-repos-list">
                 <div className="mini-repo-card">
-                  <span className="mini-repo-name">studentos-web</span>
+                  <span className="mini-repo-name">acadx-web</span>
                   <span className="mini-repo-desc">The modern frontend client for the student workspace portal.</span>
                   <div className="mini-repo-footer">
                     <span className="mini-repo-lang">
@@ -821,7 +456,7 @@ def quicksort(arr):
               <Quote size={48} />
             </div>
             <p className="testimonial-quote">
-              "StudentOS completely replaced my paper timetables. Knowing which lecture slot is active on Friday morning saves so much stress."
+              "AcadX completely replaced my paper timetables. Knowing which lecture slot is active on Friday morning saves so much stress."
             </p>
             <div className="testimonial-author">
               <div className="testimonial-avatar">
@@ -873,29 +508,7 @@ def quicksort(arr):
       </section>
 
       {/* FAQs */}
-      <section className="faqs-container">
-        <div className="landing-section-title-wrap">
-          <h2 className="landing-section-title">Frequently Asked Questions</h2>
-          <p className="landing-section-subtitle">Everything you need to know about access and security</p>
-        </div>
-
-        <div className="faqs-list">
-          {FAQS.map((faq, i) => (
-            <div key={i} className={`faq-item ${expandedFaq === i ? 'active' : ''}`}>
-              <button className="faq-question-btn" onClick={() => handleToggleFaq(i)}>
-                <span>{faq.q}</span>
-                <ChevronDown size={18} className="faq-chevron" />
-              </button>
-              <div
-                className="faq-answer"
-                style={{ maxHeight: expandedFaq === i ? '150px' : '0' }}
-              >
-                <p style={{ margin: 0 }}>{faq.a}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+      <FaqSection />
 
       {/* Bottom CTA */}
       <section className="landing-bottom-cta">
@@ -915,8 +528,8 @@ def quicksort(arr):
       {/* Footer */}
       <footer className="landing-footer">
         <div className="footer-brand">
-          <div className="footer-logo">S</div>
-          <span className="footer-name">StudentOS</span>
+          <div className="footer-logo" style={{ overflow: "hidden" }}><img src="/logo.png" alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} /></div>
+          <span className="footer-name">AcadX</span>
         </div>
         <div className="footer-credits">
           Built with ❤️ by <a href="https://github.com/destopianpirate" target="_blank" rel="noreferrer">destopianpirate</a>

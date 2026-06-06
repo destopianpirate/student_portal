@@ -1,0 +1,500 @@
+
+.showcase-tab.active {
+  color: #ffffff !important;
+}
+
+.showcase-tab:hover:not(.active) {
+  color: var(--text);
+  transform: translateY(-1px);
+}
+
+/* Showcase Display Panel */
+.showcase-display {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 4.5rem;
+  align-items: center;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%), var(--card-bg-glass);
+  border: 1px solid var(--border-glass);
+  border-radius: 1.75rem;
+  padding: 3.5rem;
+  box-shadow: 0 30px 70px -15px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.showcase-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.showcase-tag {
+  background: rgba(99, 102, 241, 0.08);
+  color: var(--primary);
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  border-radius: 20px;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 1.25rem;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.showcase-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 2.2rem;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  margin-bottom: 1.15rem;
+}
+
+.showcase-desc {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: var(--text-muted);
+  margin-bottom: 1.75rem;
+}
+
+.showcase-bullets {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.showcase-bullet {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.showcase-bullet svg {
+  color: var(--success);
+  flex-shrink: 0;
+}
+
+.showcase-visual {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  min-height: 380px;
+  border-radius: 1.25rem;
+  padding: 1.75rem;
+  background: rgba(0, 0, 0, 0.015);
+  border: 1px dashed var(--border);
+  overflow: hidden;
+}
+
+[data-theme=dark] .showcase-visual {
+  background: rgba(255, 255, 255, 0.015);
+}
+
+.showcase-visual::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(var(--border) 1px, transparent 1px);
+  background-size: 18px 18px;
+  opacity: 0.45;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.showcase-visual::after {
+  content: "";
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  background: radial-gradient(circle, rgba(99, 102, 241, 0.22) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+  animation: pulse-glow-orb 8s infinite alternate ease-in-out;
+}
+
+@keyframes pulse-glow-orb {
+  0% { transform: scale(1) translate(-20px, -20px); opacity: 0.5; }
+  100% { transform: scale(1.3) translate(20px, 20px); opacity: 0.85; }
+}
+
+/* Showcase Content Widgets */
+.showcase-card-wrapper {
+  width: 100%;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* 1. Timetable Widget */
+.timetable-widget {
+  padding-left: 1.5rem;
+}
+
+.timeline-connector-line {
+  position: absolute;
+  left: 0.15rem;
+  top: 1.5rem;
+  bottom: 1.5rem;
+  width: 2px;
+  background: linear-gradient(to bottom, var(--primary) 30%, var(--border) 75%);
+  border-style: dashed;
+  opacity: 0.55;
+}
+
+.timeline-widget-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.15rem;
+  box-shadow: var(--shadow);
+  position: relative;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: left;
+}
+
+.timeline-widget-card::before {
+  content: "";
+  position: absolute;
+  left: -1.72rem;
+  top: 1.6rem;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 3px solid var(--border);
+  transition: all 0.3s ease;
+  z-index: 2;
+}
+
+.timeline-widget-card.active-card {
+  border-color: rgba(99, 102, 241, 0.4);
+  box-shadow: 0 15px 30px -10px rgba(99, 102, 241, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.timeline-widget-card.active-card::before {
+  background: var(--primary);
+  border-color: rgba(99, 102, 241, 0.25);
+  box-shadow: 0 0 10px var(--primary);
+}
+
+.timeline-widget-card.upcoming-card {
+  opacity: 0.6;
+  transform: scale(0.96);
+}
+
+.timeline-widget-card.upcoming-card:hover {
+  opacity: 0.9;
+  transform: scale(0.98);
+}
+
+.timeline-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.6rem;
+}
+
+.live-pill {
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--primary);
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 0.2rem 0.55rem;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  letter-spacing: 0.02em;
+}
+
+.pulse-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--primary);
+  border-radius: 50%;
+  animation: live-pulse-dot 1.5s infinite;
+}
+
+@keyframes live-pulse-dot {
+  0% { transform: scale(0.85); opacity: 0.5; }
+  50% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(0.85); opacity: 0.5; }
+}
+
+.upcoming-pill {
+  background: var(--input-bg);
+  color: var(--text-muted);
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+}
+
+.slot-badge {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-family: 'Space Grotesk', monospace;
+  font-size: 0.72rem;
+  font-weight: 900;
+}
+
+.class-name {
+  font-size: 1.05rem;
+  font-weight: 800;
+  margin: 0 0 0.35rem 0;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+.class-meta {
+  display: flex;
+  gap: 0.85rem;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  margin-bottom: 0.85rem;
+}
+
+.class-progress-container {
+  margin-top: 0.75rem;
+}
+
+.class-progress-track {
+  height: 5px;
+  background: var(--input-bg);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.class-progress-fill {
+  height: 100%;
+  background: linear-gradient(to right, var(--primary), var(--accent));
+  border-radius: 10px;
+}
+
+.class-progress-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.62rem;
+  color: var(--text-muted);
+  font-weight: 700;
+  margin-top: 0.35rem;
+}
+
+.class-time-tag {
+  font-size: 0.68rem;
+  color: var(--primary);
+  font-weight: 800;
+}
+
+/* 2. Grades Tracker Widget */
+.grades-header-row {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: 0.85rem;
+}
+
+.grades-stat-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: var(--shadow);
+  text-align: left;
+}
+
+.stat-label {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.stat-value-group {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+  margin-top: 0.35rem;
+}
+
+.stat-value {
+  font-size: 1.85rem;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  font-family: 'Space Grotesk', sans-serif;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.stat-trend {
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 0.15rem 0.45rem;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+.stat-trend.positive {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+}
+
+.credit-progress-box {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.35rem;
+}
+
+.radial-progress-svg {
+  width: 40px;
+  height: 40px;
+}
+
+.radial-track {
+  fill: none;
+  stroke: var(--input-bg);
+  stroke-width: 4;
+}
+
+.radial-fill {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 4;
+  stroke-linecap: round;
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+}
+
+.credit-value {
+  display: flex;
+  flex-direction: column;
+}
+
+.credit-value .current {
+  font-size: 1.15rem;
+  font-weight: 850;
+  line-height: 1.1;
+  color: var(--text);
+}
+
+.credit-value .total {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.grades-chart-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.15rem;
+  box-shadow: var(--shadow);
+  text-align: left;
+}
+
+.chart-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.85rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+}
+
+.chart-subtitle {
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+.chart-container {
+  width: 100%;
+}
+
+.gpa-curve-svg {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.chart-label {
+  font-size: 6.5px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  fill: var(--text-muted);
+  text-anchor: middle;
+  font-weight: 800;
+}
+
+.chart-value {
+  font-size: 5.5px;
+  font-family: 'Space Grotesk', monospace;
+  fill: var(--text-muted);
+  font-weight: 800;
+}
+
+.chart-value.highlight {
+  fill: var(--accent);
+  font-size: 6.5px;
+  font-weight: 900;
+}
+
+/* 3. Mess Menu Parser Widget */
+.mess-menu-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  width: 100%;
+  border-top: 4px solid #f97316;
+  text-align: left;
+}
+
+.mess-menu-header {
+  background: rgba(249, 115, 22, 0.03);
+  padding: 1.15rem;
+  border-bottom: 1px dashed var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.meal-tag-group {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.meal-pill {
+  background: rgba(249, 115, 22, 0.1);
+  color: #f97316;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 0.25rem 0.6rem;
+  border-radius: 5px;
+  letter-spacing: 0.03em;
+}
+
