@@ -14,7 +14,7 @@ const ProtectedRoute = ({ children, requiredRole }) => {
   }
 
   if (!currentUser) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
   }
 
   // Role-based access check

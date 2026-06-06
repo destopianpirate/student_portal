@@ -234,7 +234,7 @@ const SettingsPage = ({ darkMode, setDarkMode }) => {
     setOpenSection(null);
   };
 
-  const handleLogout = async () => { await logout(); navigate('/login'); };
+  const handleLogout = async () => { await logout(); navigate('/'); };
 
   const handleDownloadData = () => {
     if (!userProfile) return;

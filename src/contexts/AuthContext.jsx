@@ -132,7 +132,7 @@ export const AuthProvider = ({ children }) => {
         emailVerified: result.user.emailVerified
       };
       localStorage.setItem('cached_firebase_user', JSON.stringify(simplifiedUser));
-      await trackLogin(result.user);
+      trackLogin(result.user).catch(e => console.warn('trackLogin failed:', e.message));
       return result;
     };
   
@@ -147,7 +147,7 @@ export const AuthProvider = ({ children }) => {
         emailVerified: result.user.emailVerified
       };
       localStorage.setItem('cached_firebase_user', JSON.stringify(simplifiedUser));
-      await trackLogin(result.user);
+      trackLogin(result.user).catch(e => console.warn('trackLogin failed:', e.message));
       return result;
     };
 
@@ -302,7 +302,7 @@ export const AuthProvider = ({ children }) => {
         }
         localStorage.setItem('cached_firebase_user', JSON.stringify(simplifiedUser));
         setCurrentUser(user);
-        await fetchProfile(user);
+        fetchProfile(user).catch(e => console.warn('fetchProfile failed:', e.message));
       } else {
         localStorage.removeItem('cached_firebase_user');
         const localDemo = localStorage.getItem('demo_user');

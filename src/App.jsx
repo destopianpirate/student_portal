@@ -13,6 +13,8 @@ import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import ProfileSetupPage from './pages/ProfileSetupPage';
+import ProtectedRoute from './components/ProtectedRoute';
+import AdminRoute from './components/AdminRoute';
 
 // Lazy-loaded pages
 const TimetablePage = lazy(() => import('./pages/TimetablePage'));
@@ -185,18 +187,18 @@ function App() {
                   <Route path="/" element={<PageWrapper><HomePage /></PageWrapper>} />
                   <Route path="/login" element={<PageWrapper><LoginPage /></PageWrapper>} />
                   <Route path="/signup" element={<PageWrapper><SignupPage /></PageWrapper>} />
-                  <Route path="/profile-setup" element={<PageWrapper><ProfileSetupPage /></PageWrapper>} />
-                  <Route path="/timetable" element={<PageWrapper><TimetablePage /></PageWrapper>} />
-                  <Route path="/explore" element={<PageWrapper><ExplorePage /></PageWrapper>} />
-                  <Route path="/settings" element={<PageWrapper><SettingsPage darkMode={darkMode} setDarkMode={setDarkMode} /></PageWrapper>} />
-                  <Route path="/academics" element={<PageWrapper><AcademicsPage /></PageWrapper>} />
-                  <Route path="/notifications" element={<PageWrapper><NotificationsPage /></PageWrapper>} />
-                  <Route path="/study-tools" element={<PageWrapper><StudyAIPage /></PageWrapper>} />
-                  <Route path="/admin" element={<PageWrapper><AdminPage /></PageWrapper>} />
-                  <Route path="/calendar" element={<PageWrapper><CalendarPage /></PageWrapper>} />
-                  <Route path="/notes" element={<PageWrapper><NotesPage /></PageWrapper>} />
-                  <Route path="/projects" element={<PageWrapper><ProjectsPage /></PageWrapper>} />
-                  <Route path="/certificates" element={<PageWrapper><CertificatesPage /></PageWrapper>} />
+                  <Route path="/profile-setup" element={<ProtectedRoute><PageWrapper><ProfileSetupPage /></PageWrapper></ProtectedRoute>} />
+                  <Route path="/timetable" element={<ProtectedRoute><PageWrapper><TimetablePage /></PageWrapper></ProtectedRoute>} />
+                  <Route path="/explore" element={<ProtectedRoute><PageWrapper><ExplorePage /></PageWrapper></ProtectedRoute>} />
+                  <Route path="/settings" element={<ProtectedRoute><PageWrapper><SettingsPage darkMode={darkMode} setDarkMode={setDarkMode} /></PageWrapper></ProtectedRoute>} />
+                  <Route path="/academics" element={<ProtectedRoute><PageWrapper><AcademicsPage /></PageWrapper></ProtectedRoute>} />
+                  <Route path="/notifications" element={<ProtectedRoute><PageWrapper><NotificationsPage /></PageWrapper></ProtectedRoute>} />
+                  <Route path="/study-tools" element={<ProtectedRoute><PageWrapper><StudyAIPage /></PageWrapper></ProtectedRoute>} />
+                  <Route path="/admin" element={<AdminRoute><PageWrapper><AdminPage /></PageWrapper></AdminRoute>} />
+                  <Route path="/calendar" element={<ProtectedRoute><PageWrapper><CalendarPage /></PageWrapper></ProtectedRoute>} />
+                  <Route path="/notes" element={<ProtectedRoute><PageWrapper><NotesPage /></PageWrapper></ProtectedRoute>} />
+                  <Route path="/projects" element={<ProtectedRoute><PageWrapper><ProjectsPage /></PageWrapper></ProtectedRoute>} />
+                  <Route path="/certificates" element={<ProtectedRoute><PageWrapper><CertificatesPage /></PageWrapper></ProtectedRoute>} />
                 </Routes>
               </AnimatePresence>
             </Suspense>

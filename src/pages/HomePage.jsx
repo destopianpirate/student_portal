@@ -8,6 +8,7 @@ import { fetchAndParseMessMenu } from '../utils/messParser';
 import { getAvatarUrl, getPhotoPosition } from '../utils/avatarUtils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createPortal } from 'react-dom';
+import LandingPage from './LandingPage';
 
 const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 
@@ -901,39 +902,7 @@ const HomePage = () => {
   };
 
   if (!currentUser) {
-    return (
-      <div className="page-container" style={{ position: 'relative' }}>
-        {/* Animated Background Particles */}
-        <div className="hero-particles">
-          {Array.from({ length: 12 }).map((_, i) => (
-            <div key={i} className="particle" style={{
-              left: `${Math.random() * 100}%`,
-              animationDelay: `${Math.random() * 5}s`,
-              animationDuration: `${10 + Math.random() * 10}s`
-            }} />
-          ))}
-        </div>
-        <motion.div 
-          className="hero-section"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-        >
-          <h1 className="hero-title">Smart Student Portal</h1>
-          <p className="hero-subtitle">Your all-in-one academic companion</p>
-          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '2rem' }}>
-            <button className="btn btn-primary" onClick={() => navigate('/login')}>Login</button>
-            <button className="btn btn-outline" onClick={() => navigate('/signup')}>Sign Up</button>
-          </div>
-          <div className="feature-cards">
-            <div className="feature-card"><Calendar size={32} style={{ marginBottom: 10 }} /><h3>Timetable</h3><p>Generate and manage your schedule</p></div>
-            <div className="feature-card"><BookOpen size={32} style={{ marginBottom: 10 }} /><h3>Courses</h3><p>Browse and select courses</p></div>
-            <div className="feature-card"><User size={32} style={{ marginBottom: 10 }} /><h3>Profile</h3><p>Manage your academic profile</p></div>
-          </div>
-        </motion.div>
-        <div className="page-footer">Built with ❤️ by <a href="https://github.com/destopianpirate" target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>destopianpirate</a></div>
-      </div>
-    );
+    return <LandingPage />;
   }
 
   const avatarUrl = getAvatarUrl(userProfile, currentUser?.email);

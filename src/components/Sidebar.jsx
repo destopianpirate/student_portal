@@ -26,7 +26,7 @@ const Sidebar = ({ darkMode, setDarkMode, collapsed, setCollapsed, mobileOpen, s
 
   const handleLogout = async () => {
     await logout();
-    navigate('/login');
+    navigate('/');
   };
 
   const avatarUrl = getAvatarUrl(userProfile, currentUser?.email);
