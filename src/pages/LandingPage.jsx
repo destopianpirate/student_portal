@@ -485,7 +485,7 @@ const LandingPage = () => {
 
           <div className="ai-operator-tabs">
             <button className="ai-operator-tab">Timetable</button>
-            <button className="ai-operator-tab active">Acad-Mate</button>
+            <button className="ai-operator-tab active">A.R.A.I.</button>
             <button className="ai-operator-tab">Grade Tracker</button>
           </div>
 
@@ -498,7 +498,7 @@ const LandingPage = () => {
         <div className="ai-operator-grid">
           {/* Background Watermark Outline Text */}
           <div className="ai-operator-watermark">
-            ACAD-<br />MATE
+            A.R.<br />A.I.
           </div>
 
           {/* Left Col: Info panel */}
@@ -511,7 +511,7 @@ const LandingPage = () => {
             </div>
 
             <span className="ai-operator-codename-header">AI ASSISTANT //</span>
-            <h2 className="ai-operator-codename">ACAD-MATE</h2>
+            <h2 className="ai-operator-codename">A.R.A.I.</h2>
 
             {/* Custom Arknights Badge */}
             <div className="ai-operator-subclass-badge">

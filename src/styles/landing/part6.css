@@ -678,6 +678,8 @@
   justify-content: center;
   align-items: flex-end;
   z-index: 3;
+  -webkit-mask-image: radial-gradient(circle at 50% 45%, #000 40%, transparent 95%);
+  mask-image: radial-gradient(circle at 50% 45%, #000 40%, transparent 95%);
 }
 
 .ai-operator-img {
