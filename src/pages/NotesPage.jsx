@@ -56,14 +56,21 @@ const NotesPage = () => {
 
   return (
     <motion.div className="page-container" variants={containerV} initial="hidden" animate="visible">
-      <motion.div className="page-header-row" variants={itemV}>
-        <div>
-          <h2 className="page-title"><StickyNote size={24} /> Notes</h2>
-          <p className="page-subtitle">Capture and organize your academic notes</p>
+      <motion.div className="dashboard-premium-header" variants={itemV}>
+        <div className="dashboard-premium-header-content">
+          <div className="dashboard-premium-icon-wrap">
+            <StickyNote size={28} />
+          </div>
+          <div>
+            <h2 className="dashboard-premium-title">Notes</h2>
+            <p className="dashboard-premium-subtitle">Capture and organize your academic notes</p>
+          </div>
         </div>
-        <button className="btn btn-primary btn-sm" onClick={() => { setEditingNote(null); setForm({ title: '', content: '', course: '', tags: '', pinned: false, color: '#6366f1' }); setShowEditor(true); }}>
-          <Plus size={16} /> New Note
-        </button>
+        <div className="dashboard-premium-actions">
+          <button className="btn btn-primary btn-sm" onClick={() => { setEditingNote(null); setForm({ title: '', content: '', course: '', tags: '', pinned: false, color: '#6366f1' }); setShowEditor(true); }}>
+            <Plus size={16} /> New Note
+          </button>
+        </div>
       </motion.div>
 
       <motion.div className="search-bar-wrap" variants={itemV}>

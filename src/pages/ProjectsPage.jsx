@@ -35,14 +35,21 @@ const ProjectsPage = () => {
 
   return (
     <motion.div className="page-container" variants={containerV} initial="hidden" animate="visible">
-      <motion.div className="page-header-row" variants={itemV}>
-        <div>
-          <h2 className="page-title"><FolderKanban size={24} /> Projects</h2>
-          <p className="page-subtitle">Track your academic and personal projects</p>
+      <motion.div className="dashboard-premium-header" variants={itemV}>
+        <div className="dashboard-premium-header-content">
+          <div className="dashboard-premium-icon-wrap">
+            <FolderKanban size={28} />
+          </div>
+          <div>
+            <h2 className="dashboard-premium-title">Projects</h2>
+            <p className="dashboard-premium-subtitle">Track your academic and personal projects</p>
+          </div>
         </div>
-        <button className="btn btn-primary btn-sm" onClick={() => { setEditing(null); setForm({ name: '', description: '', status: 'Not Started', techStack: '', github: '', progress: 0 }); setShowForm(true); }}>
-          <Plus size={16} /> New Project
-        </button>
+        <div className="dashboard-premium-actions">
+          <button className="btn btn-primary btn-sm" onClick={() => { setEditing(null); setForm({ name: '', description: '', status: 'Not Started', techStack: '', github: '', progress: 0 }); setShowForm(true); }}>
+            <Plus size={16} /> New Project
+          </button>
+        </div>
       </motion.div>
 
       <motion.div className="cal-filter-row" variants={itemV}>

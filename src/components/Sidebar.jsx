@@ -71,7 +71,7 @@ const Sidebar = ({ darkMode, setDarkMode, collapsed, setCollapsed, mobileOpen, s
     { to: '/academics', icon: GraduationCap, label: 'Academics', shortcut: '3' },
     { to: '/calendar', icon: Calendar, label: 'Calendar', shortcut: '4' },
     { to: '/notes', icon: StickyNote, label: 'Notes', shortcut: '5' },
-    { to: '/study-tools', icon: Brain, label: 'AI Tools', shortcut: '6' },
+    { to: '/study-tools', icon: Brain, label: 'A.R.A.I.', shortcut: '6' },
     { to: '/projects', icon: FolderKanban, label: 'Projects', shortcut: '7' },
     { to: '/certificates', icon: Award, label: 'Certificates', shortcut: '' },
     { to: '/explore', icon: Compass, label: 'Explore', shortcut: '' },

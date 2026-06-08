@@ -293,14 +293,24 @@ const CalendarPage = () => {
 
   return (
     <motion.div className="page-container calendar-page-container" variants={containerVariants} initial="hidden" animate="visible">
-      <motion.div variants={itemVariants} className="page-header-row">
-        <div>
-          <h2 className="page-title"><Calendar size={24} /> Calendar</h2>
-          <p className="page-subtitle">Holidays, academic events, and your personal schedule</p>
+      <motion.div variants={itemVariants} className="dashboard-premium-header">
+        <div className="dashboard-premium-header-content">
+          <div className="dashboard-premium-icon-wrap">
+            <Calendar size={28} />
+          </div>
+          <div>
+            <h2 className="dashboard-premium-title">Calendar</h2>
+            <p className="dashboard-premium-subtitle">Holidays, academic events, and your personal schedule</p>
+          </div>
         </div>
-        <button className="btn btn-primary btn-sm add-event-btn" onClick={() => setShowAddModal(true)}>
-          <Plus size={16} /> <span className="add-event-text">Add Event</span>
-        </button>
+        <div className="dashboard-premium-actions">
+          <button className="btn btn-primary btn-sm" onClick={() => { setEventForm({ title: '', date: activeDateStr, type: 'personal', desc: '' }); setShowAddModal(true); }}>
+            <Plus size={16} /> Add Event
+          </button>
+          <button className="btn btn-outline btn-sm" onClick={() => setShowTimetableModal(true)}>
+            <BookOpen size={16} /> Show Timetable
+          </button>
+        </div>
       </motion.div>
 
       {/* Tabs */}

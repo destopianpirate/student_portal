@@ -10,7 +10,7 @@ const PAGES = [
   { name: 'Academics', path: '/academics', icon: GraduationCap, keywords: ['academics', 'grades', 'attendance', 'goals', 'courses', 'gpa'] },
   { name: 'Calendar', path: '/calendar', icon: Calendar, keywords: ['calendar', 'holidays', 'events', 'academic calendar'] },
   { name: 'Notes', path: '/notes', icon: StickyNote, keywords: ['notes', 'notebook', 'write'] },
-  { name: 'AI Study Tools', path: '/study-tools', icon: Brain, keywords: ['ai', 'study', 'flashcards', 'pomodoro', 'summarizer'] },
+  { name: 'A.R.A.I.', path: '/study-tools', icon: Brain, keywords: ['ai', 'study', 'flashcards', 'pomodoro', 'summarizer', 'arai'] },
   { name: 'Projects', path: '/projects', icon: FolderKanban, keywords: ['projects', 'kanban', 'tasks'] },
   { name: 'Certificates', path: '/certificates', icon: Award, keywords: ['certificates', 'certifications', 'achievements'] },
   { name: 'Explore', path: '/explore', icon: Compass, keywords: ['explore', 'discover'] },

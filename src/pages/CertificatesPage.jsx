@@ -37,12 +37,19 @@ const CertificatesPage = () => {
 
   return (
     <motion.div className="page-container" variants={containerV} initial="hidden" animate="visible">
-      <motion.div className="page-header-row" variants={itemV}>
-        <div>
-          <h2 className="page-title"><Award size={24} /> Certificates</h2>
-          <p className="page-subtitle">Your certificate vault and credentials</p>
+      <motion.div className="dashboard-premium-header" variants={itemV}>
+        <div className="dashboard-premium-header-content">
+          <div className="dashboard-premium-icon-wrap">
+            <Award size={28} />
+          </div>
+          <div>
+            <h2 className="dashboard-premium-title">Certificates</h2>
+            <p className="dashboard-premium-subtitle">Your certificate vault and credentials</p>
+          </div>
         </div>
-        <button className="btn btn-primary btn-sm" onClick={() => setShowForm(true)}><Plus size={16} /> Add Certificate</button>
+        <div className="dashboard-premium-actions">
+          <button className="btn btn-primary btn-sm" onClick={() => setShowForm(true)}><Plus size={16} /> Add Certificate</button>
+        </div>
       </motion.div>
 
       <motion.div className="search-bar-wrap" variants={itemV}>
