@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { NavLink, useNavigate, useLocation } from 'react-router-dom';
-import { Home, Calendar, GraduationCap, Brain, Compass, Settings, Bell, Sun, Moon, LogOut, ChevronLeft, ChevronRight, Search, Shield, StickyNote, BarChart3, FolderKanban, BookMarked, Award, Wrench, Command } from 'lucide-react';
+import { Home, Calendar, Clock, GraduationCap, Brain, Compass, Settings, Bell, Sun, Moon, LogOut, ChevronLeft, ChevronRight, Search, Shield, StickyNote, BarChart3, FolderKanban, BookMarked, Award, Wrench, Command } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNotifications } from '../contexts/NotificationContext';
 import { useCalendar } from '../contexts/CalendarContext';
@@ -67,7 +67,7 @@ const Sidebar = ({ darkMode, setDarkMode, collapsed, setCollapsed, mobileOpen, s
   }, [miniCalDate, hasEventsOnDate, getEventsForDate]);
 
   const navItems = [
-    { to: '/timetable', icon: Calendar, label: 'Timetable', shortcut: '2' },
+    { to: '/timetable', icon: Clock, label: 'Timetable', shortcut: '2' },
     { to: '/academics', icon: GraduationCap, label: 'Academics', shortcut: '3' },
     { to: '/calendar', icon: Calendar, label: 'Calendar', shortcut: '4' },
     { to: '/notes', icon: StickyNote, label: 'Notes', shortcut: '5' },
