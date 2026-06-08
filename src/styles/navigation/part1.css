@@ -274,6 +274,10 @@
   overflow: hidden
 }
 
+.sidebar.dropdown-open {
+  overflow: visible !important;
+}
+
 .sidebar::-webkit-scrollbar {
   width: 4px
 }

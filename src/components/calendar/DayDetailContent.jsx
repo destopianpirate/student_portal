@@ -40,14 +40,14 @@ const DayDetailContent = ({
           <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: 'var(--text)', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
             <span>{formattedDate}</span>
             <button 
-              onClick={() => setShowDayTimetable(prev => !prev)}
+              onClick={() => setShowDayTimetable(true)}
               style={{ 
                 fontSize: '0.68rem', 
                 padding: '0.15rem 0.45rem', 
                 borderRadius: '6px', 
-                background: showDayTimetable ? 'var(--primary)' : 'var(--input-bg)', 
+                background: 'var(--input-bg)', 
                 border: '1px solid var(--border)', 
-                color: showDayTimetable ? '#ffffff' : 'var(--text-muted)', 
+                color: 'var(--text-muted)', 
                 cursor: 'pointer', 
                 fontWeight: 600,
                 display: 'inline-flex',
@@ -57,7 +57,7 @@ const DayDetailContent = ({
                 marginLeft: '0.25rem'
               }}
             >
-              <Clock size={11} /> {showDayTimetable ? 'Hide Timetable' : 'Show Timetable'}
+              <Clock size={11} /> Show Timetable
             </button>
           </h4>
           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
@@ -81,58 +81,14 @@ const DayDetailContent = ({
         </div>
       </div>
 
-      {/* Synced Day Timetable (Inline Accordion) */}
-      <AnimatePresence initial={false}>
-        {showDayTimetable && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.25, ease: 'easeInOut' }}
-            style={{ overflow: 'hidden', display: 'flex', flexDirection: 'column', gap: '0.5rem', borderBottom: '1px solid var(--border)', paddingBottom: '1rem' }}
-          >
-            <h5 style={{ margin: 0, fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-              <Clock size={12} /> Synced Timetable Classes
-            </h5>
-            {isHoliday ? (
-              <div style={{ fontSize: '0.75rem', color: '#ef4444', background: 'rgba(239, 68, 68, 0.04)', padding: '0.45rem 0.65rem', borderRadius: '0.375rem', display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-                <strong>Holiday: {dayEvents.holidays[0].name}</strong>
-                <span style={{ fontSize: '0.68rem', opacity: 0.8 }}>No classes scheduled today! 🎉</span>
-              </div>
-            ) : ['Saturday', 'Sunday'].includes(selectedDayName) ? (
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', background: 'var(--input-bg)', padding: '0.45rem 0.65rem', borderRadius: '0.375rem' }}>
-                Enjoy your weekend! No classes scheduled. ☕
-              </div>
-            ) : clickedDayClasses.length === 0 ? (
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontStyle: 'italic', padding: '0.15rem 0' }}>
-                No classes scheduled for {selectedDayName}.
-              </div>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                {clickedDayClasses.map((slot, idx) => (
-                  <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.45rem 0.55rem', background: 'var(--input-bg)', borderRadius: '0.375rem', fontSize: '0.75rem', borderLeft: '3px solid var(--primary)', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center', flex: 1, minWidth: 0 }}>
-                      <GraduationCap size={14} style={{ color: 'var(--primary)', flexShrink: 0 }} />
-                      <div style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        <strong style={{ color: 'var(--text)' }}>{slot.entries[0]?.code || 'Course'}</strong>
-                        <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '0.05rem' }}>{slot.entries[0]?.type || 'Lecture'} &bull; {slot.entries[0]?.venue || 'N/A'}</div>
-                      </div>
-                    </div>
-                    <span style={{ fontSize: '0.68rem', fontWeight: 600, color: 'var(--text-muted)' }}>{slot.time.split(' – ')[0]}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Synced Day Timetable - Removed from inline accordion and moved to dialog modal */}
 
       {/* Dynamic Daily Agenda List */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
         <h5 style={{ margin: 0, fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--text-muted)', letterSpacing: '0.5px' }}>
           Events &amp; Holidays
         </h5>
-        {dayEvents.all.length === 0 ? (
+        {!(dayEvents.holidays.length > 0 || dayEvents.academic.length > 0 || dayEvents.custom.filter(e => e.category !== 'exam' && e.category !== 'quiz').length > 0) ? (
           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontStyle: 'italic', padding: '0.15rem 0' }}>
             No scheduled events for this day.
           </div>
@@ -158,7 +114,7 @@ const DayDetailContent = ({
                 </div>
               </div>
             ))}
-            {dayEvents.custom.map((e, idx) => (
+            {dayEvents.custom.filter(e => e.category !== 'exam' && e.category !== 'quiz').map((e, idx) => (
               <div key={`c-${e.id}`} style={{ display: 'flex', gap: '0.5rem', background: 'var(--input-bg)', borderLeft: `3px solid ${e.color || '#3b82f6'}`, padding: '0.45rem 0.55rem', borderRadius: '0.375rem', fontSize: '0.75rem', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flex: 1, minWidth: 0 }}>
                   <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: e.color || '#3b82f6', flexShrink: 0 }} />

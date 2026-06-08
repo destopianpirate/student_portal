@@ -37,6 +37,20 @@ const CalendarPage = () => {
   }, []);
   const activeDateStr = selectedDate || todayStr;
 
+  const customNonExamEvents = useMemo(() => {
+    return customEvents.filter(e => e.category !== 'exam' && e.category !== 'quiz');
+  }, [customEvents]);
+
+  const formattedDate = useMemo(() => {
+    if (!activeDateStr) return '';
+    return new Date(activeDateStr + 'T00:00').toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  }, [activeDateStr]);
+
   const [showAddModal, setShowAddModal] = useState(false);
   const [showMobileDetail, setShowMobileDetail] = useState(false);
   const [eventForm, setEventForm] = useState({ title: '', date: '', time: '', endTime: '', category: 'personal', color: '#3b82f6' });
@@ -151,6 +165,7 @@ const CalendarPage = () => {
     const monthEnd = `${y}-${String(m + 1).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`;
 
     return academicEvents.filter(e => {
+      if (e.category === 'exam' || e.category === 'quiz') return false; // Exclude exams & quizzes from Academic Periods
       const span = daysBetween(e.date, e.endDate);
       if (span <= 3) return false; // short events are marked on the calendar
       const eEnd = e.endDate || e.date;
@@ -214,6 +229,10 @@ const CalendarPage = () => {
     if (!activeDateStr) return null;
     return getEventsForDate(activeDateStr);
   }, [activeDateStr, getEventsForDate]);
+
+  const isHoliday = useMemo(() => {
+    return selectedEvents?.holidays && selectedEvents.holidays.length > 0;
+  }, [selectedEvents]);
 
   const isFormValid = () => {
     if (!eventForm.title || !eventForm.date) return false;
@@ -296,7 +315,7 @@ const CalendarPage = () => {
           <BookOpen size={16} /> Academic
         </button>
         <button className={`study-tab ${activeTab === 'events' ? 'active' : ''}`} onClick={() => setActiveTab('events')}>
-          <PartyPopper size={16} /> My Events <span className="tab-badge">{customEvents.length}</span>
+          <PartyPopper size={16} /> My Events <span className="tab-badge">{customNonExamEvents.length}</span>
         </button>
       </motion.div>
 
@@ -461,7 +480,7 @@ const CalendarPage = () => {
       {/* My Events Tab */}
       {activeTab === 'events' && (
         <motion.div variants={itemVariants}>
-          {customEvents.length === 0 ? (
+          {customNonExamEvents.length === 0 ? (
             <div className="empty-state glass-card" style={{ padding: '4rem 2rem' }}>
               <PartyPopper size={48} style={{ opacity: 0.3, marginBottom: '1rem' }} />
               <p style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>No custom events yet</p>
@@ -469,7 +488,7 @@ const CalendarPage = () => {
             </div>
           ) : (
             <div className="custom-events-grid">
-              {customEvents.sort((a,b) => a.date.localeCompare(b.date)).map(e => (
+              {customNonExamEvents.sort((a,b) => a.date.localeCompare(b.date)).map(e => (
                 <div key={e.id} className="custom-event-card glass-card">
                   <div className="custom-event-color" style={{ background: e.color || '#6366f1' }} />
                   <div className="custom-event-body">
@@ -632,6 +651,77 @@ const CalendarPage = () => {
               <div className="modal-footer">
                 <button className="btn btn-outline" onClick={() => setShowAddModal(false)}>Cancel</button>
                 <button className="btn btn-primary" onClick={handleAddEvent} disabled={!isFormValid()}>Save Event</button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Timetable Modal (Dialog Box) */}
+      <AnimatePresence>
+        {showDayTimetable && (
+          <div className="modal-overlay" onClick={() => setShowDayTimetable(false)}>
+            <motion.div 
+              className="modal-content glass-card timetable-dialog-modal" 
+              initial={{ scale: 0.95, opacity: 0, y: 20 }} 
+              animate={{ scale: 1, opacity: 1, y: 0 }} 
+              exit={{ scale: 0.95, opacity: 0, y: 20 }}
+              onClick={e => e.stopPropagation()}
+              style={{ maxWidth: '480px', width: '90%' }}
+            >
+              <div className="modal-header">
+                <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
+                  <Clock size={20} style={{ color: 'var(--primary)' }} />
+                  <span>Timetable - {selectedDayName}</span>
+                </h3>
+                <button className="modal-close" onClick={() => setShowDayTimetable(false)}><X size={20} /></button>
+              </div>
+              <div className="modal-body" style={{ maxHeight: '60vh', overflowY: 'auto', padding: '1rem 0' }}>
+                <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '0 0 1rem 0' }}>
+                  Classes scheduled for {formattedDate}
+                </p>
+                
+                {isHoliday ? (
+                  <div style={{ textAlign: 'center', padding: '2rem 1rem', background: 'rgba(239, 68, 68, 0.05)', borderRadius: '12px', border: '1px solid rgba(239, 68, 68, 0.1)' }}>
+                    <Star size={32} style={{ color: '#ef4444', marginBottom: '0.5rem' }} />
+                    <h4 style={{ margin: '0 0 0.25rem 0', color: '#ef4444' }}>Holiday: {selectedEvents?.holidays[0]?.name}</h4>
+                    <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>No classes scheduled today! 🎉</p>
+                  </div>
+                ) : ['Saturday', 'Sunday'].includes(selectedDayName) ? (
+                  <div style={{ textAlign: 'center', padding: '2rem 1rem', background: 'var(--input-bg)', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                    <span style={{ fontSize: '2rem', display: 'block', marginBottom: '0.5rem' }}>☕</span>
+                    <h4 style={{ margin: '0 0 0.25rem 0', color: 'var(--text)' }}>Weekend</h4>
+                    <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>Enjoy your weekend! No classes scheduled.</p>
+                  </div>
+                ) : clickedDayClasses.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '2rem 1rem', background: 'var(--input-bg)', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                    <span style={{ fontSize: '2rem', display: 'block', marginBottom: '0.5rem' }}>📖</span>
+                    <h4 style={{ margin: '0 0 0.25rem 0', color: 'var(--text)' }}>No Classes</h4>
+                    <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--text-muted)' }}>No classes scheduled for this day.</p>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {clickedDayClasses.map((slot, idx) => (
+                      <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem 1rem', background: 'var(--input-bg)', borderRadius: '8px', borderLeft: '4px solid var(--primary)', alignItems: 'center', boxShadow: '0 2px 4px rgba(0,0,0,0.02)' }}>
+                        <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center', flex: 1, minWidth: 0 }}>
+                          <GraduationCap size={18} style={{ color: 'var(--primary)', flexShrink: 0 }} />
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <strong style={{ color: 'var(--text)', fontSize: '0.9rem' }}>{slot.entries[0]?.code || 'Course'}</strong>
+                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
+                              {slot.entries[0]?.type || 'Lecture'} &bull; {slot.entries[0]?.venue || 'N/A'}
+                            </div>
+                          </div>
+                        </div>
+                        <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', background: 'var(--card-bg)', padding: '0.25rem 0.5rem', borderRadius: '6px', border: '1px solid var(--border)' }}>
+                          {slot.time.split(/[-–—]/)[0]}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="modal-footer" style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem', display: 'flex', justifyContent: 'flex-end' }}>
+                <button className="btn btn-primary" onClick={() => setShowDayTimetable(false)}>Close</button>
               </div>
             </motion.div>
           </div>

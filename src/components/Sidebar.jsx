@@ -89,7 +89,7 @@ const Sidebar = ({ darkMode, setDarkMode, collapsed, setCollapsed, mobileOpen, s
 
   return (
     <motion.aside
-      className={`sidebar ${effectiveCollapsed ? 'collapsed' : 'expanded'} ${mobileOpen ? 'mobile-open' : ''}`}
+      className={`sidebar ${effectiveCollapsed ? 'collapsed' : 'expanded'} ${mobileOpen ? 'mobile-open' : ''} ${effectiveCollapsed && profileDropdownOpen ? 'dropdown-open' : ''}`}
       animate={{ width: isMobile ? 260 : (effectiveCollapsed ? 68 : 260) }}
       transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
     >
