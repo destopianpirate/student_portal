@@ -8,7 +8,7 @@ import { getAvatarUrl, getPhotoPosition } from '../utils/avatarUtils';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Sidebar = ({ darkMode, setDarkMode, collapsed, setCollapsed, mobileOpen, setMobileOpen, onOpenCommandPalette }) => {
-  const { currentUser, userProfile, logout, isAdmin } = useAuth();
+  const { currentUser, userProfile, logout, isAdmin, setShowLogoutConfirm } = useAuth();
   const { unreadCount } = useNotifications();
   const { hasEventsOnDate, nextHoliday, getEventsForDate } = useCalendar();
   const navigate = useNavigate();
@@ -126,7 +126,7 @@ const Sidebar = ({ darkMode, setDarkMode, collapsed, setCollapsed, mobileOpen, s
               </div>
             )}
             {!effectiveCollapsed && (
-              <button className="sidebar-logout-btn" onClick={(e) => { e.stopPropagation(); handleLogout(); }} title="Logout">
+              <button className="sidebar-logout-btn" onClick={(e) => { e.stopPropagation(); setShowLogoutConfirm(true); }} title="Logout">
                 <LogOut size={14} />
               </button>
             )}
@@ -168,7 +168,7 @@ const Sidebar = ({ darkMode, setDarkMode, collapsed, setCollapsed, mobileOpen, s
                     </button>
                     <button 
                       className="profile-menu-dropdown-item text-danger" 
-                      onClick={async () => { setProfileDropdownOpen(false); await handleLogout(); }}
+                      onClick={() => { setProfileDropdownOpen(false); setShowLogoutConfirm(true); }}
                     >
                       <LogOut size={14} /> Logout
                     </button>

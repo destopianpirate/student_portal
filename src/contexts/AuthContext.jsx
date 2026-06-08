@@ -34,6 +34,7 @@ export const AuthProvider = ({ children }) => {
   });
 
   const [loading, setLoading] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   // Derived role state
   const userRole = userProfile?.role || 'student';
@@ -322,6 +323,7 @@ export const AuthProvider = ({ children }) => {
       currentUser, userProfile, loading,
       userRole, isAdmin,
       login, signup, loginWithGoogle, loginAsDemo, logout,
+      showLogoutConfirm, setShowLogoutConfirm,
       resetPassword, changePassword,
       saveProfile, saveTimetable, fetchProfile,
       lookupEmailByUsername, checkUsernameAvailable,

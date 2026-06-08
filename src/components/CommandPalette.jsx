@@ -28,7 +28,7 @@ const CommandPalette = ({ isOpen, onClose, darkMode, setDarkMode }) => {
   const inputRef = useRef(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, setShowLogoutConfirm } = useAuth();
 
   // Filter results
   const results = useMemo(() => {
@@ -78,8 +78,7 @@ const CommandPalette = ({ isOpen, onClose, darkMode, setDarkMode }) => {
     } else if (item.action === 'toggle-theme') {
       setDarkMode(!darkMode);
     } else if (item.action === 'logout') {
-      logout();
-      navigate('/login');
+      setShowLogoutConfirm(true);
     }
     onClose();
   };

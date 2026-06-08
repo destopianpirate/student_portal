@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import Sidebar from './components/Sidebar';
 import Navbar from './components/Navbar';
 import CommandPalette from './components/CommandPalette';
+import LogoutConfirmModal from './components/LogoutConfirmModal';
 import { Menu, X, Sun, Moon, Settings, LogOut } from 'lucide-react';
 import ToastContainer from './components/ToastContainer';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -53,7 +54,13 @@ const GUEST_PATHS = ['/login', '/signup', '/profile-setup'];
 function App() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { currentUser, userProfile, logout, loading } = useAuth();
+  const { currentUser, userProfile, logout, loading, showLogoutConfirm, setShowLogoutConfirm } = useAuth();
+  
+  const handleActualLogout = async () => {
+    setShowLogoutConfirm(false);
+    await logout();
+    navigate('/');
+  };
   const [darkMode, rawSetDarkMode] = useState(() => localStorage.getItem('theme') === 'dark');
   
   const savedAccent = userProfile?.preferences?.accent || localStorage.getItem('theme_accent') || 'indigo';
@@ -225,7 +232,7 @@ function App() {
                         </button>
                         <button 
                           className="profile-menu-dropdown-item text-danger" 
-                          onClick={async () => { setProfileMenuOpen(false); await logout(); navigate('/'); }}
+                          onClick={() => { setProfileMenuOpen(false); setShowLogoutConfirm(true); }}
                         >
                           <LogOut size={14} /> Logout
                         </button>
@@ -285,6 +292,15 @@ function App() {
       {/* Mobile sidebar toggle button is now integrated into the mobile-app-header */}
 
       <CommandPalette isOpen={cmdOpen} onClose={() => setCmdOpen(false)} darkMode={darkMode} setDarkMode={setDarkMode} />
+      <AnimatePresence>
+        {showLogoutConfirm && (
+          <LogoutConfirmModal 
+            isOpen={showLogoutConfirm} 
+            onClose={() => setShowLogoutConfirm(false)} 
+            onConfirm={handleActualLogout} 
+          />
+        )}
+      </AnimatePresence>
       <ToastContainer />
     </>
   );

@@ -38,7 +38,7 @@ const applyThemeAccent = (accent) => {
 };
 
 const SettingsPage = ({ darkMode, setDarkMode }) => {
-  const { currentUser, userProfile, logout, saveProfile, deleteAccount, resetPassword, sendVerificationEmail } = useAuth();
+  const { currentUser, userProfile, logout, saveProfile, deleteAccount, resetPassword, sendVerificationEmail, setShowLogoutConfirm } = useAuth();
   const { addNotification } = useNotifications();
   const navigate = useNavigate();
   const location = useLocation();
@@ -169,7 +169,7 @@ const SettingsPage = ({ darkMode, setDarkMode }) => {
     setOpenSection(null);
   };
 
-  const handleLogout = async () => { await logout(); navigate('/'); };
+  const handleLogout = () => { setShowLogoutConfirm(true); };
 
   const handleImportJSON = (e) => {
     const file = e.target.files[0];
