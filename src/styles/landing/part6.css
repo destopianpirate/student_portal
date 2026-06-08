@@ -9,325 +9,49 @@
   --desk-border: rgba(255, 0, 127, 0.15);
 }
 
-/* 1. Everything You Need, Unified: Desk Workspace Mockup */
-.desk-workspace-container {
-  width: 100%;
-  max-width: 1200px;
-  background: linear-gradient(135deg, #09090b 0%, #18181b 100%);
-  border: 1px solid rgba(255, 255, 255, 0.03);
-  border-radius: 2rem;
-  padding: 4rem 2rem;
+/* 1. Everything You Need, Unified: Widescreen Banner Mockup */
+.desk-workspace-fullwidth-banner {
+  width: 100vw;
   position: relative;
-  overflow: hidden;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-  margin-top: 2rem;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+  margin-top: 3.5rem;
   margin-bottom: 5rem;
-}
-
-.desk-workspace-grid {
-  display: grid;
-  grid-template-columns: 1.2fr 0.8fr;
-  gap: 3rem;
-  align-items: center;
-}
-
-/* Desk Surface layout simulating Image 1 */
-.desk-surface {
-  position: relative;
-  width: 100%;
-  height: 480px;
-  background: radial-gradient(circle at 50% 50%, rgba(255, 0, 127, 0.04) 0%, transparent 70%);
-  border-radius: 1.5rem;
-  border: 1px solid rgba(255, 255, 255, 0.05);
   overflow: hidden;
-  display: block;
-}
-
-/* 3D Perspective and rotation wrapper on laptop */
-@media (min-width: 901px) {
-  .desk-surface-perspective {
-    width: 100%;
-    height: 100%;
-    position: relative;
-    perspective: 1200px;
-  }
-
-  .desk-surface-3d {
-    width: 100%;
-    height: 100%;
-    position: relative;
-    transform: rotateX(16deg) rotateY(-12deg) rotateZ(-2deg);
-    transform-style: preserve-3d;
-    transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  .desk-surface:hover .desk-surface-3d {
-    transform: rotateX(10deg) rotateY(-6deg) rotateZ(-1deg);
-  }
-}
-
-/* Individual Devices */
-.desk-device {
-  position: absolute;
-  border-radius: 12px;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4), 
-              0 0 0 1px rgba(255, 255, 255, 0.05);
+  border-top: 2px solid #111;
+  border-bottom: 2px solid #111;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6), 
+              0 0 35px rgba(255, 0, 127, 0.18);
   background: #09090b;
-  overflow: hidden;
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  cursor: pointer;
 }
 
-.desk-device:hover, .desk-device.active {
-  box-shadow: 0 20px 45px rgba(255, 0, 127, 0.25), 
-              0 0 15px rgba(255, 0, 127, 0.15),
-              0 0 0 1px var(--neon-pink);
-  transform: translateY(-8px) translateZ(15px);
-  z-index: 10 !important;
+.desk-workspace-banner-img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* 1. Large Monitor Frame */
-.desk-device.device-monitor {
-  width: 58%;
-  height: 270px;
-  top: 15px;
-  left: 2%;
-  z-index: 3;
-}
-
-.monitor-stand {
-  position: absolute;
-  width: 100px;
-  height: 60px;
-  background: #1e1e24;
-  bottom: 0;
-  left: calc(29% - 50px);
-  z-index: 1;
-  transform: translateY(60px);
-  border-radius: 8px 8px 0 0;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-/* 2. Keyboard */
-.desk-device-keyboard {
-  position: absolute;
-  width: 42%;
-  height: 85px;
-  bottom: 65px;
-  left: 10%;
-  background: linear-gradient(135deg, #18181b 0%, #09090b 100%);
-  border-radius: 6px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
-  padding: 8px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  z-index: 4;
-}
-
-.keyboard-row {
-  display: flex;
-  gap: 3px;
-  flex: 1;
-}
-
-.key-cap {
-  flex: 1;
-  background: #27272a;
-  border-radius: 2px;
-  border-bottom: 2px solid #09090b;
-}
-
-.key-cap.space-bar {
-  flex: 5;
-  background: #3f3f46;
-}
-
-/* 3. Tablet */
-.desk-device.device-tablet {
-  width: 36%;
-  height: 220px;
-  top: 35px;
-  right: 4%;
-  z-index: 2;
-  transform: rotateZ(3deg);
-}
-
-/* 4. Smartphone */
-.desk-device.device-phone {
-  width: 18%;
-  height: 170px;
-  bottom: 25px;
-  right: 12%;
-  z-index: 5;
-  transform: rotateZ(-8deg);
-}
-
-/* 5. Notebook / Study Journal */
-.desk-device.device-notebook {
-  width: 38%;
-  height: 130px;
-  bottom: 25px;
-  left: 45%;
-  z-index: 3;
-  transform: rotateZ(4deg);
-  background: #18181b;
-  border-left: 6px solid var(--neon-pink);
-  padding: 12px;
-  text-align: left;
-}
-
-/* 6. Stationery / Cards */
-.desk-device.device-card-gateway {
-  width: 18%;
-  height: 80px;
-  bottom: 165px;
-  right: 32%;
-  z-index: 2;
-  transform: rotateZ(12deg);
-  background: linear-gradient(135deg, #27272a 0%, #09090b 100%);
-  padding: 8px;
-  text-align: left;
-}
-
-.desk-device.device-card-gateway:hover {
-  transform: rotateZ(12deg) translateY(-8px) translateZ(15px);
-}
-
-/* UI Content Simulators inside Devices */
-.mock-ui-header {
-  height: 18px;
-  background: #18181b;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  display: flex;
-  align-items: center;
-  padding: 0 8px;
-  gap: 4px;
-}
-
-.mock-ui-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.mock-ui-dot:nth-child(1) { background: #ef4444; }
-.mock-ui-dot:nth-child(2) { background: #f59e0b; }
-.mock-ui-dot:nth-child(3) { background: #10b981; }
-
-.mock-ui-address {
-  font-size: 0.5rem;
-  color: rgba(255, 255, 255, 0.3);
-  margin-left: 8px;
-  font-family: monospace;
-}
-
-.mock-ui-body {
-  height: calc(100% - 18px);
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  overflow: hidden;
-  font-size: 0.65rem;
-  color: #e2e8f0;
-}
-
-/* Details Panel next to desk */
-.desk-details-panel {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  text-align: left;
-  border-left: 1px solid rgba(255, 255, 255, 0.08);
-  padding-left: 2rem;
-  min-height: 280px;
-}
-
-.desk-details-tag {
-  color: var(--neon-pink);
-  font-size: 0.75rem;
-  font-weight: 850;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-}
-
-.desk-details-title {
-  font-size: 1.8rem;
-  font-weight: 850;
-  line-height: 1.25;
-  margin-bottom: 1rem;
-  color: #fff;
-  letter-spacing: -0.02em;
-}
-
-.desk-details-desc {
-  font-size: 0.95rem;
-  line-height: 1.6;
-  color: var(--text-muted);
-  margin-bottom: 1.5rem;
-}
-
-.desk-details-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.desk-details-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  font-size: 0.85rem;
-  color: #e2e8f0;
-  font-weight: 650;
-}
-
-.desk-details-item svg {
-  color: var(--neon-pink);
-  flex-shrink: 0;
-}
-
-/* Interactive helper prompts */
-.desk-interactive-prompt {
-  font-size: 0.78rem;
-  color: rgba(255, 255, 255, 0.4);
-  margin-top: 1rem;
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  justify-content: center;
-}
-
-.desk-interactive-prompt span {
-  animation: pulse-pink 2s infinite;
-}
-
-@keyframes pulse-pink {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 1; color: var(--neon-pink); }
+.desk-workspace-fullwidth-banner:hover .desk-workspace-banner-img {
+  transform: scale(1.025);
 }
 
 
-/* 2. Meet Acad-AI: Tactical Character Showcase (Image 2 style) */
-/* 2. Meet Acad-AI: Tactical Character Showcase (Image 2 style) */
+/* 2. Meet A.R.A.I.: Tactical Character Showcase (Image 2 style) */
 .ai-operator-section {
   width: 100%;
   max-width: 1200px;
-  background: #d4d6db;
-  border: 1px solid #9c9da1;
+  background: #ffffff;
+  border: 2px solid #111;
   border-radius: 4px;
   margin-bottom: 6rem;
   padding: 0;
   overflow: hidden;
   position: relative;
-  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
@@ -336,8 +60,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0.75rem 2rem;
-  border-bottom: 1.5px solid #111;
+  padding: 0.6rem 2.5rem;
+  border-bottom: 2px solid #111;
   background: #191b1f;
   position: relative;
   z-index: 10;
@@ -350,48 +74,49 @@
 }
 
 .logo-chinese {
-  font-size: 1.35rem;
-  font-weight: 950;
+  font-size: 1.45rem;
+  font-weight: 900;
   color: #fff;
   letter-spacing: 0.05em;
-  font-family: "Microsoft YaHei", "SimHei", sans-serif;
+  font-family: "Impact", "Arial Black", sans-serif;
+  text-transform: uppercase;
 }
 
 .logo-divider {
-  width: 1.5px;
-  height: 14px;
-  background: rgba(255, 255, 255, 0.3);
+  width: 2px;
+  height: 18px;
+  background: rgba(255, 255, 255, 0.4);
 }
 
 .ai-operator-logo {
-  font-size: 0.75rem;
-  font-weight: 800;
-  color: rgba(255, 255, 255, 0.75);
-  letter-spacing: 0.1em;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.6);
+  letter-spacing: 0.15em;
   text-transform: uppercase;
+  font-family: monospace;
 }
 
 /* Pill Search bar layout from Image 2 */
 .ai-operator-search-wrap {
   position: relative;
-  width: 250px;
+  width: 260px;
 }
 
 .ai-operator-search-bar {
   width: 100%;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1.5px solid #888;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1.5px solid #666;
   border-radius: 30px;
   padding: 0.35rem 1rem 0.35rem 2rem;
   color: #fff;
   font-size: 0.78rem;
   font-weight: 600;
   outline: none;
-  transition: all 0.3s;
 }
 
 .ai-operator-search-bar::placeholder {
-  color: #888;
+  color: #666;
 }
 
 .ai-operator-search-icon {
@@ -399,26 +124,28 @@
   left: 0.75rem;
   top: 50%;
   transform: translateY(-50%);
-  color: #888;
+  color: #666;
   pointer-events: none;
 }
 
 .ai-operator-tabs {
   display: flex;
-  gap: 2rem;
+  gap: 1.5rem;
   align-items: center;
 }
 
 .ai-operator-tab {
-  font-size: 0.82rem;
-  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.45);
   font-weight: 750;
-  text-transform: capitalize;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   cursor: pointer;
-  transition: all 0.25s;
+  transition: all 0.2s;
   background: none;
   border: none;
-  padding: 0.25rem 0.5rem;
+  padding: 0.4rem 0.8rem;
+  position: relative;
 }
 
 .ai-operator-tab:hover, .ai-operator-tab.active {
@@ -430,11 +157,12 @@
   height: 28px;
   border-radius: 50%;
   border: 1.5px solid #fff;
-  background: #3f3f46;
+  background: #27272a;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
 }
 
 .ai-operator-profile-avatar img {
@@ -461,22 +189,24 @@
   position: absolute;
   width: 80%;
   height: 100%;
-  background: #ececee;
+  background: #ffffff;
   transform: skewX(-20deg);
   left: -15%;
   top: 0;
   border-right: 5px solid #ffffff;
+  display: none;
 }
 
 .bg-slash-dark {
   position: absolute;
   width: 50%;
   height: 100%;
-  background: #b8babf;
+  background: #dedfe2;
   transform: skewX(-20deg);
   right: -10%;
   top: 0;
   border-left: 5px solid #ffffff;
+  display: none;
 }
 
 .bg-slash-lines {
@@ -486,41 +216,43 @@
   width: 100%;
   height: 100%;
   background-image: 
-    linear-gradient(90deg, rgba(255, 255, 255, 0.25) 1px, transparent 1px),
-    linear-gradient(0deg, rgba(255, 255, 255, 0.25) 1px, transparent 1px);
+    linear-gradient(90deg, rgba(0, 0, 0, 0.02) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(0, 0, 0, 0.02) 1px, transparent 1px);
   background-size: 30px 30px;
-  opacity: 0.3;
+  opacity: 0.8;
 }
 
 /* Showcase Grid Content */
 .ai-operator-grid {
   display: grid;
   grid-template-columns: 1.15fr 0.85fr;
-  min-height: 520px;
+  min-height: 440px;
   position: relative;
   z-index: 2;
 }
 
-/* Background watermark typography from Image 2 */
+/* Background watermark typography from Image 2 (Single line) */
 .ai-operator-watermark {
   position: absolute;
-  top: 22%;
-  left: 20%;
-  font-size: 10rem;
+  top: 15%;
+  left: 5%;
+  font-size: 11rem;
   font-weight: 950;
-  color: rgba(255, 255, 255, 0.65);
+  color: transparent;
+  -webkit-text-stroke: 1.5px rgba(0, 0, 0, 0.035);
   pointer-events: none;
   user-select: none;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
   text-transform: uppercase;
   font-family: "Arial Black", sans-serif;
   line-height: 0.85;
-  z-index: 1;
+  white-space: nowrap;
+  z-index: 2;
 }
 
 /* Left panel: Info stats & traits */
 .ai-operator-info-col {
-  padding: 3.5rem 3.5rem 3.5rem 4rem;
+  padding: 2.25rem 3.5rem 2.25rem 4rem;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -531,30 +263,32 @@
 
 .ai-operator-quote-box {
   display: flex;
-  gap: 0.5rem;
+  align-items: flex-start;
+  gap: 0.75rem;
   background: transparent;
   border: none;
   padding: 0;
-  margin-bottom: 2rem;
+  margin-bottom: 1.25rem;
   position: relative;
+  max-width: 500px;
 }
 
 .ai-operator-quote-icon {
-  font-size: 2.8rem;
+  font-size: 3.5rem;
   color: #111;
-  font-family: serif;
-  line-height: 0.8;
-  margin-top: -0.5rem;
+  font-family: Georgia, serif;
+  line-height: 0.7;
+  margin-top: -0.2rem;
   user-select: none;
   font-weight: bold;
 }
 
 .ai-operator-quote-text {
-  font-size: 0.92rem;
-  line-height: 1.4;
+  font-size: 0.95rem;
+  line-height: 1.45;
   color: #2b2b2b;
   font-weight: 700;
-  font-family: inherit;
+  margin: 0;
 }
 
 .ai-operator-codename-header {
@@ -566,18 +300,31 @@
   margin-bottom: 0.25rem;
 }
 
+.ai-operator-name-wrapper {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 1rem;
+}
+
 .ai-operator-codename {
   font-size: 4rem;
   font-weight: 900;
   color: #111;
   letter-spacing: -0.03em;
   line-height: 1;
-  margin-bottom: 1.25rem;
   text-transform: uppercase;
   font-family: "Arial Black", sans-serif;
-  border-bottom: 5px solid #111;
+  border-bottom: none;
   width: fit-content;
-  padding-bottom: 6px;
+  padding-bottom: 0;
+  margin: 0;
+}
+
+.ai-operator-name-underline {
+  width: 140px;
+  height: 6px;
+  background: #111;
+  margin-top: 4px;
 }
 
 /* Custom double-square subclass badge from Arknights (Image 2 style) */
@@ -588,7 +335,7 @@
   background: #d4d6db;
   padding: 2px;
   gap: 2px;
-  margin-bottom: 1.75rem;
+  margin-bottom: 1.25rem;
 }
 
 .subclass-icon-square {
@@ -625,7 +372,7 @@
   color: #2b2b2b;
   font-weight: 700;
   text-align: left;
-  margin-bottom: 2.25rem;
+  margin-bottom: 1.5rem;
   max-width: 460px;
 }
 
@@ -639,13 +386,13 @@
   font-weight: 850;
 }
 
-/* Go to Gacha button matching Image 2 */
+/* flat gacha button matching Image 2 */
 .btn-gacha {
-  background: #75777c;
-  border: 1.5px solid #111;
+  background: #7b7e85;
+  border: none;
   color: #fff;
   border-radius: 30px;
-  padding: 0.65rem 2rem;
+  padding: 0.65rem 2.5rem;
   font-size: 0.9rem;
   font-weight: 800;
   cursor: pointer;
@@ -662,90 +409,66 @@
 
 /* Right panel: Floating Character Artwork */
 .ai-operator-artwork-col {
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  overflow: hidden;
+  position: static;
   height: 100%;
+}
+
+.ai-operator-bg-vertical-text {
+  position: absolute;
+  right: 2rem;
+  top: 15%;
+  transform: rotate(90deg);
+  transform-origin: right top;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: rgba(0, 0, 0, 0.06);
+  letter-spacing: 0.2em;
+  font-family: monospace;
+  pointer-events: none;
+  z-index: 2;
 }
 
 .ai-operator-artwork-wrapper {
-  position: relative;
-  width: 95%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
   height: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  z-index: 3;
-  -webkit-mask-image: radial-gradient(circle at 50% 45%, #000 40%, transparent 95%);
-  mask-image: radial-gradient(circle at 50% 45%, #000 40%, transparent 95%);
+  z-index: 1;
+  pointer-events: none;
+  overflow: hidden;
 }
 
 .ai-operator-img {
+  position: absolute;
+  right: 0;
+  top: 0;
   width: 100%;
-  height: 490px;
-  object-fit: contain;
-  position: relative;
-  z-index: 2;
-  filter: drop-shadow(0 15px 25px rgba(0, 0, 0, 0.45));
+  height: 100%;
+  object-fit: cover;
+  object-position: right top;
+  z-index: 1;
   user-select: none;
   pointer-events: none;
+  -webkit-mask-image: none;
+  mask-image: none;
+  filter: none;
 }
 
 
 /* === Responsive Styles & Optimizations === */
 
 @media (max-width: 900px) {
-  /* 1. Revamped desk section for mobile */
-  .desk-workspace-container {
-    padding: 2.5rem 1.5rem;
-    border-radius: 1.5rem;
-  }
-
-  .desk-workspace-grid {
-    grid-template-columns: 1fr;
-    gap: 2rem;
-  }
-
-  /* Flatten out 3D desk into clean swipeable list or vertical stacks */
-  .desk-surface {
-    height: auto;
-    background: transparent;
-    border: none;
-    overflow: visible;
-  }
-
-  .desk-surface-3d {
-    transform: none !important;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    position: relative;
-  }
-
-  .desk-device {
-    position: relative !important;
-    width: 100% !important;
-    height: auto !important;
-    top: auto !important;
-    bottom: auto !important;
-    left: auto !important;
-    right: auto !important;
-    transform: none !important;
-    border-radius: 16px;
-    box-shadow: var(--shadow);
-    border: 1px solid var(--border);
-  }
-
-  .desk-device-keyboard, .monitor-stand {
-    display: none !important;
-  }
-
-  .desk-details-panel {
-    border-left: none;
-    padding-left: 0;
-    min-height: auto;
+  /* 1. Widescreen Desk Banner for mobile */
+  .desk-workspace-fullwidth-banner {
+    width: 100vw;
+    margin-left: -50vw;
+    margin-right: -50vw;
+    margin-top: 2rem;
+    margin-bottom: 3rem;
+    border-top: 1px solid #111;
+    border-bottom: 1px solid #111;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
   }
 
   /* 2. Revamped AI operator section for mobile */
@@ -813,6 +536,7 @@
   }
 
   .ai-operator-artwork-col {
+    position: relative;
     order: 1;
     height: 300px;
     background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, 0.15));
@@ -820,13 +544,27 @@
   }
 
   .ai-operator-artwork-wrapper {
+    position: relative;
     height: 100%;
     width: 100%;
+    display: flex;
+    justify-content: center;
     align-items: flex-end;
+    z-index: 1;
   }
 
   .ai-operator-img {
+    position: relative;
+    right: auto;
+    bottom: auto;
+    width: auto;
     height: 280px;
+    max-width: 100%;
+    object-fit: contain;
+    object-position: center bottom;
+    filter: none;
+    -webkit-mask-image: none;
+    mask-image: none;
   }
 
   .ai-operator-bg-slashes {

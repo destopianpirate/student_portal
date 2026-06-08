@@ -23,68 +23,8 @@ import { motion } from 'framer-motion';
 import ShowcaseSection from '../components/landing/ShowcaseSection';
 import FaqSection from '../components/landing/FaqSection';
 
-const DEVICE_DATA = {
-  monitor: {
-    tag: 'Central Command',
-    title: 'Central Student Dashboard',
-    desc: 'Your main gateway to campus life. Track active semester metrics, view upcoming lectures, and receive live system notifications from a single interface.',
-    bullets: [
-      'Real-time class schedule counters & progress bars',
-      'Consolidated CGPA & attendance indicators',
-      'Quick-action widget toggles & user custom controls'
-    ],
-    icon: Laptop
-  },
-  tablet: {
-    tag: 'Curriculum Logbook',
-    title: 'Curriculum & GPA Tracker',
-    desc: 'Manage your academic progression with ease. Store grade logs across semesters, evaluate audits, and check cumulative CGPA trajectory curves dynamically.',
-    bullets: [
-      'Interactive credit distribution visualizers',
-      'SGPA & CGPA trajectory chart generators',
-      'Semester course grading audit history list'
-    ],
-    icon: Tablet
-  },
-  phone: {
-    tag: 'Live Mess Menu & ID',
-    title: 'Mess Tracker & Mobile Profile',
-    desc: 'Access hostel meal menus and profiles on the move. Automatically parses the weekly Excel files to tell you what is cooking for breakfast, lunch, or dinner today.',
-    bullets: [
-      'Live meal tab highlight based on local time',
-      'Chef-special recommendations and meal ratings',
-      'Digital student profile ID & secure verification QR'
-    ],
-    icon: Smartphone
-  },
-  notebook: {
-    tag: 'Study Organizer',
-    title: 'Workspace Study Notes',
-    desc: 'Draft structured study notebooks directly within the app. Write Markdown-supported study sheets, tag documents by course slots, and backup files instantly.',
-    bullets: [
-      'Full Markdown text compiler support',
-      'Course-specific tagging and pinning controls',
-      'Local backups and external document download tools'
-    ],
-    icon: Sparkles
-  },
-  cards: {
-    tag: 'Utilities & Gateway',
-    title: 'Secure College OAuth & Tools',
-    desc: 'A suite of mini utility gadgets to organize your campus life. Enforces secure gateway authentication restricted to official student accounts only.',
-    bullets: [
-      'OAuth domain gateway for official student emails',
-      'Semester assignment checklists and logs trackers',
-      'Focus timers and attendance records calculators'
-    ],
-    icon: ShieldCheck
-  }
-};
-
 const LandingPage = () => {
   const navigate = useNavigate();
-  const [activeDevice, setActiveDevice] = useState('monitor');
-  const currentDeviceData = DEVICE_DATA[activeDevice];
 
   // Listen to global data-theme changes to toggle the mockup and footer logo theme
   const [isDark, setIsDark] = useState(() => {
@@ -259,200 +199,19 @@ const LandingPage = () => {
 
       <ShowcaseSection />
 
-      {/* Feature Grid Revamp: Interactive Desk Workspace Mockup */}
+      {/* Feature Grid: Widescreen Desk Workspace Mockup */}
       <section className="features-grid-container">
         <div className="landing-section-title-wrap">
           <h2 className="landing-section-title">Everything You Need, Unified</h2>
-          <p className="landing-section-subtitle">A responsive interactive workspace console mapping all study routines in one place</p>
+          <p className="landing-section-subtitle">A responsive widescreen workspace console mapping all study routines in one place</p>
         </div>
 
-        <div className="desk-workspace-container">
-          <div className="desk-workspace-grid">
-            {/* Desk Surface (Interactive 3D mockups area) */}
-            <div className="desk-surface">
-              <div className="desk-surface-perspective">
-                <div className="desk-surface-3d">
-                  
-                  {/* Large Monitor Screen */}
-                  <div 
-                    className={`desk-device device-monitor ${activeDevice === 'monitor' ? 'active' : ''}`}
-                    onMouseEnter={() => setActiveDevice('monitor')}
-                    onClick={() => setActiveDevice('monitor')}
-                    style={{ zIndex: 3 }}
-                  >
-                    <div className="mock-ui-header">
-                      <div className="mock-ui-dot" />
-                      <div className="mock-ui-dot" />
-                      <div className="mock-ui-dot" />
-                      <span className="mock-ui-address">acadx.iitgn.ac.in/dashboard</span>
-                    </div>
-                    <div className="mock-ui-body" style={{ background: '#0a0a0c', padding: '8px', display: 'grid', gridTemplateColumns: '1fr 3fr', gap: '6px', height: 'calc(100% - 18px)' }}>
-                      {/* Mock Sidebar */}
-                      <div style={{ borderRight: '1px solid rgba(255,255,255,0.06)', paddingRight: '4px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        <div style={{ fontWeight: '850', color: 'var(--neon-pink)', fontSize: '0.45rem', marginBottom: '8px' }}>ACADX</div>
-                        {['Home', 'Schedule', 'Grades', 'Mess'].map((item, i) => (
-                          <div key={i} style={{ fontSize: '0.35rem', color: i === 0 ? 'var(--neon-pink)' : '#71717a', background: i === 0 ? 'rgba(255,0,127,0.08)' : 'transparent', padding: '2px 4px', borderRadius: '3px', textAlign: 'left' }}>{item}</div>
-                        ))}
-                      </div>
-                      {/* Mock Content */}
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', textAlign: 'left' }}>
-                        <div style={{ fontSize: '0.55rem', fontWeight: '800' }}>Hey student! 👋</div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px' }}>
-                          <div style={{ background: '#18181b', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '4px', padding: '4px' }}>
-                            <div style={{ fontSize: '0.35rem', color: '#71717a' }}>LIVE CLASS</div>
-                            <div style={{ fontSize: '0.42rem', fontWeight: '800', color: 'var(--neon-pink)', marginTop: '1px' }}>CS 201: DSA</div>
-                          </div>
-                          <div style={{ background: '#18181b', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '4px', padding: '4px' }}>
-                            <div style={{ fontSize: '0.35rem', color: '#71717a' }}>CGPA</div>
-                            <div style={{ fontSize: '0.42rem', fontWeight: '800', color: '#10b981', marginTop: '1px' }}>9.12</div>
-                          </div>
-                        </div>
-                        <div style={{ background: '#18181b', borderRadius: '4px', padding: '4px', border: '1px solid rgba(255,255,255,0.05)' }}>
-                          <div style={{ fontSize: '0.35rem', color: '#71717a' }}>WEEKLY TIMETABLE ACTIVITY</div>
-                          <div style={{ width: '100%', height: '4px', background: '#27272a', borderRadius: '2px', marginTop: '3px', overflow: 'hidden' }}>
-                            <div style={{ width: '85%', height: '100%', background: 'linear-gradient(to right, var(--neon-pink), var(--neon-purple))' }}></div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="monitor-stand" />
-
-                  {/* Keyboard (Decoration) */}
-                  <div className="desk-device-keyboard">
-                    <div className="keyboard-row">
-                      {Array.from({ length: 14 }).map((_, i) => <div key={i} className="key-cap" />)}
-                    </div>
-                    <div className="keyboard-row">
-                      {Array.from({ length: 13 }).map((_, i) => <div key={i} className="key-cap" />)}
-                    </div>
-                    <div className="keyboard-row">
-                      <div className="key-cap" />
-                      <div className="key-cap space-bar" />
-                      <div className="key-cap" />
-                    </div>
-                  </div>
-
-                  {/* Tablet Screen */}
-                  <div 
-                    className={`desk-device device-tablet ${activeDevice === 'tablet' ? 'active' : ''}`}
-                    onMouseEnter={() => setActiveDevice('tablet')}
-                    onClick={() => setActiveDevice('tablet')}
-                    style={{ zIndex: 2 }}
-                  >
-                    <div className="mock-ui-header">
-                      <div className="mock-ui-dot" />
-                      <div className="mock-ui-dot" />
-                      <div className="mock-ui-dot" />
-                      <span className="mock-ui-address">acadx.iitgn.ac.in/academics</span>
-                    </div>
-                    <div className="mock-ui-body" style={{ background: '#09090b', padding: '10px', textAlign: 'left' }}>
-                      <div style={{ fontSize: '0.55rem', fontWeight: '850', color: '#a855f7', marginBottom: '4px' }}>GPA CURVE</div>
-                      <svg viewBox="0 0 100 40" style={{ width: '100%', height: '55px', overflow: 'visible' }}>
-                        <path d="M5,35 Q30,20 55,22 T95,8" fill="none" stroke="var(--neon-pink)" strokeWidth="1.5" />
-                        <circle cx="5" cy="35" r="1.5" fill="#fff" />
-                        <circle cx="30" cy="23" r="1.5" fill="#fff" />
-                        <circle cx="55" cy="22" r="1.5" fill="#fff" />
-                        <circle cx="95" cy="8" r="2" fill="var(--neon-pink)" />
-                        <text x="95" y="4" fontSize="3" fill="var(--neon-pink)" fontWeight="bold" textAnchor="middle">9.5</text>
-                      </svg>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '6px', fontSize: '0.35rem', color: '#52525b', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '4px' }}>
-                        <span>Sem 1: 8.2</span>
-                        <span>Sem 2: 8.8</span>
-                        <span>Sem 3: 9.1</span>
-                        <span>Sem 4: 9.5</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Smartphone Screen */}
-                  <div 
-                    className={`desk-device device-phone ${activeDevice === 'phone' ? 'active' : ''}`}
-                    onMouseEnter={() => setActiveDevice('phone')}
-                    onClick={() => setActiveDevice('phone')}
-                    style={{ zIndex: 5 }}
-                  >
-                    <div className="mock-ui-header">
-                      <div className="mock-ui-dot" style={{ width: '4px', height: '4px' }} />
-                      <span className="mock-ui-address" style={{ fontSize: '0.4rem', marginLeft: '2px' }}>mess.iitgn</span>
-                    </div>
-                    <div className="mock-ui-body" style={{ background: '#09090b', padding: '8px', textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                      <div style={{ background: 'rgba(255,0,127,0.08)', color: 'var(--neon-pink)', padding: '2px 4px', borderRadius: '3px', fontSize: '0.4rem', fontWeight: '800', width: 'fit-content' }}>LUNCH SPECIAL</div>
-                      <div style={{ fontSize: '0.52rem', fontWeight: '850', color: '#fff', marginTop: '1px' }}>Paneer Butter Masala</div>
-                      <div style={{ fontSize: '0.38rem', color: '#71717a' }}>Dal Tadka, Kashmiri Pulao, Gulab Jamun</div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '4px' }}>
-                        <span style={{ fontSize: '0.4rem', color: '#10b981' }}>★ 4.8 Rating</span>
-                        <span style={{ fontSize: '0.35rem', color: '#71717a' }}>12:30-2:30 PM</span>
-                      </div>
-                      {/* Student QR ID Mock */}
-                      <div style={{ background: '#18181b', border: '1px dashed rgba(255,255,255,0.1)', borderRadius: '4px', padding: '4px', display: 'flex', gap: '4px', alignItems: 'center', marginTop: '4px' }}>
-                        <div style={{ width: '15px', height: '15px', background: '#fff', borderRadius: '2px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.3rem', fontWeight: 'bold', color: '#000' }}>QR</div>
-                        <div>
-                          <div style={{ fontSize: '0.35rem', color: '#fff', fontWeight: '700' }}>Devashish Gupta</div>
-                          <div style={{ fontSize: '0.3rem', color: '#71717a' }}>Roll No: 20110045</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Notebook / Journal Screen */}
-                  <div 
-                    className={`desk-device device-notebook ${activeDevice === 'notebook' ? 'active' : ''}`}
-                    onMouseEnter={() => setActiveDevice('notebook')}
-                    onClick={() => setActiveDevice('notebook')}
-                    style={{ zIndex: 3 }}
-                  >
-                    <div style={{ fontSize: '0.58rem', fontWeight: '850', color: 'var(--neon-pink)', marginBottom: '2px' }}># Graph Traversals</div>
-                    <div style={{ fontSize: '0.42rem', color: '#a1a1aa', lineHeight: '1.4', marginBottom: '6px' }}>
-                      Use queue data structures to visit adjacent vertices first in Breadth-First Search (BFS)...
-                    </div>
-                    <div style={{ display: 'flex', gap: '3px' }}>
-                      <span style={{ fontSize: '0.35rem', color: 'var(--neon-pink)', background: 'rgba(255,0,127,0.08)', padding: '1px 3px', borderRadius: '2px', fontWeight: '700' }}>CS 201</span>
-                      <span style={{ fontSize: '0.35rem', color: '#a855f7', background: 'rgba(168,85,247,0.08)', padding: '1px 3px', borderRadius: '2px', fontWeight: '700' }}>DSA</span>
-                    </div>
-                  </div>
-
-                  {/* Stationery / Cards Gateway Screen */}
-                  <div 
-                    className={`desk-device device-card-gateway ${activeDevice === 'cards' ? 'active' : ''}`}
-                    onMouseEnter={() => setActiveDevice('cards')}
-                    onClick={() => setActiveDevice('cards')}
-                    style={{ zIndex: 2 }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginBottom: '2px' }}>
-                      <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#22c55e', boxShadow: '0 0 4px #22c55e' }} />
-                      <span style={{ fontSize: '0.45rem', fontWeight: '800', color: '#fff' }}>GATEWAY AUTH</span>
-                    </div>
-                    <div style={{ fontSize: '0.38rem', color: '#71717a', lineHeight: '1.2' }}>Official IITGN student domain verified.</div>
-                    <div style={{ display: 'flex', gap: '2px', marginTop: '6px', fontSize: '0.35rem' }}>
-                      <span style={{ border: '1px solid rgba(255,255,255,0.08)', padding: '1px 3px', borderRadius: '2px', color: '#a1a1aa' }}>ASSIGNMENTS: 2 PENDING</span>
-                    </div>
-                  </div>
-
-                </div>
-              </div>
-            </div>
-
-            {/* Desk Details Panel */}
-            <div className="desk-details-panel">
-              <span className="desk-details-tag">
-                {React.createElement(currentDeviceData.icon, { size: 16 })} {currentDeviceData.tag}
-              </span>
-              <h3 className="desk-details-title">{currentDeviceData.title}</h3>
-              <p className="desk-details-desc">{currentDeviceData.desc}</p>
-              <div className="desk-details-list">
-                {currentDeviceData.bullets.map((bullet, idx) => (
-                  <div key={idx} className="desk-details-item">
-                    <ShieldCheck size={16} />
-                    <span>{bullet}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-          <div className="desk-interactive-prompt">
-            <span>⚡</span> Hover over or tap the devices on the desk to explore different workspace capabilities.
-          </div>
+        <div className="desk-workspace-fullwidth-banner">
+          <img 
+            src="/desk_workspace_mockup.png" 
+            alt="Everything You Need, Unified Workspace Mockup" 
+            className="desk-workspace-banner-img"
+          />
         </div>
       </section>
 
@@ -496,9 +255,9 @@ const LandingPage = () => {
 
         {/* Showcase Grid */}
         <div className="ai-operator-grid">
-          {/* Background Watermark Outline Text */}
+          {/* Background Watermark Outline Text (Single line behind name block) */}
           <div className="ai-operator-watermark">
-            A.R.<br />A.I.
+            A.R.A.I. —
           </div>
 
           {/* Left Col: Info panel */}
@@ -511,7 +270,10 @@ const LandingPage = () => {
             </div>
 
             <span className="ai-operator-codename-header">AI ASSISTANT //</span>
-            <h2 className="ai-operator-codename">A.R.A.I.</h2>
+            <div className="ai-operator-name-wrapper">
+              <h2 className="ai-operator-codename">A.R.A.I.</h2>
+              <div className="ai-operator-name-underline" />
+            </div>
 
             {/* Custom Arknights Badge */}
             <div className="ai-operator-subclass-badge">
@@ -540,16 +302,18 @@ const LandingPage = () => {
               className="btn-gacha"
               onClick={() => navigate('/login')}
             >
-              Access Dashboard
+              Launch A.R.A.I.
             </button>
           </div>
 
           {/* Right Col: Character Artwork */}
           <div className="ai-operator-artwork-col">
+            {/* Background vertical label */}
+            <div className="ai-operator-bg-vertical-text">A.R.A.I. // STUDENT ASSISTANT</div>
             <div className="ai-operator-artwork-wrapper">
               <img 
                 src="/la_pluma_ai.png" 
-                alt="La Pluma AI Companion" 
+                alt="A.R.A.I. Companion" 
                 className="ai-operator-img"
               />
             </div>

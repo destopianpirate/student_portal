@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Lock, Eye, EyeOff, LogIn, User, AlertCircle, GraduationCap, ArrowRight, Calendar, BarChart3, UtensilsCrossed } from 'lucide-react';
+import { Lock, Eye, EyeOff, LogIn, User, AlertCircle, GraduationCap, ArrowRight, Calendar, BarChart3, UtensilsCrossed, ArrowLeft, Key } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import confetti from 'canvas-confetti';
@@ -79,10 +79,11 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [resetSent, setResetSent] = useState(false);
+  const [isLoginLoading, setIsLoginLoading] = useState(false);
+  const [isForgotLoading, setIsForgotLoading] = useState(false);
+  const [resetSent, setResetSent] = useState(false); // Reset email sent flag
   const [shouldShake, setShouldShake] = useState(false);
-  
+  const [isForgot, setIsForgot] = useState(false);
   // Domain modal state
   const [showDomainModal, setShowDomainModal] = useState(false);
   const [domainModalMessage, setDomainModalMessage] = useState('');
@@ -103,7 +104,7 @@ const LoginPage = () => {
     if (!email) return;
 
     try {
-      setLoading(true);
+      setIsLoginLoading(true);
       
       // If no '@', resolve as username to get email
       if (!email.includes('@')) {
@@ -112,7 +113,7 @@ const LoginPage = () => {
         } catch (lookupErr) {
           triggerShake();
           setError('No account found with that username');
-          setLoading(false);
+          setIsLoginLoading(false);
           return;
         }
       }
@@ -123,7 +124,7 @@ const LoginPage = () => {
           `The email address associated with your login ("${email}") is invalid. Access is restricted to official IIT Gandhinagar student accounts only. Please use your @iitgn.ac.in email ID to log in.`
         );
         setShowDomainModal(true);
-        setLoading(false);
+        setIsLoginLoading(false);
         return;
       }
 
@@ -140,7 +141,7 @@ const LoginPage = () => {
       triggerShake();
       setError(err.message?.replace('Firebase: ', '').replace(/\(auth\/.*\)/, '') || 'Login failed');
     } finally { 
-      setLoading(false); 
+      setIsLoginLoading(false); 
     }
   };
 
@@ -157,7 +158,7 @@ const LoginPage = () => {
 
   const handleGoogle = async () => {
     try {
-      setLoading(true); 
+      setIsLoginLoading(true); 
       setError('');
       const result = await loginWithGoogle();
       const email = result.user?.email || '';
@@ -170,7 +171,7 @@ const LoginPage = () => {
           `Google authentication succeeded, but the account "${email}" is restricted. You must log in using your official IIT Gandhinagar Google Workspace ID (@iitgn.ac.in).`
         );
         setShowDomainModal(true);
-        setLoading(false);
+        setIsLoginLoading(false);
         return;
       }
 
@@ -184,21 +185,24 @@ const LoginPage = () => {
     } catch (err) {
       triggerShake();
       setError(err.message?.replace('Firebase: ', '').replace(/\(auth\/.*\)/, '') || 'Google login failed');
-      setLoading(false);
+      setIsLoginLoading(false);
     }
   };
 
-  const handleForgot = async () => {
+  const handleForgot = async (e) => {
+    if (e) e.preventDefault();
     let email = identifier.trim();
     if (!email) {
-      const promptEmail = window.prompt("Please enter your registered college email or username to reset your password:");
-      if (!promptEmail) return;
-      email = promptEmail.trim();
+      setError('Please enter your username or email address.');
+      triggerShake();
+      return;
     }
     
     try {
-      setLoading(true);
+      setIsForgotLoading(true);
       setError('');
+      setResetSent(false);
+      
       if (!email.includes('@')) { 
         email = await lookupEmailByUsername(email); 
       }
@@ -208,22 +212,22 @@ const LoginPage = () => {
           `Cannot request password reset. The email "${email}" associated with this account does not belong to the IIT Gandhinagar domain (@iitgn.ac.in).`
         );
         setShowDomainModal(true);
-        setLoading(false);
+        setIsForgotLoading(false);
         return;
       }
 
       await resetPassword(email);
-      setResetSent(true); 
-      setError('');
+      setResetSent(true);
+      setIdentifier(''); // Clear the input field on success
     } catch (err) {
       triggerShake();
       const cleanMsg = err.message
         ?.replace('Firebase: ', '')
         ?.replace(/\(auth\/.*\)/, '')
-        ?.trim() || 'Failed to send reset email';
+        ?.trim() || 'Failed to send password reset email';
       setError(cleanMsg);
     } finally {
-      setLoading(false);
+      setIsForgotLoading(false);
     }
   };
 
@@ -257,73 +261,123 @@ const LoginPage = () => {
           {/* Header */}
           <motion.div className="auth-header" variants={itemVariants}>
             <div className="auth-logo-ring">
-              <LogIn size={24} style={{ color: 'var(--primary)' }} />
+              {isForgot ? (
+                <Key size={20} style={{ color: 'var(--primary)' }} />
+              ) : (
+                <LogIn size={24} style={{ color: 'var(--primary)' }} />
+              )}
             </div>
-            <h1 className="auth-title">Welcome Back</h1>
-            <p className="auth-subtitle">Sign in to your AcadX portal</p>
+            <h1 className="auth-title">{isForgot ? 'Reset Password' : 'Welcome Back'}</h1>
+            <p className="auth-subtitle">
+              {isForgot 
+                ? 'Enter your username or college email to receive a password reset link' 
+                : 'Sign in to your AcadX portal'}
+            </p>
           </motion.div>
           
           {error && <motion.div className="auth-error" variants={itemVariants}><AlertCircle size={15} /> {error}</motion.div>}
           {resetSent && <motion.div className="auth-success" variants={itemVariants}>Password reset email sent! Check your inbox.</motion.div>}
           
-          <form onSubmit={handleLogin} className="auth-form">
-            <motion.div className="input-group" variants={itemVariants}>
-              <User size={17} className="input-icon" />
-              <input 
-                type="text"
-                id="login-identifier"
-                className="auth-input" 
-                placeholder="Username or College Email" 
-                value={identifier} 
-                onChange={e => setIdentifier(e.target.value)} 
-                required 
-              />
-            </motion.div>
-            
-            <motion.div className="input-group" variants={itemVariants}>
-              <Lock size={17} className="input-icon" />
-              <input 
-                id="login-password"
-                type={showPw ? 'text' : 'password'} 
-                className="auth-input" 
-                placeholder="Password" 
-                value={password} 
-                onChange={e => setPassword(e.target.value)} 
-                required 
-              />
-              <button type="button" className="input-toggle" onClick={() => setShowPw(!showPw)}>
-                {showPw ? <EyeOff size={17} /> : <Eye size={17} />}
-              </button>
-            </motion.div>
-            
-            <motion.button type="button" className="forgot-link" onClick={handleForgot} variants={itemVariants}>
-              Forgot Password?
-            </motion.button>
-            
-            <motion.button type="submit" className="btn-auth-submit" disabled={loading} variants={itemVariants}>
-              <LogIn size={17} /> {loading ? 'Signing in...' : 'Sign In'}
-            </motion.button>
-          </form>
-          
-          <motion.div className="auth-divider" variants={itemVariants}><span>or</span></motion.div>
-          
-          <motion.button className="btn-google-premium" onClick={handleGoogle} disabled={loading} variants={itemVariants}>
-            <GoogleIcon />
-            Google Workspace Login
-          </motion.button>
+          {!isForgot ? (
+            <>
+              <form onSubmit={handleLogin} className="auth-form">
+                <motion.div className="input-group" variants={itemVariants}>
+                  <User size={17} className="input-icon" />
+                  <input 
+                    type="text"
+                    id="login-identifier"
+                    className="auth-input" 
+                    placeholder="Username or College Email" 
+                    value={identifier} 
+                    onChange={e => setIdentifier(e.target.value)} 
+                    required 
+                  />
+                </motion.div>
+                
+                <motion.div className="input-group" variants={itemVariants}>
+                  <Lock size={17} className="input-icon" />
+                  <input 
+                    id="login-password"
+                    type={showPw ? 'text' : 'password'} 
+                    className="auth-input" 
+                    placeholder="Password" 
+                    value={password} 
+                    onChange={e => setPassword(e.target.value)} 
+                    required 
+                  />
+                  <button type="button" className="input-toggle" onClick={() => setShowPw(!showPw)}>
+                    {showPw ? <EyeOff size={17} /> : <Eye size={17} />}
+                  </button>
+                </motion.div>
+                
+                <motion.button 
+                  type="button" 
+                  className="forgot-link" 
+                  onClick={() => { setIsForgot(true); setError(''); setResetSent(false); }} 
+                  variants={itemVariants}
+                >
+                  Forgot Password?
+                </motion.button>
+                
+                <motion.button type="submit" className="btn-auth-submit" disabled={isLoginLoading} variants={itemVariants}>
+                  <LogIn size={17} /> {isLoginLoading ? 'Signing in...' : 'Sign In'}
+                </motion.button>
+              </form>
+              
+              <motion.div className="auth-divider" variants={itemVariants}><span>or</span></motion.div>
+              
+              <motion.button className="btn-google-premium" onClick={handleGoogle} disabled={isLoginLoading} variants={itemVariants}>
+                <GoogleIcon />
+                Google Workspace Login
+              </motion.button>
 
-          <motion.button 
-            type="button" 
-            className="btn-demo"
-            onClick={handleDemoLogin} 
-            variants={itemVariants}
-          >
-            <User size={17} /> Bypass with Demo Account
-          </motion.button>
-          
-          <motion.p className="auth-switch" variants={itemVariants}>
-            New Student? <Link to="/signup">Create Account</Link>
-          </motion.p>
+              <motion.button 
+                type="button" 
+                className="btn-demo"
+                onClick={handleDemoLogin} 
+                variants={itemVariants}
+              >
+                <User size={17} /> Bypass with Demo Account
+              </motion.button>
+              
+              <motion.p className="auth-switch" variants={itemVariants}>
+                New Student? <Link to="/signup">Create Account</Link>
+              </motion.p>
+            </>
+          ) : (
+            <>
+              {/* Forgot password flow */}
+              {!resetSent ? (
+                <form onSubmit={handleForgot} className="auth-form">
+                  <motion.div className="input-group" variants={itemVariants}>
+                    <User size={17} className="input-icon" />
+                    <input 
+                      type="text"
+                      id="reset-identifier"
+                      className="auth-input" 
+                      placeholder="Username or College Email" 
+                      value={identifier} 
+                      onChange={e => setIdentifier(e.target.value)} 
+                      required 
+                    />
+                  </motion.div>
+
+                  <motion.button type="submit" className="btn-auth-submit" disabled={isForgotLoading} variants={itemVariants}>
+                    <Key size={17} /> {isForgotLoading ? 'Sending...' : 'Send Reset Link'}
+                  </motion.button>
+                </form>
+              ) : null}
+              <motion.button 
+                type="button" 
+                className="btn-demo"
+                onClick={() => { setIsForgot(false); setError(''); setResetSent(false); }} 
+                variants={itemVariants}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginTop: resetSent ? '1rem' : '0' }}
+              >
+                <ArrowLeft size={17} /> Back to Sign In
+              </motion.button>
+            </>
+          )}
         </motion.div>
       </div>
 
