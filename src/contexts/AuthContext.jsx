@@ -3,6 +3,25 @@ import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndP
 import { doc, getDoc, setDoc, collection, query, where, getDocs, arrayUnion } from 'firebase/firestore';
 import { auth, googleProvider, db } from '../firebase';
 
+const calculateCgpaVal = (grades) => {
+  if (!grades || !Array.isArray(grades)) return '—';
+  let totalPoints = 0, totalCredits = 0;
+  const GRADE_POINTS = {
+    'A+': 11, 'A': 10, 'A-': 9, 'B': 8, 'B-': 7, 'C': 6,
+    'C-': 5, 'D': 4, 'E': 2, 'F': 0, 'I': null, 'W': null,
+  };
+  grades.forEach(sem => {
+    sem.courses?.forEach(c => {
+      const gp = GRADE_POINTS[c.grade];
+      if (gp !== null && gp !== undefined && c.credits > 0) {
+        totalPoints += gp * parseFloat(c.credits);
+        totalCredits += parseFloat(c.credits);
+      }
+    });
+  });
+  return totalCredits > 0 ? (totalPoints / totalCredits).toFixed(2) : '—';
+};
+
 const AuthContext = createContext();
 export const useAuth = () => useContext(AuthContext);
 
@@ -32,6 +51,27 @@ export const AuthProvider = ({ children }) => {
     }
     return null;
   });
+
+  const userProfileWithCgpa = React.useMemo(() => {
+    if (!userProfile) return null;
+    let computedCgpa = '—';
+    try {
+      const localGrades = localStorage.getItem(`grades_${currentUser?.uid}`);
+      if (localGrades) {
+        computedCgpa = calculateCgpaVal(JSON.parse(localGrades));
+      } else if (userProfile.grades) {
+        computedCgpa = calculateCgpaVal(userProfile.grades);
+      } else if (userProfile.cgpa) {
+        computedCgpa = userProfile.cgpa;
+      }
+    } catch {
+      computedCgpa = userProfile.cgpa || '—';
+    }
+    return {
+      ...userProfile,
+      cgpa: computedCgpa
+    };
+  }, [userProfile, currentUser?.uid]);
 
   const [loading, setLoading] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -68,7 +108,26 @@ export const AuthProvider = ({ children }) => {
 
   const saveProfile = async (profileData) => {
     if (!currentUser) return;
-    const data = { ...profileData, uid: currentUser.uid, updatedAt: new Date().toISOString() };
+    
+    // Automatically calculate CGPA from grades if grades are being saved
+    let cgpaVal = userProfile?.cgpa;
+    if (profileData.grades) {
+      cgpaVal = calculateCgpaVal(profileData.grades);
+    } else {
+      const localGradesStr = localStorage.getItem(`grades_${currentUser.uid}`);
+      if (localGradesStr) {
+        try {
+          cgpaVal = calculateCgpaVal(JSON.parse(localGradesStr));
+        } catch {}
+      }
+    }
+
+    const data = { 
+      ...profileData, 
+      cgpa: cgpaVal || '—',
+      uid: currentUser.uid, 
+      updatedAt: new Date().toISOString() 
+    };
     const updatedProfile = { ...userProfile, ...data };
     localStorage.setItem(`profile_${currentUser.uid}`, JSON.stringify(updatedProfile));
     setUserProfile(updatedProfile);
@@ -320,7 +379,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider value={{
-      currentUser, userProfile, loading,
+      currentUser, userProfile: userProfileWithCgpa, loading,
       userRole, isAdmin,
       login, signup, loginWithGoogle, loginAsDemo, logout,
       showLogoutConfirm, setShowLogoutConfirm,

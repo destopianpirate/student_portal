@@ -541,6 +541,9 @@
   .timeline-ribbon-card {
     padding: 1rem
   }
+  .timeline-ribbon-card:before {
+    display: none !important;
+  }
   .timeline-ribbon-container {
     height: 68px
   }
@@ -555,7 +558,14 @@
     display: none
   }
   .block-code {
-    font-size: .62rem
+    font-size: .44rem
+  }
+  .live-dot {
+    display: none !important;
+  }
+  .timeline-block.lunch-block {
+    transform: scale(0.75) !important;
+    transform-origin: center !important;
   }
   .timeline-block.lunch-block span {
     display: none

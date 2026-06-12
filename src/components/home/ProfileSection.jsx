@@ -32,83 +32,49 @@ const ProfileSection = ({
       {/* LEFT 30% - Avatar & Identity */}
       <motion.div className="profile-left" variants={itemVariants} style={{ zIndex: 10, position: 'relative' }}>
         {isMobile ? (
-          <div className="profile-mobile-layout">
-            <div className="profile-mobile-avatar-col">
-              <div className="avatar-containment-cell">
-                {/* Tech targeting bracket corners */}
-                <div className="avatar-tech-corner top-left" />
-                <div className="avatar-tech-corner top-right" />
-                <div className="avatar-tech-corner bottom-left" />
-                <div className="avatar-tech-corner bottom-right" />
-                
-                {/* Futuristic ambient back glow */}
-                <div className="avatar-ambient-glow" />
-                
-                {/* Floating double orbit rings */}
-                <div className="avatar-orbital-ring ring-outer" />
-                <div className="avatar-orbital-ring ring-inner" />
-                
-                {/* Main photo frame */}
-                <div className={`avatar-photo-frame aspect-${userProfile?.photoAspectRatio || 'card'}`}>
-                  <img 
-                    src={avatarUrl} 
-                    alt="Profile" 
-                    className="profile-avatar-large" 
-                    style={{ 
-                      objectPosition: photoPosition,
-                      '--img-zoom': (userProfile?.photoZoom ?? 100) / 100,
-                      '--img-rot': `${userProfile?.photoRotation ?? 0}deg`
-                    }} 
-                  />
-                  <div className="avatar-hologram-sheen" />
-                </div>
+          <>
+            {/* Photo Area */}
+            <div className="holo-avatar-container">
+              <div className="holo-avatar-frame">
+                <img 
+                  src={avatarUrl} 
+                  alt="Profile" 
+                  className="holo-avatar-img"
+                  style={{ 
+                    objectPosition: photoPosition,
+                    '--img-zoom': (userProfile?.photoZoom ?? 100) / 100,
+                    '--img-rot': `${userProfile?.photoRotation ?? 0}deg`
+                  }} 
+                />
               </div>
             </div>
 
-            <div className="profile-mobile-info-col">
-              <div className="profile-mobile-badge-top">Student Member</div>
-              <h2 className="profile-username">{userProfile?.username || currentUser?.displayName || 'Student'}</h2>
-              
-              <div className="profile-student-id">ID: {userProfile?.rollNumber || '—'}</div>
-              
-              <div className="profile-mobile-meta">
-                {userProfile?.branch && <span className="profile-meta-badge">{userProfile.branch}</span>}
-                {userProfile?.semester && <span className="profile-meta-badge">Sem {userProfile.semester}</span>}
-                {userProfile?.cgpa && <span className="profile-meta-badge cgpa">CGPA: {userProfile.cgpa}</span>}
-              </div>
+            {/* Data Area */}
+            <div className="holo-data-container">
+              <div className="holo-cursive-signature">destopian pirate</div>
+              <div className="holo-id-badge">ID: {userProfile?.rollNumber || '—'}</div>
+            </div>
 
-              {/* QR / ID Card Toggle Button */}
+            {/* Action Area */}
+            <div className="holo-action-area">
               {userProfile?.messQrBase64 || userProfile?.studentIdBase64 ? (
-                <button className="qr-id-toggle-mobile" onClick={handleToggleQr}>
-                  <CreditCard size={12} /> {showQrId ? 'Hide Cards' : 'View ID & QR'}
+                <button className="holo-action-btn" onClick={handleToggleQr}>
+                  <CreditCard size={14} /> {showQrId ? 'HIDE CARDS' : 'Show Mess QR and Student ID'}
                 </button>
               ) : (
-                <button 
-                  className="qr-id-upload-mobile" 
-                  onClick={() => navigate('/settings', { state: { openSection: 'messqr' } })}
-                >
-                  <QrCode size={12} /> Upload Cards
+                <button className="holo-action-btn upload" onClick={() => navigate('/settings', { state: { openSection: 'messqr' } })}>
+                  <QrCode size={14} /> UPLOAD CREDENTIALS
                 </button>
               )}
             </div>
-          </div>
+          </>
         ) : (
           <>
             <h2 className="profile-username">{userProfile?.username || currentUser?.displayName || 'Student'}</h2>
             
             <div className="avatar-containment-cell">
-              {/* Tech targeting bracket corners */}
-              <div className="avatar-tech-corner top-left" />
-              <div className="avatar-tech-corner top-right" />
-              <div className="avatar-tech-corner bottom-left" />
-              <div className="avatar-tech-corner bottom-right" />
-              
               {/* Futuristic ambient back glow */}
               <div className="avatar-ambient-glow" />
-              
-              {/* Floating double orbit rings */}
-              <div className="avatar-orbital-ring ring-outer" />
-              <div className="avatar-orbital-ring ring-inner" />
               
               {/* Main photo frame */}
               <div className={`avatar-photo-frame aspect-${userProfile?.photoAspectRatio || 'card'}`}>
@@ -176,12 +142,12 @@ const ProfileSection = ({
             {userProfile?.messQrBase64 && (
               <motion.div 
                 variants={singleCardVariants}
-                className="qr-id-card"
+                className={`qr-id-card ${isMobile ? 'mobile-holo-qr-card' : ''}`}
                 style={{
                   background: 'var(--card-bg)',
                   border: '1px solid var(--border)',
                   borderRadius: '12px',
-                  padding: '0.4rem',
+                  padding: isMobile ? '1.25rem' : '0.4rem',
                   textAlign: 'center',
                   boxShadow: 'var(--shadow)',
                   display: 'flex',
@@ -189,9 +155,11 @@ const ProfileSection = ({
                   alignItems: 'center',
                   justifyContent: 'center',
                   height: isMobile ? 'auto' : 'auto',
-                  width: isMobile ? '280px' : '100%',
-                  aspectRatio: isMobile ? '1 / 1' : 'auto',
-                  flex: isMobile ? 'none' : '1',
+                  width: '100%',
+                  maxWidth: isMobile ? '280px' : '220px',
+                  margin: '0 auto',
+                  aspectRatio: '1 / 1',
+                  flex: 'none',
                   minHeight: 0,
                   overflow: 'hidden'
                 }}
@@ -202,14 +170,15 @@ const ProfileSection = ({
                   alt="Mess QR" 
                   style={{ 
                     cursor: 'pointer',
-                    width: isMobile ? '240px' : '100%',
-                    height: isMobile ? '240px' : 'auto',
-                    flex: isMobile ? 'none' : '1',
+                    width: '100%',
+                    height: '100%',
+                    flex: 'none',
                     minHeight: 0,
                     objectFit: 'contain',
                     borderRadius: '8px',
                     border: '1px solid var(--border)',
-                    background: '#fff'
+                    background: '#fff',
+                    padding: isMobile ? '0.6rem' : '0.2rem'
                   }}
                   onClick={() => setActiveLightBoxImage({ url: userProfile.messQrBase64, label: 'Mess QR' })}
                 />
@@ -219,12 +188,12 @@ const ProfileSection = ({
             {userProfile?.studentIdBase64 && (
               <motion.div 
                 variants={singleCardVariants}
-                className="qr-id-card"
+                className={`qr-id-card ${isMobile ? 'mobile-holo-qr-card' : ''}`}
                 style={{
                   background: 'var(--card-bg)',
                   border: '1px solid var(--border)',
                   borderRadius: '12px',
-                  padding: '0.4rem',
+                  padding: isMobile ? '1.25rem' : '0.4rem',
                   textAlign: 'center',
                   boxShadow: 'var(--shadow)',
                   display: 'flex',
@@ -232,8 +201,8 @@ const ProfileSection = ({
                   alignItems: 'center',
                   justifyContent: 'center',
                   height: isMobile ? 'auto' : 'auto',
-                  width: isMobile ? '100%' : '100%',
-                  maxWidth: isMobile ? '260px' : '100%',
+                  width: '100%',
+                  maxWidth: '280px',
                   flex: isMobile ? 'none' : '1',
                   minHeight: 0,
                   overflow: 'hidden'

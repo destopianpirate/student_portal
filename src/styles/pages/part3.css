@@ -206,6 +206,10 @@
 
 /* Mobile - horizontal profile card, compact layout */
 @media (max-width: 768px) {
+  .app-layout, .main-content {
+    background: var(--bg) !important;
+  }
+  
   .home-top {
     gap: 1rem !important;
     margin-bottom: 1.25rem !important;
@@ -213,16 +217,30 @@
     max-width: 100% !important;
     overflow-x: hidden !important;
     box-sizing: border-box !important;
+    background: transparent !important;
+  }
+
+  .profile-left, .profile-right {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: var(--card-bg) !important;
+    border: 1px solid var(--border) !important;
+    box-shadow: var(--shadow) !important;
+  }
+
+  .profile-left:hover, .profile-right:hover {
+    border-color: var(--border) !important;
+    box-shadow: var(--shadow) !important;
   }
 
   .profile-left {
     display: flex !important;
     flex-direction: column !important;
     min-height: auto !important;
-    padding: 1rem !important;
-    gap: 0 !important;
-    text-align: left !important;
-    align-items: stretch !important;
+    padding: 1.25rem 1rem !important;
+    gap: 1rem !important;
+    text-align: center !important;
+    align-items: center !important;
     min-width: 0 !important;
     max-width: 100% !important;
     box-sizing: border-box !important;

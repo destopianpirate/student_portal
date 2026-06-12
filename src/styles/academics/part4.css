@@ -49,39 +49,36 @@
 }
 
 .compact-grade-stat-card {
-  background: var(--card-bg);
-  border: 1px solid var(--border);
+  background: #ffffff !important;
+  border: 1px solid var(--border) !important;
   text-align: center;
   border-radius: 0.85rem;
   padding: 0.75rem 0.5rem;
   transition: all 0.3s;
   position: relative;
   overflow: hidden;
+  box-shadow: var(--shadow) !important;
+}
+
+[data-theme="dark"] .compact-grade-stat-card {
+  background: var(--card-bg) !important;
 }
 
 .compact-grade-stat-card:before {
-  content: "";
-  background: linear-gradient(90deg, var(--primary), var(--accent));
-  opacity: 0;
-  height: 2px;
-  transition: opacity 0.3s;
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
+  display: none;
 }
 
 .compact-grade-stat-card:hover:before {
-  opacity: 1;
+  display: none;
 }
 
 .compact-grade-stat-card:hover {
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow) !important;
   transform: translateY(-1px);
 }
 
 .compact-grade-stat-card.cgpa-card {
-  border-left: 3px solid var(--primary);
+  border-left: none;
 }
 
 .compact-grade-stat-icon {
@@ -113,22 +110,70 @@
   font-weight: 600;
 }
 
-.compact-semester-card {
-  background: var(--card-bg);
+.semesters-container-box {
+  background: #ffffff !important;
   border: 1px solid var(--border);
   border-radius: 0.85rem;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
   margin-bottom: 0.75rem;
-  transition: all 0.3s;
+}
+
+[data-theme="dark"] .semesters-container-box {
+  background: var(--card-bg) !important;
+}
+
+.add-semester-container-inside {
+  padding: 0.75rem 0.85rem;
+  background: transparent;
+}
+
+.add-semester-container-inside .add-semester-btn {
+  background: transparent;
+  border: 1px dashed var(--border);
+  color: var(--primary);
+  width: 100%;
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.add-semester-container-inside .add-semester-btn:hover {
+  background: var(--input-bg);
+  border-color: var(--primary);
+}
+
+.compact-semester-card {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  margin-bottom: 0;
+  transition: background 0.2s;
   overflow: visible !important;
 }
 
 .compact-semester-card:hover {
-  box-shadow: var(--shadow);
+  box-shadow: none;
+  background: #f1f5f9 !important;
+}
+
+[data-theme="dark"] .compact-semester-card:hover {
+  background: #1e293b !important;
 }
 
 .compact-semester-card.is-synced-card {
   border-left: 4px solid var(--primary);
-  background: linear-gradient(135deg, rgba(99, 102, 241, 0.02) 0%, rgba(139, 92, 246, 0.02) 100%), var(--card-bg);
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.01) 0%, rgba(139, 92, 246, 0.01) 100%), transparent;
 }
 
 .compact-semester-header {
@@ -143,7 +188,7 @@
 }
 
 .compact-semester-header:hover {
-  background: var(--input-bg);
+  background: transparent;
 }
 
 .compact-semester-header h3 {
@@ -154,6 +199,11 @@
 
 .compact-semester-body {
   padding: 0 0.85rem 0.85rem;
+  background: #ffffff !important;
+}
+
+[data-theme="dark"] .compact-semester-body {
+  background: var(--card-bg) !important;
 }
 
 .compact-course-row {
@@ -206,6 +256,29 @@
 .compact-course-input.grade {
   flex-shrink: 0;
   width: 75px;
+}
+
+.course-name-credits-group {
+  display: flex;
+  align-items: center;
+  flex: 3;
+  gap: 0.5rem;
+}
+
+.course-name-credits-group .course-input-wrapper {
+  flex: 1;
+}
+
+.course-credits-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-shrink: 0;
+}
+
+.credits-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
 }
 
 /* CGPA Goal Forecaster Widget */
@@ -369,6 +442,78 @@
   100% {
     box-shadow: 0 0 0 0px rgba(99, 102, 241, 0);
     border-color: var(--border);
+  }
+}
+
+/* Mobile responsive interleaving for Academics Page components */
+@media (max-width: 1023px) {
+  .academics-summary-main,
+  .academics-summary-sidebar {
+    display: contents;
+  }
+
+  .semesters-container-box {
+    order: 1;
+  }
+
+  .grades-sidebar-stats-grid {
+    order: 2;
+  }
+
+  .spi-progress-chart-container {
+    order: 3;
+  }
+
+  .credit-audit-container {
+    order: 4;
+  }
+
+  .weekly-schedule-container {
+    order: 5;
+  }
+
+  .grade-distribution-container {
+    order: 6;
+  }
+
+  .cgpa-forecaster-container {
+    order: 7;
+  }
+}
+
+/* Mobile styles for compact course row inputs to align side-by-side touching tightly */
+@media (max-width: 768px) {
+  .course-name-credits-group {
+    gap: 0 !important;
+  }
+
+  .course-name-credits-group .compact-course-input.name {
+    border-top-right-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    border-right: none !important;
+  }
+
+  .course-name-credits-group .compact-course-input.name:focus {
+    border-right: 1px solid var(--primary) !important;
+    position: relative;
+    z-index: 5;
+  }
+
+  .course-name-credits-group .credits-label {
+    display: none !important;
+  }
+
+  .course-name-credits-group .compact-course-input.credits {
+    border-top-left-radius: 0 !important;
+    border-bottom-left-radius: 0 !important;
+    width: 42px !important;
+    min-width: 42px !important;
+    padding: 0.35rem 0.2rem !important;
+  }
+
+  .course-name-credits-group .compact-course-input.credits:focus {
+    position: relative;
+    z-index: 5;
   }
 }
 

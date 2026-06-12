@@ -248,17 +248,6 @@ const AcademicsPage = () => {
 
   return (
     <motion.div className="page-container" variants={containerVariants} initial="hidden" animate="visible" style={{ paddingBottom: 0 }}>
-      <motion.div variants={itemVariants} className="dashboard-premium-header">
-        <div className="dashboard-premium-header-content">
-          <div className="dashboard-premium-icon-wrap">
-            <GraduationCap size={28} />
-          </div>
-          <div>
-            <h2 className="dashboard-premium-title">Academics Hub</h2>
-            <p className="dashboard-premium-subtitle">Manage your grades, attendance, goals, and explore course policies</p>
-          </div>
-        </div>
-      </motion.div>
 
       {/* Academic Profile Card */}
       {userProfile && (

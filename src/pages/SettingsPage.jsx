@@ -56,7 +56,7 @@ const SettingsPage = ({ darkMode, setDarkMode }) => {
     photoPositionX: 50, photoPositionY: 50,
     photoZoom: 100, photoRotation: 0, photoAspectRatio: 'card',
     github: '', instagram: '', linkedin: '', phone: '', gmail: '',
-    cgpa: '', minor: '', hostelName: '', roomNumber: '',
+    minor: '', hostelName: '', roomNumber: '',
     messQrBase64: '', studentIdBase64: '',
     privacy: { phone: false, email: false, social: true },
     notifications: { email: true, push: false, updates: true },
@@ -96,7 +96,7 @@ const SettingsPage = ({ darkMode, setDarkMode }) => {
         photoAspectRatio: userProfile.photoAspectRatio || 'card',
         github: userProfile.github || '', instagram: userProfile.instagram || '',
         linkedin: userProfile.linkedin || '', phone: userProfile.phone || '', gmail: userProfile.gmail || '',
-        cgpa: userProfile.cgpa || '', minor: userProfile.minor || '',
+        minor: userProfile.minor || '',
         hostelName: userProfile.hostelName || '', roomNumber: userProfile.roomNumber || '',
         messQrBase64: userProfile.messQrBase64 || '', studentIdBase64: userProfile.studentIdBase64 || '',
         privacy: userProfile.privacy || { phone: false, email: false, social: true },
@@ -273,7 +273,7 @@ const SettingsPage = ({ darkMode, setDarkMode }) => {
       'yearOfAdmission', 'avatarUrl', 'customPhotoUrl', 'profilePhotoBase64',
       'photoPositionX', 'photoPositionY', 'photoZoom', 'photoRotation', 'photoAspectRatio',
       'github', 'instagram', 'linkedin', 'phone', 'gmail',
-      'cgpa', 'minor', 'hostelName', 'roomNumber',
+      'minor', 'hostelName', 'roomNumber',
       'messQrBase64', 'studentIdBase64'
     ];
     

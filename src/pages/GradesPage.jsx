@@ -7,6 +7,8 @@ import { fetchAndParseTimetable, isEvenSemester } from '../utils/parser';
 import CGPAForecaster from '../components/grades/CGPAForecaster';
 import SemesterCard from '../components/grades/SemesterCard';
 import WeeklySchedule from '../components/grades/WeeklySchedule';
+import CreditAuditWidget from '../components/grades/CreditAuditWidget';
+import { handleExportPDF } from '../utils/settingsExporter';
 
 const GRADE_POINTS = {
   'A+': 11, 'A': 10, 'A-': 9, 'B': 8, 'B-': 7, 'C': 6,
@@ -26,7 +28,9 @@ const GradesPage = () => {
     if (!currentUser) return [];
     try {
       const saved = localStorage.getItem(`grades_${currentUser.uid}`);
-      return saved ? JSON.parse(saved) : [];
+      if (saved) return JSON.parse(saved);
+      if (userProfile?.grades) return userProfile.grades;
+      return [];
     } catch { return []; }
   });
 
@@ -123,13 +127,18 @@ const GradesPage = () => {
   useEffect(() => {
     if (currentUser) {
       localStorage.setItem(`grades_${currentUser.uid}`, JSON.stringify(semesters));
+      // Auto sync to cloud in background
+      saveProfile({ grades: semesters }).catch(err => {
+        console.warn('Failed to auto-save grades to cloud:', err);
+      });
     }
-  }, [semesters, currentUser]);
+  }, [semesters, currentUser, saveProfile]);
 
-  // Compute available semesters (1 to 10) that do not already exist in the list
+  // Compute available semesters (1 to 8/10) that do not already exist in the list
   const availableSemesters = useMemo(() => {
     const list = [];
-    for (let i = 1; i <= 10; i++) {
+    const maxSems = (userProfile?.programme === 'B.Tech') ? 8 : 10;
+    for (let i = 1; i <= maxSems; i++) {
       const name = `Semester ${i}`;
       const alreadyExists = semesters.some(sem => sem.name === name);
       if (!alreadyExists) {
@@ -137,10 +146,18 @@ const GradesPage = () => {
       }
     }
     return list;
-  }, [semesters]);
+  }, [semesters, userProfile?.programme]);
 
   const addSemester = () => {
     if (!newSemName) return;
+    // Enforce 8 semester limit for B.Tech if the name matches a semester number
+    if (userProfile?.programme === 'B.Tech') {
+      const semNum = parseInt(newSemName.match(/\d+/)?.[0]);
+      if (!isNaN(semNum) && semNum > 8) {
+        addNotification('error', 'Limit Reached', 'B.Tech programmes only support up to 8 semesters');
+        return;
+      }
+    }
     setSemesters(prev => {
       const updated = [...prev, { id: Date.now(), name: newSemName, courses: [] }];
       updated.sort((a, b) => {
@@ -329,7 +346,16 @@ const GradesPage = () => {
     }
   };
 
-  const maxSGPA = Math.max(...sgpaTrend.map(s => s.sgpa), 10);
+  const chartRange = useMemo(() => {
+    if (sgpaTrend.length === 0) return { min: 6, max: 10 };
+    const values = sgpaTrend.map(s => s.sgpa);
+    const minVal = Math.min(...values);
+    const maxVal = Math.max(...values);
+    
+    const chartMin = minVal < 6 ? Math.max(0, Math.floor(minVal - 1)) : 6;
+    const chartMax = Math.max(maxVal, 10);
+    return { min: chartMin, max: chartMax };
+  }, [sgpaTrend]);
 
   const filteredSuggestions = useMemo(() => {
     if (activeSearch.semIdx === null || activeSearch.courseIdx === null) return [];
@@ -383,135 +409,128 @@ const GradesPage = () => {
             Track semester-wise SPI, cumulative GPA, and synced timetable registrations.
           </p>
         </div>
-        <button 
-          className="btn btn-primary btn-sm" 
-          onClick={handleSave}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.4rem',
-            boxShadow: '0 4px 12px rgba(99, 102, 241, 0.2)',
-            borderRadius: '0.5rem',
-            padding: '0.5rem 1rem'
-          }}
-        >
-          <Award size={14} /> Save to Cloud
-        </button>
       </div>
 
       <div className="academics-summary-grid">
         <div className="academics-summary-main">
-          {/* Semesters list */}
-          {semesters.map((sem, semIdx) => (
-            <SemesterCard
-              key={sem.id}
-              sem={sem}
-              semIdx={semIdx}
-              expandedSem={expandedSem}
-              setExpandedSem={setExpandedSem}
-              calculateSGPA={calculateSGPA}
+          <div className="semesters-container-box">
+            {/* Semesters list */}
+            {semesters.map((sem, semIdx) => (
+              <SemesterCard
+                key={sem.id}
+                sem={sem}
+                semIdx={semIdx}
+                expandedSem={expandedSem}
+                setExpandedSem={setExpandedSem}
+                calculateSGPA={calculateSGPA}
+                GRADE_POINTS={GRADE_POINTS}
+                GRADE_COLORS={GRADE_COLORS}
+                removeSemester={removeSemester}
+                addCourse={addCourse}
+                removeCourse={removeCourse}
+                updateCourse={updateCourse}
+                activeSearch={activeSearch}
+                setActiveSearch={setActiveSearch}
+                filteredSuggestions={filteredSuggestions}
+                handleSelectSuggestion={handleSelectSuggestion}
+                itemVariants={itemVariants}
+                currentSemester={userProfile?.semester}
+              />
+            ))}
+
+            {/* Add Semester inside the same box */}
+            <div className="add-semester-container-inside">
+              {showAddSem ? (
+                <motion.div className="add-semester-form" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                  {!isCustomSem ? (
+                    <select
+                      className="compact-course-input name"
+                      value={newSemName}
+                      onChange={e => {
+                        if (e.target.value === 'CUSTOM') {
+                          setIsCustomSem(true);
+                          setNewSemName('');
+                        } else {
+                          setNewSemName(e.target.value);
+                        }
+                      }}
+                      autoFocus
+                      style={{ minWidth: '180px', height: '32px' }}
+                    >
+                      <option value="">Select Semester</option>
+                      {availableSemesters.map(sem => (
+                        <option key={sem} value={sem}>{sem}</option>
+                      ))}
+                      <option value="CUSTOM">Custom Semester...</option>
+                    </select>
+                  ) : (
+                    <input
+                      className="compact-course-input name"
+                      placeholder="e.g. Summer Semester 2026"
+                      value={newSemName}
+                      onChange={e => setNewSemName(e.target.value)}
+                      autoFocus
+                      style={{ minWidth: '180px', height: '32px', padding: '0 0.75rem', border: '1px solid var(--border)', borderRadius: '6px', outline: 'none', background: 'var(--input-bg)', color: 'var(--text)' }}
+                    />
+                  )}
+                  <button className="btn btn-primary btn-sm" onClick={addSemester} disabled={!newSemName} style={{ padding: '0.35rem 0.75rem' }}>Add</button>
+                  <button 
+                    className="btn btn-outline btn-sm" 
+                    onClick={() => { 
+                      if (isCustomSem) {
+                        setIsCustomSem(false);
+                        setNewSemName('');
+                      } else {
+                        setShowAddSem(false); 
+                        setNewSemName(''); 
+                      }
+                    }} 
+                    style={{ padding: '0.35rem 0.75rem' }}
+                  >
+                    {isCustomSem ? 'Back' : 'Cancel'}
+                  </button>
+                </motion.div>
+              ) : (
+                <button 
+                  className="add-semester-btn" 
+                  onClick={() => { setShowAddSem(true); setNewSemName(''); setIsCustomSem(false); }}
+                >
+                  <Plus size={14} /> Add Semester
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Credit Distribution & Degree Audit */}
+          <div className="credit-audit-container">
+            <CreditAuditWidget
+              semesters={semesters}
               GRADE_POINTS={GRADE_POINTS}
-              GRADE_COLORS={GRADE_COLORS}
-              removeSemester={removeSemester}
-              addCourse={addCourse}
-              removeCourse={removeCourse}
-              updateCourse={updateCourse}
-              activeSearch={activeSearch}
-              setActiveSearch={setActiveSearch}
-              filteredSuggestions={filteredSuggestions}
-              handleSelectSuggestion={handleSelectSuggestion}
               itemVariants={itemVariants}
             />
-          ))}
-
-          {/* Add Semester */}
-          {showAddSem ? (
-            <motion.div className="add-semester-form" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} style={{ marginTop: '0.5rem', display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-              {!isCustomSem ? (
-                <select
-                  className="compact-course-input name"
-                  value={newSemName}
-                  onChange={e => {
-                    if (e.target.value === 'CUSTOM') {
-                      setIsCustomSem(true);
-                      setNewSemName('');
-                    } else {
-                      setNewSemName(e.target.value);
-                    }
-                  }}
-                  autoFocus
-                  style={{ minWidth: '180px', height: '32px' }}
-                >
-                  <option value="">Select Semester</option>
-                  {availableSemesters.map(sem => (
-                    <option key={sem} value={sem}>{sem}</option>
-                  ))}
-                  <option value="CUSTOM">Custom Semester...</option>
-                </select>
-              ) : (
-                <input
-                  className="compact-course-input name"
-                  placeholder="e.g. Summer Semester 2026"
-                  value={newSemName}
-                  onChange={e => setNewSemName(e.target.value)}
-                  autoFocus
-                  style={{ minWidth: '180px', height: '32px', padding: '0 0.75rem', border: '1px solid var(--border)', borderRadius: '6px', outline: 'none', background: 'var(--input-bg)', color: 'var(--text)' }}
-                />
-              )}
-              <button className="btn btn-primary btn-sm" onClick={addSemester} disabled={!newSemName} style={{ padding: '0.35rem 0.75rem' }}>Add</button>
-              <button 
-                className="btn btn-outline btn-sm" 
-                onClick={() => { 
-                  if (isCustomSem) {
-                    setIsCustomSem(false);
-                    setNewSemName('');
-                  } else {
-                    setShowAddSem(false); 
-                    setNewSemName(''); 
-                  }
-                }} 
-                style={{ padding: '0.35rem 0.75rem' }}
-              >
-                {isCustomSem ? 'Back' : 'Cancel'}
-              </button>
-            </motion.div>
-          ) : (
-            <motion.button 
-              className="btn btn-primary add-semester-btn" 
-              onClick={() => { setShowAddSem(true); setNewSemName(''); setIsCustomSem(false); }} 
-              variants={itemVariants}
-              style={{ marginTop: '0.5rem', padding: '0.45rem 1rem' }}
-            >
-              <Plus size={16} /> Add Semester
-            </motion.button>
-          )}
+          </div>
 
           {/* Synced Weekly Schedule & Workload Card */}
           {timetableCourses.length > 0 && (
-            <WeeklySchedule
-              timetableCourses={timetableCourses}
-              weeklySchedule={weeklySchedule}
-              itemVariants={itemVariants}
-            />
+            <div className="weekly-schedule-container">
+              <WeeklySchedule
+                timetableCourses={timetableCourses}
+                weeklySchedule={weeklySchedule}
+                itemVariants={itemVariants}
+              />
+            </div>
           )}
         </div>
 
         <div className="academics-summary-sidebar">
           {/* Quick Stats Grid */}
           <div className="grades-sidebar-stats-grid">
-            <div className="compact-grade-stat-card cgpa-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', alignItems: 'center', minHeight: '115px' }}>
+            <div className="compact-grade-stat-card cgpa-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', minHeight: '115px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                 <div className="compact-grade-stat-icon"><TrendingUp size={16} /></div>
                 <div className="compact-grade-stat-value">{cgpa}</div>
                 <div className="compact-grade-stat-label">Cumulative GPA</div>
               </div>
-              {honorStanding && (
-                <div className="honor-standing-container">
-                  <span className={`honor-standing-badge ${honorStanding.className}`}>
-                    {honorStanding.name}
-                  </span>
-                </div>
-              )}
             </div>
             <div className="compact-grade-stat-card" style={{ minHeight: '115px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
               <div className="compact-grade-stat-icon"><BookOpen size={16} /></div>
@@ -537,75 +556,93 @@ const GradesPage = () => {
 
           {/* SPI Progress Chart */}
           {sgpaTrend.length > 1 && (
-            <motion.div className="grades-chart-card glass-card" variants={itemVariants} style={{ position: 'relative', overflow: 'hidden', padding: '1rem', marginBottom: 0 }}>
+            <motion.div className="grades-chart-card glass-card spi-progress-chart-container" variants={itemVariants} style={{ position: 'relative', overflow: 'hidden', padding: '1rem', marginBottom: 0 }}>
               <h3 style={{ marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '.5rem', fontSize: '0.85rem', fontWeight: 800, color: 'var(--text)' }}>
                 <TrendingUp size={16} style={{ color: 'var(--primary)' }} /> Semester SPI Progress
               </h3>
               
-              <div className="sgpa-chart" style={{ position: 'relative', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-around', height: '120px', padding: '1rem 0.5rem 0.5rem', background: 'rgba(99, 102, 241, 0.02)', border: '1px dashed var(--border)', borderRadius: '0.6rem' }}>
-                {/* Dashed CGPA Baseline across all bars */}
-                {cgpa !== '—' && (
-                  <div 
-                    style={{
-                      position: 'absolute',
-                      left: 0,
-                      right: 0,
-                      top: `${(1 - (parseFloat(cgpa) || 0) / maxSGPA) * 100}%`,
-                      borderTop: '1px dashed var(--primary)',
-                      opacity: 0.6,
-                      zIndex: 1,
-                      pointerEvents: 'none'
-                    }}
-                  >
-                    <span style={{ position: 'absolute', right: '10px', top: '-14px', fontSize: '0.6rem', color: 'var(--primary)', fontWeight: 'bold', background: 'var(--card-bg)', padding: '0.05rem 0.3rem', borderRadius: '3px', border: '1px solid var(--border)' }}>
-                      CGPA: {cgpa}
-                    </span>
-                  </div>
-                )}
-
-                {sgpaTrend.map((s, i) => {
-                  const heightPercent = (s.sgpa / maxSGPA) * 100;
-                  return (
+              <div className="sgpa-chart" style={{ position: 'relative', height: '180px', padding: '1rem 0.5rem 0.5rem', background: 'rgba(99, 102, 241, 0.02)', border: '1px dashed var(--border)', borderRadius: '0.6rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                {/* The main relative grid of the chart (height 120px) where the bars and baseline sit */}
+                <div style={{ position: 'relative', height: '120px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-around', width: '100%', borderBottom: '1px solid var(--border)' }}>
+                  
+                  {/* Dashed CGPA Baseline across all bars, positioned relative to the 85px height container */}
+                  {cgpa !== '—' && (
                     <div 
-                      key={i} 
-                      className="sgpa-bar-wrapper" 
-                      onClick={() => handleChartBarClick(s.name)}
-                      style={{ 
-                        display: 'flex', 
-                        flexDirection: 'column', 
-                        alignItems: 'center', 
-                        height: '100%', 
-                        justifyContent: 'flex-end', 
-                        flex: 1, 
-                        position: 'relative', 
-                        zIndex: 2,
-                        cursor: 'pointer'
+                      style={{
+                        position: 'absolute',
+                        left: 0,
+                        right: 0,
+                        bottom: `${((parseFloat(cgpa) - chartRange.min) / (chartRange.max - chartRange.min)) * 100}%`,
+                        borderTop: '1px dashed var(--primary)',
+                        opacity: 0.6,
+                        zIndex: 1,
+                        pointerEvents: 'none'
                       }}
-                      title="Click to scroll to semester details"
                     >
-                      <div className="sgpa-bar-value" style={{ fontSize: '0.7rem', fontWeight: 'bold', marginBottom: '0.2rem' }}>{s.sgpa.toFixed(2)}</div>
-                      <div 
-                        className="sgpa-bar" 
-                        style={{ 
-                          height: `${heightPercent}%`, 
-                          width: '20px', 
-                          background: 'linear-gradient(180deg, var(--primary) 0%, var(--accent) 100%)', 
-                          borderRadius: '4px 4px 0 0',
-                          boxShadow: '0 3px 8px rgba(99, 102, 241, 0.15)',
-                          transition: 'all 0.3s ease'
-                        }} 
-                      />
-                      <div className="sgpa-bar-label" style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginTop: '0.35rem', fontWeight: 'bold' }}>{s.name}</div>
+                      <span style={{ position: 'absolute', right: '10px', top: '-14px', fontSize: '0.6rem', color: 'var(--primary)', fontWeight: 'bold', background: 'var(--card-bg)', padding: '0.05rem 0.3rem', borderRadius: '3px', border: '1px solid var(--border)' }}>
+                        CGPA: {cgpa}
+                      </span>
                     </div>
-                  );
-                })}
+                  )}
+
+                  {/* The columns of the chart */}
+                  {sgpaTrend.map((s, i) => {
+                    const heightPercent = ((s.sgpa - chartRange.min) / (chartRange.max - chartRange.min)) * 100;
+                    return (
+                      <div 
+                        key={i} 
+                        className="sgpa-bar-wrapper" 
+                        onClick={() => handleChartBarClick(s.name)}
+                        style={{ 
+                          display: 'flex', 
+                          flexDirection: 'column', 
+                          alignItems: 'center', 
+                          justifyContent: 'flex-end',
+                          height: '100%',
+                          flex: 1, 
+                          position: 'relative', 
+                          zIndex: 2,
+                          cursor: 'pointer'
+                        }}
+                        title="Click to scroll to semester details"
+                      >
+                        {/* Label with the actual SGPA value - positioned absolutely above the bar so it never squashes the flex */}
+                        <div style={{ position: 'absolute', bottom: `calc(${heightPercent}% + 2px)`, fontSize: '0.7rem', fontWeight: 'bold', whiteSpace: 'nowrap', color: 'var(--text)' }}>
+                          {s.sgpa.toFixed(2)}
+                        </div>
+
+                        {/* The visual bar */}
+                        <div 
+                          className="sgpa-bar" 
+                          style={{ 
+                            height: `${heightPercent}%`, 
+                            width: '20px', 
+                            background: 'linear-gradient(180deg, var(--primary) 0%, var(--accent) 100%)', 
+                            borderRadius: '4px 4px 0 0',
+                            boxShadow: '0 3px 8px rgba(99, 102, 241, 0.15)',
+                            transition: 'all 0.3s ease'
+                          }} 
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* The labels at the very bottom (outside the relative grid) to avoid any overlapping */}
+                <div style={{ display: 'flex', justifyContent: 'space-around', width: '100%', paddingTop: '0.4rem' }}>
+                  {sgpaTrend.map((s, i) => (
+                    <div key={i} style={{ flex: 1, textAlign: 'center', fontSize: '0.65rem', color: 'var(--text-muted)', fontWeight: 'bold' }}>
+                      {s.name}
+                    </div>
+                  ))}
+                </div>
               </div>
             </motion.div>
           )}
 
           {/* Grade Distribution */}
           {Object.keys(gradeDistribution).length > 0 && (
-            <motion.div className="grades-chart-card glass-card" variants={itemVariants} style={{ padding: '1rem', marginBottom: 0 }}>
+            <motion.div className="grades-chart-card glass-card grade-distribution-container" variants={itemVariants} style={{ padding: '1rem', marginBottom: 0 }}>
               <h3 style={{ marginBottom: '0.75rem', fontSize: '0.85rem', fontWeight: 800, color: 'var(--text)' }}>Grade Profile Analysis</h3>
               <div className="grade-dist-row" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
                 {Object.entries(gradeDistribution).sort((a, b) => (GRADE_POINTS[b[0]] || 0) - (GRADE_POINTS[a[0]] || 0)).map(([grade, count]) => (
@@ -636,16 +673,19 @@ const GradesPage = () => {
 
           {/* CGPA Goal Forecaster */}
           {cgpa !== '—' && (
-            <CGPAForecaster
-              cgpa={cgpa}
-              targetCgpa={targetCgpa}
-              setTargetCgpa={setTargetCgpa}
-              remainingCredits={remainingCredits}
-              setRemainingCredits={setRemainingCredits}
-              requiredSPI={requiredSPI}
-              itemVariants={itemVariants}
-            />
+            <div className="cgpa-forecaster-container">
+              <CGPAForecaster
+                cgpa={cgpa}
+                targetCgpa={targetCgpa}
+                setTargetCgpa={setTargetCgpa}
+                remainingCredits={remainingCredits}
+                setRemainingCredits={setRemainingCredits}
+                requiredSPI={requiredSPI}
+                itemVariants={itemVariants}
+              />
+            </div>
           )}
+
         </div>
       </div>
 

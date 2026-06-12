@@ -178,13 +178,7 @@ const EditProfileDetails = ({
               <GraduationCap className="premium-input-icon" size={16} />
             </div>
           </div>
-          <div className="edit-field">
-            <label>CGPA</label>
-            <div className="premium-input-wrapper">
-              <input type="number" step="0.01" min="0" max="10" placeholder="e.g. 8.54" value={form.cgpa} onChange={e => update('cgpa', e.target.value)} />
-              <Award className="premium-input-icon" size={16} />
-            </div>
-          </div>
+
           <div className="edit-field">
             <label>Minor / Specialization</label>
             <div className="premium-input-wrapper">

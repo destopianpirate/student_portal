@@ -193,13 +193,13 @@ const NotificationsPage = () => {
   }, [allNotifications]);
 
   const handleNotifClick = (n) => {
-    if (n.id.startsWith('announcement-')) {
+    if (n.id?.toString().startsWith('announcement-')) {
       const annId = n.id.replace('announcement-', '');
       if (!readAnnouncements.includes(annId)) {
         setReadAnnouncements(prev => [...prev, annId]);
       }
       setSelectedAnnouncement(n.announcementData);
-    } else if (n.id.startsWith('attendance-warn-') || n.id.startsWith('deadline-') || n.id.startsWith('exam-')) {
+    } else if (n.id?.toString().startsWith('attendance-warn-') || n.id?.toString().startsWith('deadline-') || n.id?.toString().startsWith('exam-')) {
       if (n.action?.path) {
         navigate(n.action.path);
       }
@@ -349,8 +349,8 @@ const NotificationsPage = () => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
               {notifs.map(n => {
                 const config = TYPE_CONFIG[n.type] || TYPE_CONFIG.info;
-                const Icon = n.id.startsWith('announcement-') ? Megaphone : config.icon;
-                const cardColor = n.id.startsWith('announcement-') ? 'var(--primary)' : config.color;
+                const Icon = n.id?.toString().startsWith('announcement-') ? Megaphone : config.icon;
+                const cardColor = n.id?.toString().startsWith('announcement-') ? 'var(--primary)' : config.color;
 
                 return (
                   <motion.div
@@ -425,7 +425,7 @@ const NotificationsPage = () => {
                         </span>
                       )}
                       
-                      {n.id.startsWith('announcement-') && (
+                      {n.id?.toString().startsWith('announcement-') && (
                         <span style={{ marginTop: '0.4rem', fontSize: '0.7rem', color: 'var(--primary)', fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
                           View Full Notice <ChevronRight size={10} />
                         </span>

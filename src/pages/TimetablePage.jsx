@@ -552,20 +552,32 @@ const TimetablePage = () => {
 
             {isMobile && mobileViewMode === 'list' && (
               <div className="timetable-mobile-tabs">
-                {days.map(d => (
-                  <button 
-                    key={d} 
-                    className={`timetable-mobile-tab-btn ${activeDayTab === d ? 'active' : ''}`}
-                    onClick={() => setActiveDayTab(d)}
-                  >
-                    {d.substring(0, 3)}
-                  </button>
-                ))}
+                {days.map(d => {
+                  const todayName = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+                  const isToday = d === todayName;
+                  return (
+                    <button 
+                      key={d} 
+                      className={`timetable-mobile-tab-btn ${activeDayTab === d ? 'active' : ''} ${isToday ? 'today-tab' : ''}`}
+                      onClick={() => setActiveDayTab(d)}
+                    >
+                      {d.substring(0, 3)}
+                    </button>
+                  );
+                })}
               </div>
             )}
-
-            {(isMobile && mobileViewMode === 'list') ? (
-              <div className="timetable-mobile-timeline" ref={timetableRef}>
+            {/* Mobile daywise list timeline */}
+            {isMobile && mobileViewMode === 'list' && (
+              <AnimatePresence mode="wait">
+                <motion.div 
+                  key={activeDayTab}
+                  className="timetable-mobile-timeline"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.2, ease: 'easeOut' }}
+                >
                 {orderedTimeSlots.map(time => {
                   const isActive = isSlotActive(time);
                   
@@ -573,19 +585,37 @@ const TimetablePage = () => {
                     return (
                       <div key={time} className={`timetable-mobile-lunch ${isActive ? 'active' : ''}`}>
                         <Coffee size={14} />
-                        <span>Lunch Break ({time})</span>
+                        <span>Lunch Break</span>
+                        <span style={{ opacity: 0.6, fontSize: '.7rem', fontWeight: 500 }}>{time}</span>
                       </div>
                     );
                   }
                   
                   const entries = activeTimetable[activeDayTab]?.[time] || [];
                   if (entries.length === 0) return null;
+
+                  // Calculate duration from time string
+                  const getDuration = (t) => {
+                    const parts = t.split(/[-–—]/).map(s => s.trim());
+                    if (parts.length < 2) return '';
+                    const parseT = (s) => { const m = s.match(/(\d+):(\d+)/); return m ? parseInt(m[1]) * 60 + parseInt(m[2]) : 0; };
+                    const mins = parseT(parts[1]) - parseT(parts[0]);
+                    if (mins <= 0) return '';
+                    return mins >= 60 ? `${Math.floor(mins/60)}h ${mins%60 ? mins%60+'m' : ''}`.trim() : `${mins}m`;
+                  };
                   
                   return (
-                    <div key={time} className={`timetable-mobile-row ${isActive ? 'active-row' : ''}`}>
+                    <motion.div 
+                      key={time} 
+                      className={`timetable-mobile-row ${isActive ? 'active-row' : ''}`}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.15, delay: orderedTimeSlots.indexOf(time) * 0.03 }}
+                    >
                       <div className="timetable-mobile-time-badge">
-                        <Clock size={12} />
+                        <Clock size={11} />
                         <span>{time}</span>
+                        {getDuration(time) && <span className="time-duration-chip">{getDuration(time)}</span>}
                       </div>
                       <div className="timetable-mobile-cards-list">
                         {entries.map((e, idx) => (
@@ -618,88 +648,102 @@ const TimetablePage = () => {
                           </div>
                         )}
                       </div>
-                    </div>
+                    </motion.div>
                   );
                 })}
                 {orderedTimeSlots.filter(t => t !== "13:00 - 14:00" && (activeTimetable[activeDayTab]?.[t] || []).length > 0).length === 0 && (
                   <div className="timetable-mobile-empty">
-                    <Calendar size={36} />
-                    <p>No classes scheduled for {activeDayTab}</p>
+                    <Calendar size={40} />
+                    <p>No classes on {activeDayTab}!</p>
+                    <span className="empty-subtitle">Enjoy your free day 🎉</span>
                   </div>
                 )}
-              </div>
-            ) : (
-              <div className="timetable-container" ref={timetableRef}>
-                <table className="timetable">
-                  <thead><tr><th style={{ width: '120px' }}>Time</th>{days.map(d => <th key={d}>{d}</th>)}</tr></thead>
-                  <tbody>
-                    {orderedTimeSlots.map(time => {
-                      const isActive = isSlotActive(time);
-                      const rowClass = isActive ? 'active-row' : '';
-                      const slotClass = `time-slot-cell ${isActive ? 'active-slot' : ''}`;
-                      
-                      if (time === "13:00 - 14:00") {
-                        return (
-                          <tr key={time} className={rowClass}>
-                            <td className={slotClass}>
-                              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                                <Coffee size={12} /> {time}
-                              </span>
-                            </td>
-                            <td colSpan={days.length} className="timetable-lunch">Lunch Break</td>
-                          </tr>
-                        );
-                      }
-                      
+              </motion.div>
+              </AnimatePresence>
+            )}
+
+            {/* Gridwise timetable container (always rendered, but positioned off-screen when mobile list view is active) */}
+            <div 
+              ref={timetableRef} 
+              className="timetable-container" 
+              style={isMobile && mobileViewMode === 'list' ? { 
+                position: 'absolute', 
+                left: '-9999px', 
+                top: '-9999px', 
+                width: '1200px',
+                background: 'var(--card-bg)',
+                pointerEvents: 'none'
+              } : {}}
+            >
+              <table className="timetable">
+                <thead><tr><th style={{ width: '120px' }}>Time</th>{days.map(d => <th key={d}>{d}</th>)}</tr></thead>
+                <tbody>
+                  {orderedTimeSlots.map(time => {
+                    const isActive = isSlotActive(time);
+                    const rowClass = isActive ? 'active-row' : '';
+                    const slotClass = `time-slot-cell ${isActive ? 'active-slot' : ''}`;
+                    
+                    if (time === "13:00 - 14:00") {
                       return (
                         <tr key={time} className={rowClass}>
-                          <td className={slotClass}>{time}</td>
-                          {days.map(day => {
-                            const entries = activeTimetable[day]?.[time] || [];
-                            return (
-                              <td key={day} style={{ padding: 0 }}>
-                                {entries.map((e, i) => (
-                                  <div key={i} className="timetable-cell" style={{ '--hue': getHue(e.code) }}>
-                                    
-                                    {/* Timetable hover details card */}
-                                    <div className="timetable-hover-tooltip">
-                                      <div className="tooltip-header">Session Details</div>
-                                      <div className="tooltip-title">{e.title || 'Course Lecture'}</div>
-                                      <div className="tooltip-meta-row">
-                                        <BookOpen size={11} style={{ color: 'var(--primary)' }} />
-                                        <span>Code: {e.code}</span>
-                                      </div>
-                                      <div className="tooltip-meta-row">
-                                        <User size={11} style={{ color: 'var(--primary)' }} />
-                                        <span>Instructor: {e.instructor || 'N/A'}</span>
-                                      </div>
-                                      <div className="tooltip-meta-row">
-                                        <MapPin size={11} style={{ color: 'var(--primary)' }} />
-                                        <span>Venue: {e.venue || 'N/A'}</span>
-                                      </div>
-                                      <div className="tooltip-meta-row">
-                                        <Clock size={11} style={{ color: 'var(--primary)' }} />
-                                        <span>Type: {e.type || 'Lecture'}</span>
-                                      </div>
-                                    </div>
-
-                                    <span className="code">{e.code}</span>
-                                    <span className="title">{e.title}</span>
-                                    <span className="type">{e.type}</span>
-                                    {e.venue && <span className="venue"><MapPin size={10} style={{ marginRight: 2 }} />{e.venue}</span>}
-                                  </div>
-                                ))}
-                                {entries.length > 1 && <div className="conflict-warning"><AlertCircle size={12} style={{ marginRight: 4 }} />Conflict!</div>}
-                              </td>
-                            );
-                          })}
+                          <td className={slotClass}>
+                            <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                              <Coffee size={12} /> {time}
+                            </span>
+                          </td>
+                          <td colSpan={days.length} className="timetable-lunch">Lunch Break</td>
                         </tr>
                       );
-                    })}
-                  </tbody>
-                </table>
-              </div>
-            )}
+                    }
+                    
+                    return (
+                      <tr key={time} className={rowClass}>
+                        <td className={slotClass}>{time}</td>
+                        {days.map(day => {
+                          const entries = activeTimetable[day]?.[time] || [];
+                          return (
+                            <td key={day} style={{ padding: 0 }}>
+                              {entries.map((e, i) => (
+                                <div key={i} className="timetable-cell" style={{ '--hue': getHue(e.code) }}>
+                                  
+                                  {/* Timetable hover details card */}
+                                  <div className="timetable-hover-tooltip">
+                                    <div className="tooltip-header">Session Details</div>
+                                    <div className="tooltip-title">{e.title || 'Course Lecture'}</div>
+                                    <div className="tooltip-meta-row">
+                                      <BookOpen size={11} style={{ color: 'var(--primary)' }} />
+                                      <span>Code: {e.code}</span>
+                                    </div>
+                                    <div className="tooltip-meta-row">
+                                      <User size={11} style={{ color: 'var(--primary)' }} />
+                                      <span>Instructor: {e.instructor || 'N/A'}</span>
+                                    </div>
+                                    <div className="tooltip-meta-row">
+                                      <MapPin size={11} style={{ color: 'var(--primary)' }} />
+                                      <span>Venue: {e.venue || 'N/A'}</span>
+                                    </div>
+                                    <div className="tooltip-meta-row">
+                                      <Clock size={11} style={{ color: 'var(--primary)' }} />
+                                      <span>Type: {e.type || 'Lecture'}</span>
+                                    </div>
+                                  </div>
+
+                                  <span className="code">{e.code}</span>
+                                  <span className="title">{e.title}</span>
+                                  <span className="type">{e.type}</span>
+                                  {e.venue && <span className="venue"><MapPin size={10} style={{ marginRight: 2 }} />{e.venue}</span>}
+                                </div>
+                              ))}
+                              {entries.length > 1 && <div className="conflict-warning"><AlertCircle size={12} style={{ marginRight: 4 }} />Conflict!</div>}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
 
             <div style={{ marginTop: '2rem' }}>
               <h3>Registered Courses Summary</h3>
