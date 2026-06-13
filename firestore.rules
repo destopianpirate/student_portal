@@ -3,16 +3,32 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // User profile rules
+    // Helper function to check if the requesting user is an admin
+    function isAdmin() {
+      return request.auth != null && 
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Rules for the 'users' collection
     match /users/{userId} {
-      // Allow any logged-in user to read user profiles (so students can find each other/interact)
+      // Any logged-in student can search or read profiles (e.g., to resolve usernames or view classmates)
       allow read: if request.auth != null;
       
-      // Only allow the user to modify their own profile data
-      allow write: if request.auth != null && request.auth.uid == userId;
+      // Users can only write/update their own document; admins can write to any document (e.g., setting roles)
+      allow write: if (request.auth != null && request.auth.uid == userId) || isAdmin();
     }
-    
-    // Fallback rule for any other collection
+
+    // Rules for the 'announcements' collection
+    match /announcements/{announcementId} {
+      // Any logged-in student can read announcements
+      allow read: if request.auth != null;
+      
+      // Only admins can create, update, or delete announcements
+      allow write: if isAdmin();
+    }
+
+    // Default fallback: deny everything else
     match /{document=**} {
       allow read, write: if false;
     }
