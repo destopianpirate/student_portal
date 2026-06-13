@@ -238,7 +238,8 @@ export const AuthProvider = ({ children }) => {
       privacy: { phone: false, email: false, social: true },
       notifications: { email: true, push: false, updates: true },
       preferences: { librarySeat: 'A-12', defaultView: 'Grid', accent: 'indigo' },
-      isDemo: true
+      isDemo: true,
+      profileComplete: true
     };
 
     const demoGrades = [
@@ -356,7 +357,7 @@ export const AuthProvider = ({ children }) => {
         }
         localStorage.setItem('cached_firebase_user', JSON.stringify(simplifiedUser));
         setCurrentUser(user);
-        fetchProfile(user).catch(e => console.warn('fetchProfile failed:', e.message));
+        await fetchProfile(user).catch(e => console.warn('fetchProfile failed:', e.message));
       } else {
         localStorage.removeItem('cached_firebase_user');
         const localDemo = localStorage.getItem('demo_user');
