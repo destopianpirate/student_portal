@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 import { motion, AnimatePresence, Reorder, useDragControls } from 'framer-motion';
 import {
   StickyNote, Plus, Search, Pin, Trash2, Edit3, X, Save, Tag, Folder, Star,
@@ -699,9 +700,38 @@ const focusElementAtEnd = (el) => {
 
 // ═══ Main Notes Page ═══
 const NotesPage = () => {
+  const { currentUser } = useAuth();
+
   // ── State ──
-  const [notes, setNotes] = useState(loadNotes);
-  const [folders, setFolders] = useState(loadFolders);
+  const [notes, setNotes] = useState([]);
+  const [folders, setFolders] = useState(DEFAULT_FOLDERS);
+
+  useEffect(() => {
+    if (currentUser?.uid) {
+      try {
+        const storedNotes = localStorage.getItem(`notes_v2_${currentUser.uid}`);
+        setNotes(storedNotes ? JSON.parse(storedNotes) : []);
+        const storedFolders = localStorage.getItem(`notes_folders_${currentUser.uid}`);
+        setFolders(storedFolders ? JSON.parse(storedFolders) : DEFAULT_FOLDERS);
+      } catch (e) {
+        setNotes([]);
+        setFolders(DEFAULT_FOLDERS);
+      }
+    }
+  }, [currentUser]);
+
+  const saveNotes = (updated) => {
+    if (currentUser?.uid) {
+      localStorage.setItem(`notes_v2_${currentUser.uid}`, JSON.stringify(updated));
+    }
+  };
+
+  const saveFolders = (updated) => {
+    if (currentUser?.uid) {
+      localStorage.setItem(`notes_folders_${currentUser.uid}`, JSON.stringify(updated));
+    }
+  };
+
   const [activeNoteId, setActiveNoteId] = useState(null);
   const [sidebarView, setSidebarView] = useState('all'); // all | favorites | trash | folder:NAME
   const [searchQuery, setSearchQuery] = useState('');

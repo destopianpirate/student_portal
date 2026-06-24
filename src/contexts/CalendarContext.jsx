@@ -130,15 +130,26 @@ const ACADEMIC_EVENTS = [
 const ALL_HOLIDAYS = [...GAZETTED_HOLIDAYS, ...RESTRICTED_HOLIDAYS];
 
 export const CalendarProvider = ({ children }) => {
-  const { userProfile } = useAuth();
+  const { userProfile, currentUser } = useAuth();
 
-  const [customEvents, setCustomEvents] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('custom_events') || '[]'); } catch { return []; }
-  });
+  const [customEvents, setCustomEvents] = useState([]);
 
   useEffect(() => {
-    localStorage.setItem('custom_events', JSON.stringify(customEvents));
-  }, [customEvents]);
+    if (currentUser?.uid) {
+      try {
+        const stored = localStorage.getItem(`custom_events_${currentUser.uid}`);
+        setCustomEvents(stored ? JSON.parse(stored) : []);
+      } catch {
+        setCustomEvents([]);
+      }
+    }
+  }, [currentUser]);
+
+  useEffect(() => {
+    if (currentUser?.uid) {
+      localStorage.setItem(`custom_events_${currentUser.uid}`, JSON.stringify(customEvents));
+    }
+  }, [customEvents, currentUser]);
 
   const filteredAcademicEvents = useMemo(() => {
     if (!userProfile) {

@@ -1,20 +1,38 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FolderKanban, Plus, X, Save, Trash2, ExternalLink, GitBranch, Clock } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 const STATUS = ['Not Started', 'In Progress', 'Completed'];
 const STATUS_COLORS = { 'Not Started': '#94a3b8', 'In Progress': '#f59e0b', 'Completed': '#22c55e' };
 
 const ProjectsPage = () => {
-  const [projects, setProjects] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('student_projects') || '[]'); } catch { return []; }
-  });
+  const { currentUser } = useAuth();
+  const [projects, setProjects] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ name: '', description: '', status: 'Not Started', techStack: '', github: '', progress: 0 });
   const [filterStatus, setFilterStatus] = useState('all');
 
-  const save = (u) => { setProjects(u); localStorage.setItem('student_projects', JSON.stringify(u)); };
+  useEffect(() => {
+    if (currentUser?.uid) {
+      try {
+        const stored = localStorage.getItem(`student_projects_${currentUser.uid}`);
+        setProjects(stored ? JSON.parse(stored) : []);
+      } catch {
+        setProjects([]);
+      }
+    }
+  }, [currentUser]);
+
+  const save = (u) => {
+    setProjects(u);
+    if (currentUser?.uid) {
+      localStorage.setItem(`student_projects_${currentUser.uid}`, JSON.stringify(u));
+    } else {
+      localStorage.setItem('student_projects', JSON.stringify(u));
+    }
+  };
 
   const handleSave = () => {
     if (!form.name.trim()) return;

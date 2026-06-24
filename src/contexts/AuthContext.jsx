@@ -106,15 +106,16 @@ export const AuthProvider = ({ children }) => {
     return cachedProfile;
   };
 
-  const saveProfile = async (profileData) => {
-    if (!currentUser) return;
+  const saveProfile = async (profileData, userInstance = null) => {
+    const activeUser = userInstance || currentUser;
+    if (!activeUser) return;
     
     // Automatically calculate CGPA from grades if grades are being saved
     let cgpaVal = userProfile?.cgpa;
     if (profileData.grades) {
       cgpaVal = calculateCgpaVal(profileData.grades);
     } else {
-      const localGradesStr = localStorage.getItem(`grades_${currentUser.uid}`);
+      const localGradesStr = localStorage.getItem(`grades_${activeUser.uid}`);
       if (localGradesStr) {
         try {
           cgpaVal = calculateCgpaVal(JSON.parse(localGradesStr));
@@ -125,15 +126,15 @@ export const AuthProvider = ({ children }) => {
     const data = { 
       ...profileData, 
       cgpa: cgpaVal || '—',
-      uid: currentUser.uid, 
+      uid: activeUser.uid, 
       updatedAt: new Date().toISOString() 
     };
     const updatedProfile = { ...userProfile, ...data };
-    localStorage.setItem(`profile_${currentUser.uid}`, JSON.stringify(updatedProfile));
+    localStorage.setItem(`profile_${activeUser.uid}`, JSON.stringify(updatedProfile));
     setUserProfile(updatedProfile);
-    if (currentUser.isDemo) return;
+    if (activeUser.isDemo) return;
     // Run Firestore save in background so it doesn't block UI state changes
-    setDoc(doc(db, 'users', currentUser.uid), data, { merge: true }).catch(e => {
+    setDoc(doc(db, 'users', activeUser.uid), data, { merge: true }).catch(e => {
       console.warn('Firestore save failed, using local:', e.message);
     });
   };

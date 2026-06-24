@@ -171,8 +171,17 @@ const SignupPage = () => {
       if (!surname.trim()) { setError('Surname is required'); triggerShake(); return false; }
     }
     if (step === 2) {
-      if (!email.includes('@')) { setError('Please enter a valid email address'); triggerShake(); return false; }
-      if (!email.toLowerCase().endsWith('@iitgn.ac.in')) { setError('Only @iitgn.ac.in email addresses are allowed'); triggerShake(); return false; }
+      const fullEmail = email.includes('@') ? email.trim() : `${email.trim()}@iitgn.ac.in`;
+      if (!fullEmail || !fullEmail.includes('@') || fullEmail.startsWith('@') || fullEmail.endsWith('@')) { 
+        setError('Please enter a valid email address'); 
+        triggerShake(); 
+        return false; 
+      }
+      if (!fullEmail.toLowerCase().endsWith('@iitgn.ac.in')) { 
+        setError('Only @iitgn.ac.in email addresses are allowed'); 
+        triggerShake(); 
+        return false; 
+      }
       if (password.length < 6) { setError('Password must be at least 6 characters'); triggerShake(); return false; }
       if (password !== confirmPw) { setError('Passwords do not match'); triggerShake(); return false; }
     }
@@ -196,26 +205,31 @@ const SignupPage = () => {
     try {
       setLoading(true);
       
-      // Double-check username availability at submission time
-      const available = await checkUsernameAvailable(username.trim());
-      if (!available) { 
-        setError('Username is already taken');
-        triggerShake();
-        setStep(1); // Go back to fix
-        setLoading(false);
-        return; 
+      // Double-check username availability at submission time if not already validated
+      if (usernameStatus !== 'available') {
+        const available = await checkUsernameAvailable(username.trim());
+        if (!available) { 
+          setError('Username is already taken');
+          triggerShake();
+          setStep(1); // Go back to fix
+          setLoading(false);
+          return; 
+        }
       }
 
-      await signup(email, password);
+      const fullEmail = email.includes('@') ? email.trim() : `${email.trim()}@iitgn.ac.in`;
+
+      const result = await signup(fullEmail, password);
       await saveProfile({ 
         username: username.trim(), 
         firstName: firstName.trim(), 
         surname: surname.trim(), 
         name: `${firstName.trim()} ${surname.trim()}`,
-        email, 
+        email: fullEmail, 
         signupMethod: 'manual', 
-        createdAt: new Date().toISOString() 
-      });
+        createdAt: new Date().toISOString(),
+        profileComplete: true
+      }, result.user);
       
       confetti({
         particleCount: 150,
@@ -223,7 +237,7 @@ const SignupPage = () => {
         origin: { y: 0.6 },
         colors: ['#6366f1', '#f472b6', '#34d399']
       });
-      setTimeout(() => navigate('/profile-setup', { state: { method: 'manual' } }), 750);
+      setTimeout(() => navigate('/'), 750);
     } catch (err) {
       triggerShake();
       setError(err.message?.replace('Firebase: ', '').replace(/\(auth\/.*\)/, '') || 'Signup failed');
@@ -261,8 +275,9 @@ const SignupPage = () => {
         username: result.user.displayName || '', 
         email: googleEmail, 
         signupMethod: 'google', 
-        createdAt: new Date().toISOString() 
-      });
+        createdAt: new Date().toISOString(),
+        profileComplete: true
+      }, result.user);
       
       confetti({
         particleCount: 150,
@@ -270,7 +285,7 @@ const SignupPage = () => {
         origin: { y: 0.6 },
         colors: ['#4285F4', '#34A853', '#FBBC05', '#EA4335']
       });
-      setTimeout(() => navigate('/profile-setup', { state: { method: 'google' } }), 750);
+      setTimeout(() => navigate('/'), 750);
     } catch (err) {
       triggerShake();
       setError(err.message?.replace('Firebase: ', '').replace(/\(auth\/.*\)/, '') || 'Google signup failed');
@@ -281,7 +296,11 @@ const SignupPage = () => {
   const strength = getPasswordStrength(password);
 
   // Domain status for email field
-  const emailDomainStatus = !email ? '' : email.toLowerCase().endsWith('@iitgn.ac.in') ? 'valid' : (email.includes('@') ? 'invalid' : '');
+  const emailDomainStatus = !email 
+    ? '' 
+    : (email.includes('@') 
+        ? (email.toLowerCase().endsWith('@iitgn.ac.in') ? 'valid' : 'invalid') 
+        : 'valid');
 
   // Animation variants
   const slideVariants = {
@@ -406,11 +425,17 @@ const SignupPage = () => {
                       id="signup-email"
                       type="email" 
                       className="auth-input" 
-                      placeholder="yourname@iitgn.ac.in" 
+                      placeholder="College Email" 
                       value={email} 
                       onChange={e => setEmail(e.target.value)} 
+                      onBlur={() => {
+                        if (email.trim() && !email.includes('@')) {
+                          setEmail(email.trim() + '@iitgn.ac.in');
+                        }
+                      }}
+                      style={{ paddingRight: '6.5rem' }}
                     />
-                    <div className={`domain-badge ${emailDomainStatus}`}>
+                    <div className="domain-badge-simple">
                       @iitgn.ac.in
                     </div>
                   </div>
@@ -428,6 +453,7 @@ const SignupPage = () => {
                       placeholder="Password (min 6 chars)" 
                       value={password} 
                       onChange={e => setPassword(e.target.value)} 
+                      style={{ paddingRight: '2.5rem' }}
                     />
                     <button type="button" className="input-toggle" onClick={() => setShowPw(!showPw)}>
                       {showPw ? <EyeOff size={17} /> : <Eye size={17} />}
@@ -461,9 +487,10 @@ const SignupPage = () => {
                       placeholder="Confirm Password" 
                       value={confirmPw} 
                       onChange={e => setConfirmPw(e.target.value)} 
+                      style={{ paddingRight: '2.5rem' }}
                     />
                     {confirmPw && (
-                      <div style={{ position: 'absolute', right: '0.75rem' }}>
+                      <div className="confirm-password-status">
                         {password === confirmPw 
                           ? <CheckCircle2 size={17} color="#22c55e" />
                           : <XCircle size={17} color="#ef4444" />
@@ -512,7 +539,7 @@ const SignupPage = () => {
                   </div>
                   <div className="auth-summary-row">
                     <span className="label">College Email</span>
-                    <span className="value">{email}</span>
+                    <span className="value">{email.includes('@') ? email : `${email}@iitgn.ac.in`}</span>
                   </div>
                   <div className="auth-summary-row">
                     <span className="label">Password</span>

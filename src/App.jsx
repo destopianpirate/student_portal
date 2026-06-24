@@ -119,18 +119,6 @@ function App() {
     localStorage.setItem('sidebar_collapsed', sidebarCollapsed);
   }, [sidebarCollapsed]);
 
-  // Redirect authenticated users with incomplete profiles to profile-setup
-  useEffect(() => {
-    if (!loading && currentUser) {
-      const isProfileSetupPath = location.pathname === '/profile-setup';
-      const isProfileComplete = (userProfile && userProfile.profileComplete) || (userProfile && userProfile.isDemo);
-      
-      if (!isProfileComplete && !isProfileSetupPath) {
-        const method = currentUser.providerData?.some(p => p.providerId === 'google.com') ? 'google' : 'manual';
-        navigate('/profile-setup', { state: { method } });
-      }
-    }
-  }, [currentUser, userProfile, loading, location.pathname, navigate]);
 
   // Global Ctrl+K handler
   useEffect(() => {

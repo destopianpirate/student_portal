@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { useAuth } from './AuthContext';
 
 const NotificationContext = createContext();
 export const useNotifications = () => useContext(NotificationContext);
@@ -6,18 +7,28 @@ export const useNotifications = () => useContext(NotificationContext);
 let notifIdCounter = 0;
 
 export const NotificationProvider = ({ children }) => {
+  const { currentUser } = useAuth();
   const [notifications, setNotifications] = useState([]);
-  const [history, setHistory] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem('notification_history') || '[]');
-    } catch { return []; }
-  });
+  const [history, setHistory] = useState([]);
 
   useEffect(() => {
-    try {
-      localStorage.setItem('notification_history', JSON.stringify(history.slice(0, 100)));
-    } catch { /* ignore */ }
-  }, [history]);
+    if (currentUser?.uid) {
+      try {
+        const stored = localStorage.getItem(`notification_history_${currentUser.uid}`);
+        setHistory(stored ? JSON.parse(stored) : []);
+      } catch {
+        setHistory([]);
+      }
+    }
+  }, [currentUser]);
+
+  useEffect(() => {
+    if (currentUser?.uid) {
+      try {
+        localStorage.setItem(`notification_history_${currentUser.uid}`, JSON.stringify(history.slice(0, 100)));
+      } catch { /* ignore */ }
+    }
+  }, [history, currentUser]);
 
   const addNotification = useCallback((type, title, message, action) => {
     const id = ++notifIdCounter;
@@ -56,8 +67,10 @@ export const NotificationProvider = ({ children }) => {
 
   const clearHistory = useCallback(() => {
     setHistory([]);
-    localStorage.removeItem('notification_history');
-  }, []);
+    if (currentUser?.uid) {
+      localStorage.removeItem(`notification_history_${currentUser.uid}`);
+    }
+  }, [currentUser]);
 
   const unreadCount = history.filter(n => !n.read).length;
 

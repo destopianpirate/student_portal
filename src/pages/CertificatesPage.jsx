@@ -1,19 +1,37 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Award, Plus, X, ExternalLink, Trash2, Search, Calendar } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 
 const CERT_CATEGORIES = ['All', 'Programming', 'Data Science', 'Cloud', 'Design', 'Business', 'Academic', 'Other'];
 
 const CertificatesPage = () => {
-  const [certs, setCerts] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('student_certificates') || '[]'); } catch { return []; }
-  });
+  const { currentUser } = useAuth();
+  const [certs, setCerts] = useState([]);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('All');
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ name: '', issuer: '', date: '', category: 'Other', url: '', skills: '' });
 
-  const save = (u) => { setCerts(u); localStorage.setItem('student_certificates', JSON.stringify(u)); };
+  useEffect(() => {
+    if (currentUser?.uid) {
+      try {
+        const stored = localStorage.getItem(`student_certificates_${currentUser.uid}`);
+        setCerts(stored ? JSON.parse(stored) : []);
+      } catch {
+        setCerts([]);
+      }
+    }
+  }, [currentUser]);
+
+  const save = (u) => {
+    setCerts(u);
+    if (currentUser?.uid) {
+      localStorage.setItem(`student_certificates_${currentUser.uid}`, JSON.stringify(u));
+    } else {
+      localStorage.setItem('student_certificates', JSON.stringify(u));
+    }
+  };
 
   const handleAdd = () => {
     if (!form.name) return;

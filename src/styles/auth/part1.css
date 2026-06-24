@@ -112,11 +112,11 @@
 }
 
 .auth-input {
-  border: 1px solid var(--border);
+  border: 1px solid transparent;
   background: var(--input-bg);
   width: 100%;
   color: var(--text);
-  border-radius: .65rem;
+  border-radius: 50px;
   outline: none;
   padding: .75rem .85rem .75rem 2.75rem;
   font-family: inherit;

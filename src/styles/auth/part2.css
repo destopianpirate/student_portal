@@ -488,6 +488,27 @@
   background: rgba(239, 68, 68, 0.05);
 }
 
+.domain-badge-simple {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.confirm-password-status {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+}
+
 .field-hint {
   font-size: 0.72rem;
   margin-top: 0.25rem;
@@ -679,7 +700,8 @@
 .auth-input {
   padding: 0.55rem 0.65rem 0.55rem 2.25rem !important;
   font-size: 0.82rem !important;
-  border-radius: 6px !important;
+  border-radius: 50px !important;
+  border: 1px solid transparent !important;
 }
 
 .input-icon {
@@ -789,6 +811,15 @@
 .domain-badge {
   font-size: 0.65rem !important;
   padding: 0.12rem 0.35rem !important;
+  right: 0.5rem !important;
+}
+
+.domain-badge-simple {
+  font-size: 0.72rem !important;
+  right: 0.5rem !important;
+}
+
+.confirm-password-status {
   right: 0.5rem !important;
 }
 
