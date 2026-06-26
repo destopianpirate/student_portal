@@ -17,6 +17,10 @@
   --input-bg: #f1f5f9;
   --shadow: 0 8px 30px rgba(0, 0, 0, 0.04);
   --glass-blur: blur(20px);
+  --neo-bg: #f1f5f9;
+  --neo-shadow-flat: 3px 3px 6px #d1d5db, -3px -3px 6px #ffffff;
+  --neo-shadow-flat-hover: 5px 5px 10px #d1d5db, -5px -5px 10px #ffffff;
+  --neo-shadow-inset: inset 2.5px 2.5px 5px #d1d5db, inset -2.5px -2.5px 5px #ffffff;
 }
 
 [data-theme=dark] {
@@ -31,6 +35,10 @@
   --input-bg: #111827;
   --shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
   --glass-blur: blur(20px);
+  --neo-bg: #111827;
+  --neo-shadow-flat: 3px 3px 6px #050507, -3px -3px 6px #1b1b23;
+  --neo-shadow-flat-hover: 5px 5px 10px #050507, -5px -5px 10px #1b1b23;
+  --neo-shadow-inset: inset 2.5px 2.5px 5px #050507, inset -2.5px -2.5px 5px #1b1b23;
 }
 
 /* === Cursor & Theme Toggle === */

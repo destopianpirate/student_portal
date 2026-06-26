@@ -22,46 +22,66 @@ const ScheduleSection = ({
 }) => {
   return (
     <motion.div className="today-section" variants={itemVariants}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', width: '100%', position: 'relative' }}>
-        <div style={{ flex: 1 }} />
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', flex: 2 }}>
-          <h3 className="section-title" style={{ margin: 0, textAlign: 'center', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}>
-            <Calendar size={20} /> Class Schedule: {selectedScheduleDay}{selectedScheduleDay === todayName ? ' (Today)' : ''}
-          </h3>
-          <div className="home-day-tabs" style={{ display: 'flex', justifyContent: 'center', background: 'transparent', padding: 0, border: 'none', boxShadow: 'none' }}>
-            <DayPillNav
-              days={['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']}
-              activeDay={selectedScheduleDay}
-              onDayChange={setSelectedScheduleDay}
-              todayName={todayName}
-            />
+      <div style={{ 
+        display: 'flex', 
+        alignItems: isMobile ? 'stretch' : 'flex-start', 
+        flexDirection: 'column',
+        gap: isMobile ? '0.75rem' : '0.75rem', 
+        marginBottom: '1.25rem', 
+        width: '100%' 
+      }}>
+        {isMobile ? (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', width: '100%' }}>
+            <h3 className="section-title" style={{ margin: 0, textAlign: 'center', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}>
+              <Calendar size={20} /> Class Schedule: {selectedScheduleDay}{selectedScheduleDay === todayName ? ' (Today)' : ''}
+            </h3>
+            <div className="home-day-tabs" style={{ display: 'flex', justifyContent: 'center', background: 'transparent', padding: 0, border: 'none', boxShadow: 'none' }}>
+              <DayPillNav
+                days={['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']}
+                activeDay={selectedScheduleDay}
+                onDayChange={setSelectedScheduleDay}
+                todayName={todayName}
+              />
+            </div>
           </div>
-        </div>
-        <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
-          {savedTimetable && !isMobile && (
-            <button 
-              type="button"
-              className="btn btn-sm" 
-              onClick={() => setShowClassModal(true)}
-              style={{ 
-                display: 'flex', 
-                alignItems: 'center', 
-                gap: '0.35rem', 
-                padding: '0.45rem 0.75rem', 
-                fontSize: '0.75rem', 
-                cursor: 'pointer',
-                border: 'none',
-                background: 'var(--input-bg)',
-                color: 'var(--text-muted)',
-                borderRadius: '8px'
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = 'var(--border)'}
-              onMouseLeave={e => e.currentTarget.style.background = 'var(--input-bg)'}
-            >
-              <Eye size={13} /> Full Schedule
-            </button>
-          )}
-        </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0.75rem', width: '100%' }}>
+            <h3 className="section-title" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Calendar size={20} /> Class Schedule: {selectedScheduleDay}{selectedScheduleDay === todayName ? ' (Today)' : ''}
+            </h3>
+            <div className="home-day-tabs" style={{ display: 'flex', background: 'transparent', padding: 0, border: 'none', boxShadow: 'none' }}>
+              <DayPillNav
+                days={['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']}
+                activeDay={selectedScheduleDay}
+                onDayChange={setSelectedScheduleDay}
+                todayName={todayName}
+              />
+            </div>
+          </div>
+        )}
+        
+        {savedTimetable && !isMobile && (
+          <button 
+            type="button"
+            className="btn btn-sm neo-btn" 
+            onClick={() => setShowClassModal(true)}
+            style={{ 
+              position: 'absolute',
+              top: '1.5rem',
+              right: '1.5rem',
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '0.35rem', 
+              padding: '0.45rem 0.75rem', 
+              fontSize: '0.75rem', 
+              cursor: 'pointer',
+              borderRadius: '8px',
+              zIndex: 10
+            }}
+          >
+            <Eye size={14} /> Full Schedule
+          </button>
+        )}
       </div>
 
       {selectedDayHoliday ? (

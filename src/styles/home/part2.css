@@ -876,4 +876,23 @@
   pointer-events: none;
   z-index: 2;
   border-radius: inherit;
+}
+
+/* === Neomorphic Buttons === */
+.neo-btn {
+  background: var(--neo-bg) !important;
+  border: none !important;
+  box-shadow: var(--neo-shadow-flat) !important;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  color: var(--text-muted) !important;
+}
+.neo-btn:hover {
+  box-shadow: var(--neo-shadow-flat-hover) !important;
+  transform: translateY(-1px) !important;
+  color: var(--text) !important;
+  background: var(--neo-bg) !important;
+}
+.neo-btn:active {
+  box-shadow: var(--neo-shadow-inset) !important;
+  transform: translateY(0) !important;
 }

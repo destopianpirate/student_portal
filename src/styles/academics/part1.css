@@ -1,12 +1,14 @@
 .mess-tabs {
-  background: var(--input-bg);
+  background: var(--neo-bg) !important;
   z-index: 1;
   border-radius: 2rem;
   gap: .35rem;
   margin-bottom: 1.25rem;
   padding: .3rem;
   display: flex;
-  position: relative
+  position: relative;
+  border: none !important;
+  box-shadow: var(--neo-shadow-inset) !important;
 }
 
 .mess-tab-btn {
@@ -29,22 +31,24 @@
 
 .mess-tab-btn:hover:not(.active) {
   color: var(--text);
-  background: #fff3
+  background: transparent !important;
+  opacity: 0.85;
 }
 
 [data-theme=dark] .mess-tab-btn:hover:not(.active) {
-  background: #ffffff0d
+  background: transparent !important;
+  opacity: 0.85;
 }
 
 .mess-tab-btn.active {
-  background: var(--card-bg);
-  color: var(--primary);
-  box-shadow: 0 4px 12px -3px #6366f126
+  background: var(--neo-bg) !important;
+  color: var(--primary) !important;
+  box-shadow: var(--neo-shadow-flat) !important;
 }
 
 [data-theme=dark] .mess-tab-btn.active {
-  color: #fff;
-  box-shadow: 0 4px 12px -3px #00000080
+  color: var(--primary) !important;
+  box-shadow: var(--neo-shadow-flat) !important;
 }
 
 .mess-tab-btn.is-now {

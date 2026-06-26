@@ -54,10 +54,10 @@
   display: flex;
   align-items: center;
   height: var(--nav-h);
-  background: var(--base, #000);
+  background: var(--neo-bg) !important;
   border-radius: 9999px;
-  border: 1px solid var(--border-color);
-  box-shadow: var(--neo-shadow, 0 4px 12px rgba(0, 0, 0, 0.05));
+  border: none !important;
+  box-shadow: var(--neo-shadow-inset) !important;
   transition: all 0.3s ease;
 }
 
@@ -176,13 +176,15 @@
 }
 
 .pill.is-active {
-  background: var(--accent-color) !important;
-  color: var(--bg-color) !important;
+  background: var(--neo-bg) !important;
+  color: var(--primary) !important;
+  box-shadow: var(--neo-shadow-flat) !important;
+  border-radius: 9999px;
 }
 
 .pill.is-active .pill-label,
 .pill.is-active .pill-label-hover {
-  color: var(--bg-color) !important;
+  color: var(--primary) !important;
 }
 
 .theme-toggle-icon {

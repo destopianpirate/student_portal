@@ -269,27 +269,23 @@ function App() {
         )}
         <main className={`main-content ${showSidebar ? (sidebarCollapsed ? 'sidebar-collapsed' : 'sidebar-expanded') : ''}`}>
           <ErrorBoundary>
-            <Suspense fallback={<LazyFallback />}>
-              <AnimatePresence mode="wait">
-                <Routes location={location} key={location.pathname}>
-                  <Route path="/" element={<PageWrapper><HomePage /></PageWrapper>} />
-                  <Route path="/login" element={<PageWrapper><LoginPage /></PageWrapper>} />
-                  <Route path="/signup" element={<PageWrapper><SignupPage /></PageWrapper>} />
-                  <Route path="/profile-setup" element={<ProtectedRoute><PageWrapper><ProfileSetupPage /></PageWrapper></ProtectedRoute>} />
-                  <Route path="/timetable" element={<ProtectedRoute><PageWrapper><TimetablePage /></PageWrapper></ProtectedRoute>} />
-                  <Route path="/explore" element={<ProtectedRoute><PageWrapper><ExplorePage /></PageWrapper></ProtectedRoute>} />
-                  <Route path="/settings" element={<ProtectedRoute><PageWrapper><SettingsPage darkMode={darkMode} setDarkMode={setDarkMode} /></PageWrapper></ProtectedRoute>} />
-                  <Route path="/academics" element={<ProtectedRoute><PageWrapper><AcademicsPage /></PageWrapper></ProtectedRoute>} />
-                  <Route path="/notifications" element={<ProtectedRoute><PageWrapper><NotificationsPage /></PageWrapper></ProtectedRoute>} />
-                  <Route path="/study-tools" element={<ProtectedRoute><PageWrapper><StudyAIPage /></PageWrapper></ProtectedRoute>} />
-                  <Route path="/admin" element={<AdminRoute><PageWrapper><AdminPage /></PageWrapper></AdminRoute>} />
-                  <Route path="/calendar" element={<ProtectedRoute><PageWrapper><CalendarPage /></PageWrapper></ProtectedRoute>} />
-                  <Route path="/notes" element={<ProtectedRoute><PageWrapper><NotesPage /></PageWrapper></ProtectedRoute>} />
-                  <Route path="/projects" element={<ProtectedRoute><PageWrapper><ProjectsPage /></PageWrapper></ProtectedRoute>} />
-                  <Route path="/certificates" element={<ProtectedRoute><PageWrapper><CertificatesPage /></PageWrapper></ProtectedRoute>} />
-                </Routes>
-              </AnimatePresence>
-            </Suspense>
+              <Routes location={location} key={location.pathname}>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/signup" element={<SignupPage />} />
+                <Route path="/profile-setup" element={<ProtectedRoute><ProfileSetupPage /></ProtectedRoute>} />
+                <Route path="/timetable" element={<ProtectedRoute><TimetablePage /></ProtectedRoute>} />
+                <Route path="/explore" element={<ProtectedRoute><ExplorePage /></ProtectedRoute>} />
+                <Route path="/settings" element={<ProtectedRoute><SettingsPage darkMode={darkMode} setDarkMode={setDarkMode} /></ProtectedRoute>} />
+                <Route path="/academics" element={<ProtectedRoute><AcademicsPage /></ProtectedRoute>} />
+                <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
+                <Route path="/study-tools" element={<ProtectedRoute><StudyAIPage /></ProtectedRoute>} />
+                <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
+                <Route path="/calendar" element={<ProtectedRoute><CalendarPage /></ProtectedRoute>} />
+                <Route path="/notes" element={<ProtectedRoute><NotesPage /></ProtectedRoute>} />
+                <Route path="/projects" element={<ProtectedRoute><ProjectsPage /></ProtectedRoute>} />
+                <Route path="/certificates" element={<ProtectedRoute><CertificatesPage /></ProtectedRoute>} />
+              </Routes>
           </ErrorBoundary>
         </main>
       </div>
