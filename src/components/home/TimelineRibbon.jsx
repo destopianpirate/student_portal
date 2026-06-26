@@ -1,11 +1,20 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Clock, Coffee } from 'lucide-react';
 import { getClassWindow, getHue } from '../../utils/homeUtils';
 
-const TimelineRibbon = ({ todaySchedule, selectedScheduleDay, hudTime, itemVariants }) => {
-  const currentMins = hudTime.getHours() * 60 + hudTime.getMinutes();
-  const isToday = selectedScheduleDay === ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][hudTime.getDay()];
+const TimelineRibbon = ({ todaySchedule, selectedScheduleDay, itemVariants }) => {
+  const [now, setNow] = useState(() => new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setNow(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const currentMins = now.getHours() * 60 + now.getMinutes();
+  const isToday = selectedScheduleDay === ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][now.getDay()];
   const academicStart = 8 * 60 + 30; // 8:30 AM
   const academicEnd = 18 * 60 + 30; // 6:30 PM
 
@@ -146,7 +155,7 @@ const TimelineRibbon = ({ todaySchedule, selectedScheduleDay, hudTime, itemVaria
                     transform: pointerLeft < 12 ? 'none' : pointerLeft > 88 ? 'none' : 'translateX(-50%)'
                   }}
                 >
-                  {`${hudTime.getHours() % 12 || 12}:${hudTime.getMinutes().toString().padStart(2, '0')}:${hudTime.getSeconds().toString().padStart(2, '0')} ${hudTime.getHours() >= 12 ? 'PM' : 'AM'}`}
+                  {`${now.getHours() % 12 || 12}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')} ${now.getHours() >= 12 ? 'PM' : 'AM'}`}
                 </div>
                 <div className="pointer-dot" />
                 <div className="pointer-line" />
@@ -159,4 +168,4 @@ const TimelineRibbon = ({ todaySchedule, selectedScheduleDay, hudTime, itemVaria
   );
 };
 
-export default TimelineRibbon;
+export default React.memo(TimelineRibbon);

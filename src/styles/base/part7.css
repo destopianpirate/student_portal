@@ -656,4 +656,51 @@
     min-width: 0 !important;
   }
 }
+
+/* Capsule inputs in Add Event Modal */
+.add-event-modal {
+  max-height: 90vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.add-event-modal .modal-body {
+  overflow-y: auto !important;
+  flex: 1 !important;
+  padding-right: 4px !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.add-event-modal .modal-body::-webkit-scrollbar {
+  display: none !important;
+}
+
+.add-event-modal .form-input {
+  border: none;
+  background: var(--input-bg);
+  color: var(--text);
+  border-radius: 9999px;
+  outline: none;
+  padding: 0.55rem 1.25rem;
+  font-family: inherit;
+  font-size: 0.85rem;
+  transition: all 0.25s ease;
+  width: 100%;
+  box-shadow: none;
+}
+
+.add-event-modal .form-input:focus {
+  box-shadow: 0 0 0 2px var(--primary);
+  background: var(--card-bg);
+  border: none;
+  outline: none;
+}
+
+/* Ensure datetime and select inputs have clean styles */
+.add-event-modal select.form-input {
+  padding-right: 1.5rem;
+}
+
+
 

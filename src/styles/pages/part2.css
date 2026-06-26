@@ -1,4 +1,3 @@
-
 .admin-overview-grid {
   flex-wrap: wrap;
   gap: 1rem;
@@ -19,14 +18,17 @@
   .admin-table-header {
     display: none
   }
+
   .admin-table-row {
     grid-template-columns: 1fr 1fr;
     gap: .35rem;
     padding: .75rem
   }
+
   .admin-user-cell {
     grid-column: 1/-1
   }
+
   .branch-name {
     width: 120px
   }
@@ -244,7 +246,7 @@
 }
 
 .skill-bar-fill {
-  background: linear-gradient(90deg,  var(--primary),  var(--accent));
+  background: linear-gradient(90deg, var(--primary), var(--accent));
   border-radius: 2px;
   height: 100%;
   transition: width .3s
@@ -423,6 +425,65 @@
   display: none;
 }
 
+/* Pill Nav Tabs for Calendar Page */
+.cal-pill-tabs {
+  display: flex;
+  gap: 0.4rem;
+  margin-bottom: 0.85rem;
+  flex-shrink: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.cal-pill-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.cal-pill-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 9999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  color: var(--text-muted);
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cal-pill-tab:hover {
+  color: var(--text);
+  border-color: rgba(99, 102, 241, 0.2);
+  background: rgba(99, 102, 241, 0.04);
+}
+
+.cal-pill-tab.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
+}
+
+.cal-pill-count {
+  font-size: 0.62rem;
+  font-weight: 750;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.05rem 0.35rem;
+  border-radius: 9999px;
+  line-height: 1.3;
+}
+
+.cal-pill-tab:not(.active) .cal-pill-count {
+  background: var(--input-bg);
+  color: var(--text-muted);
+}
+
 /* Calendar View Layout (Calendar tab grid: month + detail) */
 .calendar-view-layout {
   grid-template-columns: 1fr 360px;
@@ -470,9 +531,19 @@
   border: 1px solid transparent;
 }
 
+/* Hover lift for days with custom event backgrounds */
+.cal-day[style*="background"] {
+  transition: filter 0.2s;
+}
+
+.cal-day[style*="background"]:hover {
+  filter: brightness(1.1) contrast(1.05);
+}
+
 .cal-day:hover {
   background: var(--input-bg);
-  border-color: rgba(99, 102, 241, 0.15);
+  border-color: transparent !important;
+  outline: none !important;
   transform: scale(1.03);
 }
 
@@ -489,47 +560,76 @@
   background: var(--input-bg);
 }
 
+.cal-day.weekend {
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.cal-day.weekend .cal-day-num {
+  color: #000000;
+}
+
+[data-theme=dark] .cal-day.weekend {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+[data-theme=dark] .cal-day.weekend .cal-day-num {
+  color: #ffffff;
+}
+
+.cal-day.today.weekend .cal-day-num {
+  color: #ffffff !important;
+}
+
+/* Add Event Modal Input box-sizing and padding overrides to prevent boundary clips */
+.add-event-modal .form-input {
+  box-sizing: border-box !important;
+  width: 100% !important;
+}
+
+.add-event-modal .modal-body {
+  padding-left: 8px !important;
+  padding-right: 8px !important;
+}
+
 .cal-day.other-month {
-  opacity: 0.2;
-  pointer-events: none;
+  opacity: 0.35;
+  cursor: pointer;
   background: transparent;
+  color: var(--text-muted);
 }
 
-.cal-day-dots {
+.cal-day.other-month:hover {
+  opacity: 0.6;
+  background: var(--input-bg);
+}
+
+/* Colored underlines instead of dots */
+.cal-day-underlines {
   display: flex;
-  gap: 3px;
-  margin-top: 3px;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5px;
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: auto;
 }
 
-.cal-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
+.cal-underline {
+  height: 2px;
+  width: 14px;
+  border-radius: 1px;
 }
 
-.cal-dot.holiday {
-  background: #ef4444;
-  box-shadow: 0 0 4px rgba(239,68,68,0.5);
-}
-
-.cal-dot.academic {
-  background: #6366f1;
-  box-shadow: 0 0 4px rgba(99,102,241,0.5);
-}
-
-.cal-dot.deadline {
-  background: #f59e0b;
-  box-shadow: 0 0 4px rgba(245,158,11,0.5);
-}
-
-.cal-dot.exam {
-  background: #ef4444;
-  box-shadow: 0 0 4px rgba(239,68,68,0.5);
-}
-
-.cal-dot.custom {
-  background: #22c55e;
-  box-shadow: 0 0 4px rgba(34,197,94,0.5);
+/* Legend bars */
+.cal-legend-bar {
+  display: inline-block;
+  width: 14px;
+  height: 3px;
+  border-radius: 2px;
+  vertical-align: middle;
+  margin-right: 3px;
 }
 
 .cal-detail-item-content {
@@ -551,4 +651,258 @@
   border-radius: 50%;
   cursor: pointer;
   transition: background 0.2s;
-}
+}
+
+/* Inline mobile detail card */
+.cal-mobile-detail {
+  padding: 1rem;
+  margin-top: 0.5rem;
+  border-radius: 1rem;
+}
+
+/* Calendar page tabs override */
+.cal-header-compact .dashboard-premium-header-content {
+  flex-wrap: wrap;
+  gap: 1.5rem;
+  flex: 1;
+}
+
+.cal-header-compact .cal-page-tabs-container {
+  margin-bottom: 0;
+  margin-left: auto;
+  margin-right: 1.5rem;
+}
+
+.cal-page-tabs-container .pill {
+  font-size: 14.5px !important;
+}
+
+/* Header mobile optimization */
+@media (max-width: 768px) {
+  .page-container.calendar-page-container {
+    padding: 0.5rem 0.5rem 1.5rem !important;
+  }
+
+  .cal-header-compact {
+    display: grid !important;
+    grid-template-columns: 1fr auto !important;
+    grid-template-rows: auto auto !important;
+    gap: 0.5rem !important;
+    padding: 0.6rem 0.75rem !important;
+    margin-bottom: 0.85rem !important;
+  }
+
+  .cal-header-compact .dashboard-premium-header-content {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.4rem !important;
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    width: auto !important;
+    flex-wrap: nowrap !important;
+  }
+
+  .cal-header-icon-hide {
+    display: flex !important;
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 8px !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .cal-header-icon-hide svg {
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  .cal-subtitle-hide {
+    display: none !important;
+  }
+
+  .cal-btn-text {
+    display: inline !important;
+    font-size: 0.7rem !important;
+  }
+
+  .cal-header-compact .dashboard-premium-title {
+    font-size: 1.05rem !important;
+  }
+
+  .cal-header-compact .dashboard-premium-actions {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    align-self: center !important;
+    justify-self: end !important;
+  }
+
+  .cal-header-compact .dashboard-premium-actions .btn {
+    padding: 0.35rem 0.65rem !important;
+    font-size: 0.72rem !important;
+    height: 30px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 0.25rem !important;
+  }
+
+  .cal-header-compact .cal-page-tabs-container {
+    grid-column: span 2 !important;
+    grid-row: 2 !important;
+    width: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    margin-top: 0.25rem !important;
+    box-sizing: border-box !important;
+  }
+
+  .cal-page-tabs-container .pill-nav-container {
+    width: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+  }
+
+  .cal-page-tabs-container .pill-nav {
+    width: 100% !important;
+    max-width: 100% !important;
+    justify-content: center !important;
+  }
+
+  .cal-page-tabs-container .pill-nav-items {
+    width: 100% !important;
+    max-width: 100% !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+  }
+
+  .cal-page-tabs-container .pill-list {
+    width: 100% !important;
+    display: flex !important;
+    justify-content: space-around !important;
+    align-items: center !important;
+    padding: 2px !important;
+    box-sizing: border-box !important;
+  }
+
+  .cal-page-tabs-container .pill-list>li {
+    flex: 1 !important;
+    display: flex !important;
+    justify-content: center !important;
+  }
+
+  .cal-page-tabs-container .pill {
+    width: 100% !important;
+    padding: 0 2px !important;
+    font-size: 11px !important;
+    letter-spacing: 0px !important;
+    text-align: center !important;
+    justify-content: center !important;
+  }
+
+  .cal-legend {
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 0.5rem 0.85rem !important;
+    padding: 0.25rem 0.5rem !important;
+    margin-top: 0.75rem !important;
+  }
+
+  .cal-legend span {
+    font-size: 0.68rem !important;
+    gap: 0.25rem !important;
+  }
+
+  .cal-legend-bar {
+    width: 10px !important;
+    height: 3px !important;
+    margin-right: 2px !important;
+  }
+
+  /* Modal responsive scroll overlay */
+  .modal-overlay {
+    align-items: flex-start !important;
+    overflow-y: auto !important;
+    padding: 1.5rem 0 !important;
+  }
+
+  .modal-content {
+    margin: auto !important;
+  }
+
+  /* Add Event Modal Mobile Optimization */
+  .add-event-modal {
+    padding: 1.1rem !important;
+    width: 92% !important;
+    max-width: 95vw !important;
+  }
+
+  .add-event-modal .form-row {
+    flex-direction: column !important;
+    gap: 0.75rem !important;
+  }
+
+  .add-event-modal .form-group {
+    width: 100% !important;
+    flex: none !important;
+  }
+
+  /* Prevent browser auto-zoom cut-offs on focus on mobile */
+  input, select, textarea, .form-input {
+    font-size: 16px !important;
+  }
+
+  /* Mobile Day Tab Switcher Horizontal Scrolling (prevents clipping) */
+  .home-day-tabs .pill-nav-container {
+    width: 100% !important;
+    display: flex !important;
+    justify-content: center !important;
+  }
+  
+  .home-day-tabs .pill-nav {
+    width: 100% !important;
+    max-width: 100% !important;
+    justify-content: center !important;
+  }
+
+  .home-day-tabs .pill-nav-items {
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+    border-radius: 9999px !important;
+    display: flex !important;
+  }
+
+  .home-day-tabs .pill-nav-items::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .home-day-tabs .pill-list {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    padding: 3px !important;
+    width: max-content !important;
+  }
+}
+
+/* Center Homepage Day Pill Nav Switchers */
+.home-day-tabs {
+  width: 100% !important;
+  display: flex !important;
+  justify-content: center !important;
+  margin-top: 0.25rem;
+}
+
+.home-day-tabs .pill-nav-container {
+  width: 100% !important;
+  display: flex !important;
+  justify-content: center !important;
+}
+
+.home-day-tabs .pill-nav {
+  width: 100% !important;
+  max-width: 100% !important;
+  justify-content: center !important;
+}

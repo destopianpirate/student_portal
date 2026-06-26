@@ -2,6 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { BookOpen, Eye, Clock, Coffee, Sun, Cookie, Moon } from 'lucide-react';
 import { isCurrentMeal, getMealWindow } from '../../utils/homeUtils';
+import DayPillNav from './DayPillNav';
 
 const MEAL_ICONS = {
   Breakfast: Coffee,
@@ -25,45 +26,46 @@ const MessMenuSection = ({
 }) => {
   return (
     <motion.div className="today-section" variants={itemVariants}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%' }}>
-          <h3 className="section-title" style={{ margin: 0, paddingRight: '7.5rem' }}><BookOpen size={20} /> Mess Menu — {selectedMessDay}{selectedMessDay === todayName ? ' (Today)' : ''}</h3>
-          <div className="home-day-tabs">
-            {['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(d => {
-              const isToday = d === todayName;
-              return (
-                <button
-                  key={d}
-                  className={`home-day-tab-btn ${selectedMessDay === d ? 'active' : ''}`}
-                  onClick={() => setSelectedMessDay(d)}
-                >
-                  {d.substring(0, 3)}{isToday ? ' (Today)' : ''}
-                </button>
-              );
-            })}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', width: '100%', position: 'relative' }}>
+        <div style={{ flex: 1 }} />
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', flex: 2 }}>
+          <h3 className="section-title" style={{ margin: 0, textAlign: 'center', display: 'flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'center' }}>
+            <BookOpen size={20} /> Mess Menu: {selectedMessDay}{selectedMessDay === todayName ? ' (Today)' : ''}
+          </h3>
+          <div className="home-day-tabs" style={{ display: 'flex', justifyContent: 'center', background: 'transparent', padding: 0, border: 'none', boxShadow: 'none' }}>
+            <DayPillNav
+              days={['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']}
+              activeDay={selectedMessDay}
+              onDayChange={setSelectedMessDay}
+              todayName={todayName}
+            />
           </div>
         </div>
-        {messMenu && !isMobile && (
-          <button 
-            type="button"
-            className="btn btn-outline btn-sm" 
-            onClick={() => setShowMessModal(true)}
-            style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '0.35rem', 
-              padding: '0.45rem 0.75rem', 
-              fontSize: '0.75rem',
-              position: 'absolute',
-              top: '1.5rem',
-              right: '1.5rem',
-              zIndex: 10,
-              cursor: 'pointer'
-            }}
-          >
-            <Eye size={13} /> Full Menu
-          </button>
-        )}
+        <div style={{ flex: 1, display: 'flex', justifyContent: 'flex-end' }}>
+          {messMenu && !isMobile && (
+            <button 
+              type="button"
+              className="btn btn-sm" 
+              onClick={() => setShowMessModal(true)}
+              style={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                gap: '0.35rem', 
+                padding: '0.45rem 0.75rem', 
+                fontSize: '0.75rem',
+                cursor: 'pointer',
+                border: 'none',
+                background: 'var(--input-bg)',
+                color: 'var(--text-muted)',
+                borderRadius: '8px'
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = 'var(--border)'}
+              onMouseLeave={e => e.currentTarget.style.background = 'var(--input-bg)'}
+            >
+              <Eye size={13} /> Full Menu
+            </button>
+          )}
+        </div>
       </div>
 
       {messLoading ? (
@@ -136,9 +138,25 @@ const MessMenuSection = ({
       {isMobile && messMenu && (
         <button 
           type="button"
-          className="btn btn-outline btn-sm" 
+          className="btn btn-sm" 
           onClick={() => setShowMessModal(true)}
-          style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem', padding: '0.55rem 0.75rem', fontSize: '0.8rem', width: '100%', marginTop: '1.25rem', cursor: 'pointer' }}
+          style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            gap: '0.35rem', 
+            padding: '0.55rem 0.75rem', 
+            fontSize: '0.8rem', 
+            width: '100%', 
+            marginTop: '1.25rem', 
+            cursor: 'pointer',
+            border: 'none',
+            background: 'var(--input-bg)',
+            color: 'var(--text-muted)',
+            borderRadius: '8px'
+          }}
+          onMouseEnter={e => e.currentTarget.style.background = 'var(--border)'}
+          onMouseLeave={e => e.currentTarget.style.background = 'var(--input-bg)'}
         >
           <Eye size={14} /> Full Menu
         </button>
@@ -147,4 +165,4 @@ const MessMenuSection = ({
   );
 };
 
-export default MessMenuSection;
+export default React.memo(MessMenuSection);

@@ -49,13 +49,14 @@ const SettingsPage = ({ darkMode, setDarkMode }) => {
   const [lightboxImage, setLightboxImage] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [isUsernameValid, setIsUsernameValid] = useState(true);
 
   const [form, setForm] = useState({
     name: '', firstName: '', surname: '', username: '', gender: '', rollNumber: '', programme: '', branch: '',
     yearOfAdmission: '', avatarUrl: '', customPhotoUrl: '', profilePhotoBase64: '',
     photoPositionX: 50, photoPositionY: 50,
     photoZoom: 100, photoRotation: 0, photoAspectRatio: 'card',
-    github: '', instagram: '', linkedin: '', phone: '', gmail: '',
+    github: '', instagram: '', linkedin: '', x: '', website: '', customLinks: [], phone: '', gmail: '',
     minor: '', hostelName: '', roomNumber: '',
     messQrBase64: '', studentIdBase64: '',
     privacy: { phone: false, email: false, social: true },
@@ -95,7 +96,9 @@ const SettingsPage = ({ darkMode, setDarkMode }) => {
         photoRotation: userProfile.photoRotation ?? 0,
         photoAspectRatio: userProfile.photoAspectRatio || 'card',
         github: userProfile.github || '', instagram: userProfile.instagram || '',
-        linkedin: userProfile.linkedin || '', phone: userProfile.phone || '', gmail: userProfile.gmail || '',
+        linkedin: userProfile.linkedin || '', x: userProfile.x || '', website: userProfile.website || '',
+        customLinks: userProfile.customLinks || [],
+        phone: userProfile.phone || '', gmail: userProfile.gmail || '',
         minor: userProfile.minor || '',
         hostelName: userProfile.hostelName || '', roomNumber: userProfile.roomNumber || '',
         messQrBase64: userProfile.messQrBase64 || '', studentIdBase64: userProfile.studentIdBase64 || '',
@@ -272,7 +275,7 @@ const SettingsPage = ({ darkMode, setDarkMode }) => {
       'name', 'firstName', 'surname', 'username', 'gender', 'rollNumber', 'programme', 'branch',
       'yearOfAdmission', 'avatarUrl', 'customPhotoUrl', 'profilePhotoBase64',
       'photoPositionX', 'photoPositionY', 'photoZoom', 'photoRotation', 'photoAspectRatio',
-      'github', 'instagram', 'linkedin', 'phone', 'gmail',
+      'github', 'instagram', 'linkedin', 'x', 'website', 'phone', 'gmail',
       'minor', 'hostelName', 'roomNumber',
       'messQrBase64', 'studentIdBase64'
     ];
@@ -281,6 +284,18 @@ const SettingsPage = ({ darkMode, setDarkMode }) => {
       const formVal = form[key] === undefined || form[key] === null ? '' : String(form[key]).trim();
       const initialVal = initialForm[key] === undefined || initialForm[key] === null ? '' : String(initialForm[key]).trim();
       if (formVal !== initialVal) {
+        return true;
+      }
+    }
+
+    // Compare customLinks
+    const formLinks = form.customLinks || [];
+    const initialLinks = initialForm.customLinks || [];
+    if (formLinks.length !== initialLinks.length) {
+      return true;
+    }
+    for (let i = 0; i < formLinks.length; i++) {
+      if (formLinks[i].label !== initialLinks[i].label || formLinks[i].url !== initialLinks[i].url) {
         return true;
       }
     }
@@ -562,6 +577,7 @@ const SettingsPage = ({ darkMode, setDarkMode }) => {
                 form={form}
                 setForm={setForm}
                 update={update}
+                setIsUsernameValid={setIsUsernameValid}
               />
             )}
           </div>
@@ -655,10 +671,10 @@ const SettingsPage = ({ darkMode, setDarkMode }) => {
             <motion.button 
               className="btn btn-primary btn-sm" 
               onClick={handleSave} 
-              disabled={!isFormDirty || saving}
-              style={{ opacity: !isFormDirty ? 0.5 : 1, cursor: !isFormDirty ? 'not-allowed' : 'pointer' }}
-              whileHover={isFormDirty && !saving ? { scale: 1.05 } : undefined}
-              whileTap={isFormDirty && !saving ? { scale: 0.95 } : undefined}
+              disabled={!isFormDirty || saving || !isUsernameValid}
+              style={{ opacity: (!isFormDirty || !isUsernameValid) ? 0.5 : 1, cursor: (!isFormDirty || !isUsernameValid) ? 'not-allowed' : 'pointer' }}
+              whileHover={isFormDirty && !saving && isUsernameValid ? { scale: 1.05 } : undefined}
+              whileTap={isFormDirty && !saving && isUsernameValid ? { scale: 0.95 } : undefined}
             >
               <Save size={16} /> {saving ? 'Saving...' : 'Save Changes'}
             </motion.button>

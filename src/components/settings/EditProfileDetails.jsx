@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, GraduationCap, ChevronDown, Calendar, Award, Book, Home, Hash } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 
 const PROGRAMME_BRANCHES = {
   'B.Tech': [
@@ -63,10 +64,64 @@ const PROGRAMMES = Object.keys(PROGRAMME_BRANCHES);
 const EditProfileDetails = ({
   form,
   setForm,
-  update
+  update,
+  setIsUsernameValid = () => {}
 }) => {
   const currentYear = new Date().getFullYear();
   const admissionYears = Array.from({ length: 7 }, (_, i) => currentYear - i);
+
+  const { userProfile, checkUsernameAvailable } = useAuth();
+  const [usernameStatus, setUsernameStatus] = useState('idle');
+
+  useEffect(() => {
+    const username = form.username ? form.username.trim() : '';
+    if (!username) {
+      setUsernameStatus('idle');
+      setIsUsernameValid(true);
+      return;
+    }
+    
+    if (userProfile && username === userProfile.username) {
+      setUsernameStatus('current');
+      setIsUsernameValid(true);
+      return;
+    }
+
+    if (username.length < 3) {
+      setUsernameStatus('too-short');
+      setIsUsernameValid(false);
+      return;
+    }
+
+    const validRegex = /^[a-zA-Z0-9._]+$/;
+    if (!validRegex.test(username)) {
+      setUsernameStatus('invalid');
+      setIsUsernameValid(false);
+      return;
+    }
+
+    setUsernameStatus('loading');
+    setIsUsernameValid(false);
+
+    const delayDebounceFn = setTimeout(async () => {
+      try {
+        const isAvailable = await checkUsernameAvailable(username);
+        if (isAvailable) {
+          setUsernameStatus('available');
+          setIsUsernameValid(true);
+        } else {
+          setUsernameStatus('taken');
+          setIsUsernameValid(false);
+        }
+      } catch (err) {
+        console.warn('Error checking username:', err);
+        setUsernameStatus('available');
+        setIsUsernameValid(true);
+      }
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [form.username, userProfile, checkUsernameAvailable, setIsUsernameValid]);
 
   return (
     <div className="settings-accordion-body" style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
@@ -108,9 +163,27 @@ const EditProfileDetails = ({
           <div className="edit-field">
             <label>Username</label>
             <div className="premium-input-wrapper">
-              <input value={form.username} onChange={e => update('username', e.target.value)} />
+              <input value={form.username} onChange={e => update('username', e.target.value.toLowerCase().replace(/\s/g, ''))} />
               <User className="premium-input-icon" size={16} />
             </div>
+            {usernameStatus === 'loading' && (
+              <span className="username-status-msg checking">Checking availability...</span>
+            )}
+            {usernameStatus === 'available' && (
+              <span className="username-status-msg available">✓ Username is available</span>
+            )}
+            {usernameStatus === 'taken' && (
+              <span className="username-status-msg taken">✗ Username is already taken</span>
+            )}
+            {usernameStatus === 'too-short' && (
+              <span className="username-status-msg warning">Username must be at least 3 characters</span>
+            )}
+            {usernameStatus === 'invalid' && (
+              <span className="username-status-msg taken">Only letters, numbers, dots, and underscores allowed</span>
+            )}
+            {usernameStatus === 'current' && (
+              <span className="username-status-msg current">✓ Your current username</span>
+            )}
           </div>
           <div className="edit-field">
             <label>Gender</label>
@@ -211,9 +284,9 @@ const EditProfileDetails = ({
                 }}
                 style={{
                   width: '100%',
-                  padding: '0.5rem 0.75rem 0.5rem 2.2rem',
-                  border: '1px solid var(--border)',
-                  borderRadius: '8px',
+                  padding: '0.5rem 1.25rem 0.5rem 2.2rem',
+                  border: 'none',
+                  borderRadius: '9999px',
                   fontSize: '0.85rem',
                   background: 'var(--input-bg)',
                   color: 'var(--text)',
@@ -250,7 +323,8 @@ const EditProfileDetails = ({
                   setForm(prev => ({ ...prev, roomNumber: prefix + cleanSuffix }));
                 }}
                 style={{
-                  paddingLeft: '2.2rem',
+                  paddingLeft: '2.5rem',
+                  paddingRight: '1.25rem',
                   opacity: form.hostelName ? 1 : 0.6,
                   cursor: form.hostelName ? 'text' : 'not-allowed'
                 }}

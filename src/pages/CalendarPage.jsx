@@ -5,6 +5,7 @@ import { useCalendar } from '../contexts/CalendarContext';
 import { useAuth } from '../contexts/AuthContext';
 import AddEventModal from '../components/calendar/AddEventModal';
 import DayDetailContent from '../components/calendar/DayDetailContent';
+import PillNav from '../../PillNav/PillNav';
 
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const WEEKDAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
@@ -38,7 +39,7 @@ const CalendarPage = () => {
   const activeDateStr = selectedDate || todayStr;
 
   const customNonExamEvents = useMemo(() => {
-    return customEvents.filter(e => e.category !== 'exam' && e.category !== 'quiz');
+    return customEvents;
   }, [customEvents]);
 
   const formattedDate = useMemo(() => {
@@ -67,6 +68,11 @@ const CalendarPage = () => {
   const savedTimetable = useMemo(() => {
     if (!currentUser) return null;
     try { return JSON.parse(localStorage.getItem(`timetable_${currentUser.uid}`)) || userProfile?.timetable || null; } catch { return null; }
+  }, [currentUser, userProfile]);
+
+  const savedCourses = useMemo(() => {
+    if (!currentUser) return [];
+    try { return JSON.parse(localStorage.getItem(`courses_${currentUser.uid}`)) || userProfile?.selectedCourses || []; } catch { return []; }
   }, [currentUser, userProfile]);
 
   const selectedDayName = useMemo(() => {
@@ -189,10 +195,14 @@ const CalendarPage = () => {
     const firstDay = new Date(year, month, 1).getDay();
     const days = [];
     
-    // Previous month fill
+    // Previous month fill — with dateStr so they're clickable
+    const prevMonthYear = month === 0 ? year - 1 : year;
+    const prevMonthIdx = month === 0 ? 11 : month - 1;
     const prevDays = new Date(year, month, 0).getDate();
     for (let i = firstDay - 1; i >= 0; i--) {
-      days.push({ day: prevDays - i, isCurrentMonth: false, dateStr: '' });
+      const d = prevDays - i;
+      const dateStr = `${prevMonthYear}-${String(prevMonthIdx + 1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      days.push({ day: d, isCurrentMonth: false, dateStr });
     }
     
     // Current month
@@ -204,25 +214,31 @@ const CalendarPage = () => {
       days.push({ day: d, isCurrentMonth: true, dateStr, isToday: dateStr === todayStr, events });
     }
     
-    // Next month fill
+    // Next month fill — with dateStr
+    const nextMonthYear = month === 11 ? year + 1 : year;
+    const nextMonthIdx = month === 11 ? 0 : month + 1;
     const remaining = 42 - days.length;
     for (let i = 1; i <= remaining; i++) {
-      days.push({ day: i, isCurrentMonth: false, dateStr: '' });
+      const dateStr = `${nextMonthYear}-${String(nextMonthIdx + 1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+      days.push({ day: i, isCurrentMonth: false, dateStr });
     }
     return days;
   }, [year, month, getEventsForDate]);
 
   const goMonth = (dir) => {
     setCurrentDate(new Date(year, month + dir, 1));
-    if (!isMobile) setSelectedDate(null);
+    setSelectedDate(null);
   };
 
   const handleDayClick = (d) => {
-    if (!d.isCurrentMonth) return;
-    setSelectedDate(d.dateStr);
-    if (isMobile) {
-      setShowMobileDetail(true);
+    if (!d.isCurrentMonth && d.dateStr) {
+      // Navigate to the month of this day
+      const parts = d.dateStr.split('-');
+      setCurrentDate(new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, 1));
+      setSelectedDate(d.dateStr);
+      return;
     }
+    setSelectedDate(d.dateStr);
   };
 
   const selectedEvents = useMemo(() => {
@@ -287,46 +303,51 @@ const CalendarPage = () => {
         setShowMobileDetail={setShowMobileDetail}
         MONTHS={MONTHS}
         month={month}
+        gazettedHolidays={gazettedHolidays}
+        restrictedHolidays={restrictedHolidays}
+        customEvents={customEvents}
+        currentDate={currentDate}
       />
     );
   };
 
   return (
     <motion.div className="page-container calendar-page-container" variants={containerVariants} initial="hidden" animate="visible">
-      <motion.div variants={itemVariants} className="dashboard-premium-header">
+      <motion.div variants={itemVariants} className="dashboard-premium-header cal-header-compact">
         <div className="dashboard-premium-header-content">
-          <div className="dashboard-premium-icon-wrap">
+          <div className="dashboard-premium-icon-wrap cal-header-icon-hide">
             <Calendar size={28} />
           </div>
           <div>
             <h2 className="dashboard-premium-title">Calendar</h2>
-            <p className="dashboard-premium-subtitle">Holidays, academic events, and your personal schedule</p>
           </div>
+        </div>
+        <div className="cal-page-tabs-container">
+          <PillNav
+            items={[
+              { id: 'calendar', label: 'Calendar' },
+              { id: 'holidays', label: 'Holidays' },
+              { id: 'academic', label: 'Academic' },
+              { id: 'events', label: 'My Events' },
+            ]}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            style={{
+              '--nav-base': 'var(--input-bg)',
+              '--border-color': 'var(--border)',
+              '--accent-color': 'var(--primary)',
+              '--bg-color': 'var(--card-bg)',
+              '--nav-pill-text': 'var(--text-muted)',
+              '--nav-hover-text': 'var(--primary)',
+              '--nav-hover-bg': 'rgba(99, 102, 241, 0.08)'
+            }}
+          />
         </div>
         <div className="dashboard-premium-actions">
           <button className="btn btn-primary btn-sm" onClick={() => { setEventForm({ title: '', date: activeDateStr, type: 'personal', desc: '' }); setShowAddModal(true); }}>
-            <Plus size={16} /> Add Event
-          </button>
-          <button className="btn btn-outline btn-sm" onClick={() => setShowTimetableModal(true)}>
-            <BookOpen size={16} /> Show Timetable
+            <Plus size={16} /><span className="cal-btn-text"> Add Event</span>
           </button>
         </div>
-      </motion.div>
-
-      {/* Tabs */}
-      <motion.div className="study-tabs" variants={itemVariants}>
-        <button className={`study-tab ${activeTab === 'calendar' ? 'active' : ''}`} onClick={() => setActiveTab('calendar')}>
-          <Calendar size={16} /> Calendar
-        </button>
-        <button className={`study-tab ${activeTab === 'holidays' ? 'active' : ''}`} onClick={() => setActiveTab('holidays')}>
-          <Star size={16} /> Holidays <span className="tab-badge">{gazettedHolidays.length + restrictedHolidays.length}</span>
-        </button>
-        <button className={`study-tab ${activeTab === 'academic' ? 'active' : ''}`} onClick={() => setActiveTab('academic')}>
-          <BookOpen size={16} /> Academic
-        </button>
-        <button className={`study-tab ${activeTab === 'events' ? 'active' : ''}`} onClick={() => setActiveTab('events')}>
-          <PartyPopper size={16} /> My Events <span className="tab-badge">{customNonExamEvents.length}</span>
-        </button>
       </motion.div>
 
       {/* Calendar View Tab */}
@@ -343,41 +364,89 @@ const CalendarPage = () => {
             <div className="calendar-weekday-header">
               {WEEKDAYS.map(d => <div key={d} className="cal-weekday">{d}</div>)}
             </div>
-            <div className="calendar-days-grid">
-              <AnimatePresence mode="popLayout">
-                {calendarDays.map((d, i) => (
-                  <motion.div
-                    layout
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.2, delay: i * 0.005 }}
-                    key={`${year}-${month}-${i}`}
-                    className={`cal-day ${!d.isCurrentMonth ? 'other-month' : ''} ${d.isToday ? 'today' : ''} ${d.dateStr === selectedDate ? 'selected' : ''} ${d.events && d.events.all.length > 0 ? 'has-events' : ''}`}
-                    onClick={() => handleDayClick(d)}
-                  >
-                    <span className="cal-day-num">{d.day}</span>
-                    {d.events && d.events.all.length > 0 && (
-                      <div className="cal-day-dots">
-                        {d.events.holidays.length > 0 && <span className="cal-dot holiday" />}
-                        {/* Deadline dot: academic deadlines OR custom deadlines */}
-                        {(d.events.academicDeadlines?.length > 0 || d.events.custom.some(e => e.category === 'deadline')) && <span className="cal-dot deadline" />}
-                        {d.events.academic.some(e => e.category !== 'deadline') && <span className="cal-dot academic" />}
-                        {/* Exam dot: custom exams/quizzes */}
-                        {d.events.custom.some(e => e.category === 'exam' || e.category === 'quiz') && <span className="cal-dot exam" />}
-                        {/* Other custom events */}
-                        {d.events.custom.some(e => !['deadline','exam','quiz'].includes(e.category)) && <span className="cal-dot custom" />}
+            <div style={{ position: 'relative', flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={`${year}-${month}`}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.2, ease: 'easeInOut' }}
+                  className="calendar-days-grid"
+                >
+                  {calendarDays.map((d, i) => {
+                    // Build colors for this day to apply text styling or gradients
+                    const dayColors = [];
+                    if (d.events && d.isCurrentMonth) {
+                      if (d.events.holidays.length > 0) dayColors.push('#a855f7');
+                      if (d.events.academic.some(e => !['deadline', 'exam', 'quiz'].includes(e.category))) dayColors.push('#6366f1');
+                      if (d.events.academicDeadlines?.length > 0 || d.events.custom.some(e => e.category === 'deadline')) dayColors.push('#f59e0b');
+                      if (d.events.academic.some(e => e.category === 'exam' || e.category === 'quiz') || d.events.custom.some(e => e.category === 'exam' || e.category === 'quiz')) dayColors.push('#ef4444');
+                      if (d.events.custom.some(e => !['deadline','exam','quiz'].includes(e.category))) {
+                        dayColors.push(d.events.custom.find(e => !['deadline','exam','quiz'].includes(e.category))?.color || '#22c55e');
+                      }
+                    }
+
+                    const uniqueColors = Array.from(new Set(dayColors));
+                    let cellBackground = 'transparent';
+                    let dateTextStyle = {};
+                    let cellBorder = undefined;
+
+                    const isWeekend = (i % 7 === 0) || (i % 7 === 6);
+
+                    if (uniqueColors.length === 1) {
+                      if (d.isToday) {
+                        dateTextStyle = { color: '#ffffff' };
+                        cellBackground = uniqueColors[0];
+                      } else {
+                        dateTextStyle = { color: uniqueColors[0] };
+                      }
+                    } else if (uniqueColors.length > 1) {
+                      // Show gradient on the number itself
+                      dateTextStyle = {
+                        background: `linear-gradient(135deg, ${uniqueColors.join(', ')})`,
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        display: 'inline-block',
+                        fontWeight: '800'
+                      };
+                      if (d.isToday) {
+                        // Neutral background + border to indicate Today, number has gradient text
+                        cellBackground = 'rgba(99, 102, 241, 0.08)';
+                        cellBorder = '2px solid var(--primary)';
+                      } else {
+                        cellBackground = 'transparent';
+                      }
+                    } else {
+                      // No events
+                      if (d.isToday) {
+                        // today uses default styles (white text, gradient bg in CSS)
+                      }
+                    }
+
+                    return (
+                      <div
+                        key={i}
+                        className={`cal-day ${!d.isCurrentMonth ? 'other-month' : ''} ${d.isToday ? 'today' : ''} ${d.dateStr === selectedDate ? 'selected' : ''} ${isWeekend ? 'weekend' : ''}`}
+                        style={{
+                          background: cellBackground !== 'transparent' ? cellBackground : undefined,
+                          border: cellBorder,
+                        }}
+                        onClick={() => handleDayClick(d)}
+                      >
+                        <span className="cal-day-num" style={dateTextStyle}>{d.day}</span>
                       </div>
-                    )}
-                  </motion.div>
-                ))}
+                    );
+                  })}
+                </motion.div>
               </AnimatePresence>
             </div>
             <div className="cal-legend">
-              <span><span className="cal-dot holiday" /> Holiday</span>
-              <span><span className="cal-dot academic" /> Academic</span>
-              <span><span className="cal-dot deadline" /> Deadline</span>
-              <span><span className="cal-dot exam" /> Exam/Quiz</span>
-              <span><span className="cal-dot custom" /> Custom</span>
+              <span><span className="cal-legend-bar" style={{ background: '#a855f7' }} /> Holiday</span>
+              <span><span className="cal-legend-bar" style={{ background: '#6366f1' }} /> Academic</span>
+              <span><span className="cal-legend-bar" style={{ background: '#f59e0b' }} /> Deadline</span>
+              <span><span className="cal-legend-bar" style={{ background: '#ef4444' }} /> Exam/Quiz</span>
+              <span><span className="cal-legend-bar" style={{ background: '#22c55e' }} /> Custom</span>
             </div>
           </div>
 
@@ -387,38 +456,13 @@ const CalendarPage = () => {
               {renderDetailContent()}
             </div>
           )}
+        </motion.div>
+      )}
 
-          {/* Day Detail Bottom Sheet - Mobile */}
-          <AnimatePresence>
-            {isMobile && showMobileDetail && (
-              <>
-                <motion.div 
-                  className="mobile-sheet-backdrop"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  onClick={() => setShowMobileDetail(false)}
-                />
-                <motion.div 
-                  className="mobile-bottom-sheet glass-card"
-                  initial={{ y: '100%' }}
-                  animate={{ y: 0 }}
-                  exit={{ y: '100%' }}
-                  transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                  drag="y"
-                  dragConstraints={{ top: 0 }}
-                  onDragEnd={(e, { offset, velocity }) => {
-                    if (offset.y > 100 || velocity.y > 500) {
-                      setShowMobileDetail(false);
-                    }
-                  }}
-                >
-                  <div className="bottom-sheet-handle" />
-                  {renderDetailContent()}
-                </motion.div>
-              </>
-            )}
-          </AnimatePresence>
+      {/* Mobile Day Detail — inline below calendar */}
+      {activeTab === 'calendar' && isMobile && (
+        <motion.div variants={itemVariants} className="cal-mobile-detail glass-card">
+          {renderDetailContent()}
         </motion.div>
       )}
 
@@ -518,154 +562,15 @@ const CalendarPage = () => {
       )}
 
       {/* Add Event Modal */}
-      <AnimatePresence>
-        {showAddModal && (
-          <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
-            <motion.div 
-              className="modal-content glass-card add-event-modal" 
-              initial={{ scale: 0.95, opacity: 0, y: 20 }} 
-              animate={{ scale: 1, opacity: 1, y: 0 }} 
-              exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              onClick={e => e.stopPropagation()}
-            >
-              <div className="modal-header">
-                <h3><Plus size={20} style={{ color: 'var(--primary)' }} /> Add Event</h3>
-                <button className="modal-close" onClick={() => setShowAddModal(false)}><X size={20} /></button>
-              </div>
-              <div className="modal-body">
-                {/* Event Type & Name */}
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Event Type <span style={{ color: 'red' }}>*</span></label>
-                    <select 
-                      className="form-input" 
-                      value={eventForm.category} 
-                      onChange={e => setEventForm(f => {
-                        const cat = e.target.value;
-                        const defaultColors = {
-                          personal: '#3b82f6',
-                          academic: '#6366f1',
-                          social: '#ec4899',
-                          deadline: '#f59e0b',
-                          exam: '#ef4444',
-                          quiz: '#14b8a6'
-                        };
-                        return { ...f, category: cat, color: defaultColors[cat] || '#6366f1' };
-                      })}
-                    >
-                      <option value="personal">Personal</option>
-                      <option value="academic">Academic</option>
-                      <option value="social">Social</option>
-                      <option value="deadline">Deadline</option>
-                      <option value="exam">Exam</option>
-                      <option value="quiz">Quiz</option>
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label>Event Name <span style={{ color: 'red' }}>*</span></label>
-                    <input 
-                      type="text" 
-                      className="form-input" 
-                      placeholder="What's happening?" 
-                      value={eventForm.title} 
-                      onChange={e => setEventForm(f => ({ ...f, title: e.target.value }))} 
-                      autoFocus 
-                    />
-                  </div>
-                </div>
-
-                {/* Conditional Fields depending on selected event type */}
-                {['personal', 'academic', 'social'].includes(eventForm.category) && (
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label>Date <span style={{ color: 'red' }}>*</span></label>
-                      <input type="date" className="form-input" value={eventForm.date} onChange={e => setEventForm(f => ({ ...f, date: e.target.value }))} />
-                    </div>
-                    <div className="form-group">
-                      <label>Time (Optional)</label>
-                      <input type="time" className="form-input" value={eventForm.time} onChange={e => setEventForm(f => ({ ...f, time: e.target.value }))} />
-                    </div>
-                  </div>
-                )}
-
-                {eventForm.category === 'deadline' && (
-                  <div className="form-row">
-                    <div className="form-group">
-                      <label>Due Date <span style={{ color: 'red' }}>*</span></label>
-                      <input type="date" className="form-input" value={eventForm.date} onChange={e => setEventForm(f => ({ ...f, date: e.target.value }))} />
-                    </div>
-                    <div className="form-group">
-                      <label>Due Time <span style={{ color: 'red' }}>*</span></label>
-                      <input type="time" className="form-input" value={eventForm.time} onChange={e => setEventForm(f => ({ ...f, time: e.target.value }))} />
-                    </div>
-                  </div>
-                )}
-
-                {['exam', 'quiz'].includes(eventForm.category) && (
-                  <>
-                    <div className="form-group">
-                      <label>Date <span style={{ color: 'red' }}>*</span></label>
-                      <input type="date" className="form-input" value={eventForm.date} onChange={e => setEventForm(f => ({ ...f, date: e.target.value }))} />
-                    </div>
-                    <div className="form-row">
-                      <div className="form-group">
-                        <label>Start Time <span style={{ color: 'red' }}>*</span></label>
-                        <input type="time" className="form-input" value={eventForm.time} onChange={e => setEventForm(f => ({ ...f, time: e.target.value }))} />
-                      </div>
-                      <div className="form-group">
-                        <label>End Time <span style={{ color: 'red' }}>*</span></label>
-                        <input type="time" className="form-input" value={eventForm.endTime} onChange={e => setEventForm(f => ({ ...f, endTime: e.target.value }))} />
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {/* Color Selector */}
-                <div className="form-group" style={{ marginTop: '0.75rem' }}>
-                  <label>Event Color</label>
-                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.35rem' }}>
-                    {['#3b82f6', '#6366f1', '#ec4899', '#f59e0b', '#ef4444', '#14b8a6', '#a78bfa'].map(c => (
-                      <button 
-                        key={c}
-                        type="button" 
-                        onClick={() => setEventForm(f => ({ ...f, color: c }))} 
-                        style={{ 
-                          width: '24px', 
-                          height: '24px', 
-                          borderRadius: '50%', 
-                          backgroundColor: c, 
-                          border: eventForm.color === c ? '2.5px solid var(--text)' : '1.5px solid rgba(0,0,0,0.1)',
-                          cursor: 'pointer',
-                          padding: 0
-                        }}
-                      />
-                    ))}
-                    <input 
-                      type="color" 
-                      className="form-color" 
-                      value={eventForm.color} 
-                      onChange={e => setEventForm(f => ({ ...f, color: e.target.value }))} 
-                      style={{ 
-                        width: '28px', 
-                        height: '28px', 
-                        padding: 0, 
-                        border: 'none', 
-                        borderRadius: '4px', 
-                        cursor: 'pointer',
-                        background: 'transparent'
-                      }} 
-                    />
-                  </div>
-                </div>
-              </div>
-              <div className="modal-footer">
-                <button className="btn btn-outline" onClick={() => setShowAddModal(false)}>Cancel</button>
-                <button className="btn btn-primary" onClick={handleAddEvent} disabled={!isFormValid()}>Save Event</button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+      <AddEventModal
+        showAddModal={showAddModal}
+        setShowAddModal={setShowAddModal}
+        eventForm={eventForm}
+        setEventForm={setEventForm}
+        handleAddEvent={handleAddEvent}
+        isFormValid={isFormValid}
+        savedCourses={savedCourses}
+      />
 
       {/* Timetable Modal (Dialog Box) */}
       <AnimatePresence>
@@ -684,7 +589,6 @@ const CalendarPage = () => {
                   <Clock size={20} style={{ color: 'var(--primary)' }} />
                   <span>Timetable - {selectedDayName}</span>
                 </h3>
-                <button className="modal-close" onClick={() => setShowDayTimetable(false)}><X size={20} /></button>
               </div>
               <div className="modal-body" style={{ maxHeight: '60vh', overflowY: 'auto', padding: '1rem 0' }}>
                 <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '0 0 1rem 0' }}>

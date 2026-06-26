@@ -852,7 +852,6 @@ const TimetablePage = () => {
           >
             <div className="modal-header">
               <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Edit2 size={18} style={{ color: 'var(--primary)' }} /> Modify Course Slots</h3>
-              <button className="modal-close" onClick={() => setShowModifyModal(false)}><X size={18} /></button>
             </div>
             
             <div className="modal-body">

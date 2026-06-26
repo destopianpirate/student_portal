@@ -2,7 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, X } from 'lucide-react';
 
-const AddEventModal = ({ showAddModal, setShowAddModal, eventForm, setEventForm, handleAddEvent, isFormValid }) => {
+const AddEventModal = ({ showAddModal, setShowAddModal, eventForm, setEventForm, handleAddEvent, isFormValid, savedCourses = [] }) => {
   return (
     <AnimatePresence>
       {showAddModal && (
@@ -49,13 +49,36 @@ const AddEventModal = ({ showAddModal, setShowAddModal, eventForm, setEventForm,
                 </div>
                 <div className="form-group">
                   <label>Event Name <span style={{ color: 'red' }}>*</span></label>
+                  {['exam', 'quiz'].includes(eventForm.category) && savedCourses && savedCourses.length > 0 && (
+                    <select
+                      className="form-input"
+                      style={{ marginBottom: '0.5rem' }}
+                      value={savedCourses.some(c => eventForm.title === (c.title ? `${c.code} - ${c.title}` : c.code)) ? savedCourses.find(c => eventForm.title === (c.title ? `${c.code} - ${c.title}` : c.code)).code : ''}
+                      onChange={e => {
+                        const val = e.target.value;
+                        if (val) {
+                          const selected = savedCourses.find(c => c.code === val);
+                          const fullName = selected.title ? `${selected.code} - ${selected.title}` : selected.code;
+                          setEventForm(f => ({ ...f, title: fullName }));
+                        } else {
+                          setEventForm(f => ({ ...f, title: '' }));
+                        }
+                      }}
+                    >
+                      <option value="">-- Choose Course --</option>
+                      {savedCourses.map(c => (
+                        <option key={c.code} value={c.code}>
+                          {c.code} - {c.title || 'No Title'}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                   <input 
                     type="text" 
                     className="form-input" 
-                    placeholder="What's happening?" 
+                    placeholder={['exam', 'quiz'].includes(eventForm.category) ? "Or type custom event name manually..." : "What's happening?"} 
                     value={eventForm.title} 
                     onChange={e => setEventForm(f => ({ ...f, title: e.target.value }))} 
-                    autoFocus 
                   />
                 </div>
               </div>
@@ -109,7 +132,7 @@ const AddEventModal = ({ showAddModal, setShowAddModal, eventForm, setEventForm,
               {/* Color Selector */}
               <div className="form-group" style={{ marginTop: '0.75rem' }}>
                 <label>Event Color</label>
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.35rem' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginTop: '0.35rem', flexWrap: 'wrap' }}>
                   {['#3b82f6', '#6366f1', '#ec4899', '#f59e0b', '#ef4444', '#14b8a6', '#a78bfa'].map(c => (
                     <button 
                       key={c}

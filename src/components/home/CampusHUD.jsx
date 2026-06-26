@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
 import { getDailyQuote } from '../../data/quotes';
@@ -49,6 +49,23 @@ const MOODS = [
 const CampusHUD = ({ activeMoodId, hudInfo, userProfile, currentUser, itemVariants }) => {
   const currentMood = MOODS.find(m => m.id === activeMoodId) || MOODS[0];
 
+  const [localTime, setLocalTime] = useState(() => new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setLocalTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formattedTimeStr = localTime.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  });
+  const [timeVal, ampmVal] = formattedTimeStr.split(' ');
+  const secVal = String(localTime.getSeconds()).padStart(2, '0');
+
   return (
     <motion.div 
       className="campus-hud-card" 
@@ -89,9 +106,9 @@ const CampusHUD = ({ activeMoodId, hudInfo, userProfile, currentUser, itemVarian
       <div className="hud-info-row">
         <div className="hud-time-date-container">
           <div className="hud-clock-large">
-            {hudInfo.timeVal}
-            <span className="seconds">:{hudInfo.secVal}</span>
-            <span className="ampm" style={{ fontSize: '1.25rem', marginLeft: '0.25rem', verticalAlign: 'middle', textTransform: 'uppercase' }}>{hudInfo.ampmVal}</span>
+            {timeVal}
+            <span className="seconds">:{secVal}</span>
+            <span className="ampm" style={{ fontSize: '1.25rem', marginLeft: '0.25rem', verticalAlign: 'middle', textTransform: 'uppercase' }}>{ampmVal}</span>
           </div>
           <div className="hud-date-large">
             {hudInfo.dayName} • {hudInfo.dateNum} {hudInfo.monthName}
@@ -111,12 +128,6 @@ const CampusHUD = ({ activeMoodId, hudInfo, userProfile, currentUser, itemVarian
       {/* Campus Day Progress (stacked below Time/Date row) */}
       <div className="hud-bottom-progress-row">
         <div className="hud-right-progress-block">
-          {/* Active Class Notification above progress bar */}
-          <div className={`hud-countdown-above-progress ${hudInfo.countdownBadgeClass}`}>
-            <Sparkles size={12} style={{ color: 'inherit' }} />
-            <span>{hudInfo.countdownText}</span>
-          </div>
-
           {/* Bottom Progress Tracker */}
           <div className="hud-progress-section">
             <div className="hud-progress-header">
@@ -133,5 +144,6 @@ const CampusHUD = ({ activeMoodId, hudInfo, userProfile, currentUser, itemVarian
   );
 };
 
-export default CampusHUD;
+export default React.memo(CampusHUD);
 export { MOODS };
+

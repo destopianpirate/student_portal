@@ -162,5 +162,5 @@ const HomeModals = ({
   );
 };
 
-export default HomeModals;
+export default React.memo(HomeModals);
 export { getHue };

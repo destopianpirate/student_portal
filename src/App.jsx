@@ -17,18 +17,26 @@ import ProfileSetupPage from './pages/ProfileSetupPage';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
 
+const withSuspense = (Component) => {
+  return (props) => (
+    <Suspense fallback={<LazyFallback />}>
+      <Component {...props} />
+    </Suspense>
+  );
+};
+
 // Lazy-loaded pages
-const TimetablePage = lazy(() => import('./pages/TimetablePage'));
-const ExplorePage = lazy(() => import('./pages/ExplorePage'));
-const SettingsPage = lazy(() => import('./pages/SettingsPage'));
-const AcademicsPage = lazy(() => import('./pages/AcademicsPage'));
-const NotificationsPage = lazy(() => import('./pages/NotificationsPage'));
-const StudyAIPage = lazy(() => import('./pages/StudyAIPage'));
-const AdminPage = lazy(() => import('./pages/AdminPage'));
-const CalendarPage = lazy(() => import('./pages/CalendarPage'));
-const NotesPage = lazy(() => import('./pages/NotesPage'));
-const ProjectsPage = lazy(() => import('./pages/ProjectsPage'));
-const CertificatesPage = lazy(() => import('./pages/CertificatesPage'));
+const TimetablePage = withSuspense(lazy(() => import('./pages/TimetablePage')));
+const ExplorePage = withSuspense(lazy(() => import('./pages/ExplorePage')));
+const SettingsPage = withSuspense(lazy(() => import('./pages/SettingsPage')));
+const AcademicsPage = withSuspense(lazy(() => import('./pages/AcademicsPage')));
+const NotificationsPage = withSuspense(lazy(() => import('./pages/NotificationsPage')));
+const StudyAIPage = withSuspense(lazy(() => import('./pages/StudyAIPage')));
+const AdminPage = withSuspense(lazy(() => import('./pages/AdminPage')));
+const CalendarPage = withSuspense(lazy(() => import('./pages/CalendarPage')));
+const NotesPage = withSuspense(lazy(() => import('./pages/NotesPage')));
+const ProjectsPage = withSuspense(lazy(() => import('./pages/ProjectsPage')));
+const CertificatesPage = withSuspense(lazy(() => import('./pages/CertificatesPage')));
 
 const PageWrapper = ({ children }) => (
   <motion.div

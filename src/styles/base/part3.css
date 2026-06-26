@@ -704,20 +704,21 @@
 
 .edit-field input,
 .edit-field select {
-  border: 1px solid var(--border);
+  border: none;
   background: var(--input-bg);
   color: var(--text);
-  border-radius: .5rem;
+  border-radius: 9999px;
   outline: none;
-  padding: .5rem .75rem;
+  padding: .5rem 1.25rem;
   font-family: inherit;
   font-size: .85rem;
-  transition: border-color .25s
+  transition: all .25s ease
 }
 
 .edit-field input:focus,
 .edit-field select:focus {
-  border-color: var(--primary)
+  box-shadow: 0 0 0 2px var(--primary);
+  background: var(--card-bg);
 }
 
 .file-upload-area {

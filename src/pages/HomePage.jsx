@@ -15,6 +15,7 @@ import ProfileSection from '../components/home/ProfileSection';
 import ScheduleSection from '../components/home/ScheduleSection';
 import MessMenuSection from '../components/home/MessMenuSection';
 import HomeModals from '../components/home/HomeModals';
+import RemindersSection from '../components/home/RemindersSection';
 
 // Import helpers
 import {
@@ -91,7 +92,7 @@ const HomePage = () => {
   }, []);
 
   useEffect(() => {
-    const timer = setInterval(() => setHudTime(new Date()), 1000);
+    const timer = setInterval(() => setHudTime(new Date()), 10000); // Update every 10 seconds for low-frequency updates
     return () => clearInterval(timer);
   }, []);
 
@@ -218,9 +219,16 @@ const HomePage = () => {
     return calculateHudInfo(hudTime, savedTimetable, holidays, customEvents, academicEvents);
   }, [hudTime, savedTimetable, holidays, customEvents, academicEvents]);
 
+  // stableTodayDate updates ONLY when the date changes, preventing useless updates of selectedDayDateStr
+  const stableTodayDate = useMemo(() => {
+    const d = new Date(hudTime);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, [hudTime.getDate(), hudTime.getMonth(), hudTime.getFullYear()]);
+
   const selectedDayDateStr = useMemo(() => {
-    return getDateForWeekday(selectedScheduleDay, hudTime);
-  }, [selectedScheduleDay, hudTime]);
+    return getDateForWeekday(selectedScheduleDay, stableTodayDate);
+  }, [selectedScheduleDay, stableTodayDate]);
 
   const selectedDayHoliday = useMemo(() => {
     if (!selectedDayDateStr || !holidays) return null;
@@ -234,6 +242,11 @@ const HomePage = () => {
       return e.category === 'academic' || e.title.toLowerCase().includes('class');
     });
   }, [selectedDayDateStr, customEvents]);
+
+  // currentMins only updates once a minute, keeping todaySchedule calculation very stable
+  const currentMins = useMemo(() => {
+    return hudTime.getHours() * 60 + hudTime.getMinutes();
+  }, [hudTime]);
 
   const todaySchedule = useMemo(() => {
     const isNoClass = checkIsNoClassPeriod(selectedDayDateStr, holidays);
@@ -345,7 +358,7 @@ const HomePage = () => {
     }
 
     return finalSchedule;
-  }, [savedTimetable, selectedScheduleDay, selectedDayDateStr, academicEvents, customEvents, holidays]);
+  }, [savedTimetable, selectedScheduleDay, selectedDayDateStr, academicEvents, customEvents, holidays, currentMins]);
 
   const allSlots = useMemo(() => {
     if (!savedTimetable) return [];
@@ -518,7 +531,7 @@ const HomePage = () => {
   const photoPosition = getPhotoPosition(userProfile);
 
   // Build formatted programme string: "BTech'22 3rd Year/Semester 6"
-  const formattedProgramme = (() => {
+  const formattedProgramme = useMemo(() => {
     const prog = userProfile?.programme || '';
     const yoa = userProfile?.yearOfAdmission;
     const yr = userProfile?.currentYear || '';
@@ -534,44 +547,59 @@ const HomePage = () => {
       parts.push(yrSem);
     }
     return parts.join(' ') || '—';
-  })();
+  }, [userProfile]);
 
-  const mainProfileFields = [
-    { label: 'Name', value: userProfile?.name, rollNumber: userProfile?.rollNumber, isNameField: true },
-    { label: 'Programme', value: formattedProgramme },
-    { label: 'Branch', value: userProfile?.branch },
-  ];
+  const mainProfileFields = useMemo(() => {
+    const fields = [
+      { label: 'Name', value: userProfile?.name, rollNumber: userProfile?.rollNumber, isNameField: true },
+      { label: 'Programme', value: formattedProgramme },
+      { label: 'Branch', value: userProfile?.branch },
+    ];
 
-  // Add academic extras if set
-  if (userProfile?.cgpa) mainProfileFields.push({ label: 'CGPA', value: userProfile.cgpa });
-  if (userProfile?.minor) mainProfileFields.push({ label: 'Minor', value: userProfile.minor });
-  if (userProfile?.hostelName) {
-    const hName = userProfile.hostelName;
-    let roomVal = '';
-    if (userProfile.roomNumber) {
-      const prefix = `${hName.split(' ')[0]}-`;
-      if (userProfile.roomNumber.startsWith(prefix)) {
-        roomVal = `${hName[0].toUpperCase()}-${userProfile.roomNumber.slice(prefix.length)}`;
-      } else {
-        roomVal = userProfile.roomNumber;
+    // Add academic extras if set
+    if (userProfile?.cgpa) fields.push({ label: 'CGPA', value: userProfile.cgpa });
+    if (userProfile?.minor) fields.push({ label: 'Minor', value: userProfile.minor });
+    if (userProfile?.hostelName) {
+      const hName = userProfile.hostelName;
+      let roomVal = '';
+      if (userProfile.roomNumber) {
+        const prefix = `${hName.split(' ')[0]}-`;
+        if (userProfile.roomNumber.startsWith(prefix)) {
+          roomVal = `${hName[0].toUpperCase()}-${userProfile.roomNumber.slice(prefix.length)}`;
+        } else {
+          roomVal = userProfile.roomNumber;
+        }
       }
+      fields.push({
+        label: 'Hostel',
+        value: roomVal ? `${hName}/${roomVal}` : hName
+      });
     }
-    mainProfileFields.push({
-      label: 'Hostel',
-      value: roomVal ? `${hName}/${roomVal}` : hName
-    });
-  }
+    return fields;
+  }, [userProfile, formattedProgramme]);
 
   // Contact & link fields — shown in dropdown on mobile
-  const contactFields = [];
-  const privacy = userProfile?.privacy || { phone: false, email: false, social: true };
-  if (privacy.email) contactFields.push({ label: 'Email', value: userProfile?.gmail || currentUser?.email });
-  if (privacy.phone) contactFields.push({ label: 'Phone', value: userProfile?.phone });
-  if (privacy.social) {
-    if (userProfile?.github) contactFields.push({ label: 'Github', value: userProfile?.github, link: true });
-    if (userProfile?.linkedin) contactFields.push({ label: 'LinkedIn', value: userProfile?.linkedin, link: true });
-    if (userProfile?.instagram) contactFields.push({ label: 'Instagram', value: userProfile?.instagram, link: true });
-  }
+  const contactFields = useMemo(() => {
+    const fields = [];
+    const privacy = userProfile?.privacy || { phone: false, email: false, social: true };
+    if (privacy.email) fields.push({ label: 'Email', value: userProfile?.gmail || currentUser?.email });
+    if (privacy.phone) fields.push({ label: 'Phone', value: userProfile?.phone });
+    if (privacy.social) {
+      if (userProfile?.github) fields.push({ label: 'Github', value: userProfile?.github, link: true });
+      if (userProfile?.linkedin) fields.push({ label: 'LinkedIn', value: userProfile?.linkedin, link: true });
+      if (userProfile?.instagram) fields.push({ label: 'Instagram', value: userProfile?.instagram, link: true });
+      if (userProfile?.x) fields.push({ label: 'X (Twitter)', value: userProfile?.x, link: true });
+      if (userProfile?.website) fields.push({ label: 'Website', value: userProfile?.website, link: true });
+      if (Array.isArray(userProfile?.customLinks)) {
+        userProfile.customLinks.forEach(link => {
+          if (link.label && link.url) {
+            fields.push({ label: link.label, value: link.url, link: true });
+          }
+        });
+      }
+    }
+    return fields;
+  }, [userProfile, currentUser]);
 
   const totalCredits = savedCourses.reduce((sum, c) => sum + (parseFloat(c.credits) || 0), 0);
   const todayName = DAY_NAMES[new Date().getDay()];
@@ -590,21 +618,32 @@ const HomePage = () => {
         <div className="page-ambient-blob blob-3" style={{ '--blob-color': MOODS.find(m => m.id === activeMoodId)?.solidColor1 }} />
       </div>
 
-      {/* Live Campus HUD */}
-      <CampusHUD
-        activeMoodId={activeMoodId}
-        hudInfo={hudInfo}
-        userProfile={userProfile}
-        currentUser={currentUser}
-        itemVariants={itemVariants}
-      />
+      {/* Topmost Section Wrapper containing HUD (left) and Reminders (right) */}
+      <div className="homepage-top-section">
+        {/* Live Campus HUD */}
+        <CampusHUD
+          activeMoodId={activeMoodId}
+          hudInfo={hudInfo}
+          userProfile={userProfile}
+          currentUser={currentUser}
+          itemVariants={itemVariants}
+        />
+
+        {/* Reminders & Status Section */}
+        <RemindersSection
+          hudInfo={hudInfo}
+          holidays={holidays}
+          academicEvents={academicEvents}
+          customEvents={customEvents}
+          itemVariants={itemVariants}
+        />
+      </div>
 
       {/* Live Visual Timeline Ribbon */}
       {todaySchedule.length > 0 && (
         <TimelineRibbon
           todaySchedule={todaySchedule}
           selectedScheduleDay={selectedScheduleDay}
-          hudTime={hudTime}
           itemVariants={itemVariants}
         />
       )}

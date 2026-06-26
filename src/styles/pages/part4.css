@@ -127,6 +127,8 @@
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   font-family: inherit;
   font-size: 0.85rem;
+  border-radius: 9999px;
+  border: none;
 }
 
 .premium-input-wrapper select {
@@ -137,8 +139,8 @@
 
 .premium-input-wrapper input:focus,
 .premium-input-wrapper select:focus {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+  border-color: transparent;
+  box-shadow: 0 0 0 2px var(--primary);
   background: var(--card-bg);
 }
 
@@ -168,6 +170,41 @@
 
 .premium-input-wrapper select:focus ~ .premium-select-chevron {
   color: var(--primary);
+}
+
+/* Username Availability Status Messages */
+.username-status-msg {
+  font-size: 0.72rem;
+  font-weight: 600;
+  margin-top: 0.15rem;
+  padding-left: 1rem;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.username-status-msg.checking {
+  color: var(--primary);
+  animation: pulse-checking 1.5s infinite ease-in-out;
+}
+
+.username-status-msg.available,
+.username-status-msg.current {
+  color: #10b981;
+}
+
+.username-status-msg.taken {
+  color: #ef4444;
+}
+
+.username-status-msg.warning {
+  color: #f59e0b;
+}
+
+@keyframes pulse-checking {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
 }
 
 /* Single Panel Unified Accordion Container */

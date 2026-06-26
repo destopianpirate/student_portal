@@ -349,4 +349,4 @@ const ProfileSection = ({
   );
 };
 
-export default ProfileSection;
+export default React.memo(ProfileSection);

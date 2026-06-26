@@ -264,18 +264,26 @@
 }
 
 .cal-nav-btn {
-  border: 1px solid var(--border);
+  border: none;
   cursor: pointer;
   color: var(--text);
-  background: 0 0;
+  background: rgba(0, 0, 0, 0.025);
   border-radius: 8px;
   padding: .4rem;
-  transition: all .15s
+  transition: all 0.2s ease
 }
 
 .cal-nav-btn:hover {
-  background: var(--input-bg);
-  border-color: var(--primary)
+  background: rgba(0, 0, 0, 0.06);
+  border: none;
+}
+
+[data-theme=dark] .cal-nav-btn {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+[data-theme=dark] .cal-nav-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .cal-month-title {

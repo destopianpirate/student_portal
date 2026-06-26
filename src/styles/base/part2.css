@@ -215,24 +215,6 @@
   overflow: hidden
 }
 
-.today-section:after {
-  content: "";
-  background: linear-gradient(90deg, var(--primary), var(--accent), var(--primary));
-  opacity: 0;
-  background-size: 200% 100%;
-  height: 2px;
-  transition: opacity .3s;
-  animation: 4s infinite gradientShift;
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0
-}
-
-.today-section:hover:after {
-  opacity: 1
-}
-
 .today-section:hover {
   transform: translateY(-2px);
   box-shadow: 0 12px 40px -10px rgba(99, 102, 241, 0.2);
