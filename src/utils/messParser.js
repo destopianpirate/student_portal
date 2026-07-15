@@ -1,10 +1,12 @@
 import * as XLSX from 'xlsx';
 
 export const fetchAndParseMessMenu = async () => {
-  const response = await fetch('/Mess Menu May 2026.xlsx');
+  const response = await fetch(encodeURI('/Mess Menu May 2026.xlsx'));
+  if (!response.ok) throw new Error(`Failed to fetch mess menu: ${response.status}`);
   const arrayBuffer = await response.arrayBuffer();
   const workbook = XLSX.read(arrayBuffer, { type: 'array' });
-  const sheet = workbook.Sheets['Menu'];
+  const sheet = workbook.Sheets['Menu'] || workbook.Sheets[workbook.SheetNames[0]];
+  if (!sheet) throw new Error('No valid sheet found in mess menu file');
   const data = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -24,27 +26,28 @@ export const fetchAndParseMessMenu = async () => {
     if (!row || row.length === 0) continue;
 
     const firstCell = String(row[0] || '').trim();
+    const lowerFirst = firstCell.toLowerCase();
 
-    // Detect meal section headers
-    if (firstCell.toLowerCase().startsWith('breakfast')) {
+    // Detect meal section headers (must contain times in parentheses or after dashes)
+    if (lowerFirst.startsWith('breakfast') && (firstCell.includes('(') || firstCell.includes('-'))) {
       currentMeal = 'Breakfast';
       const timeMatch = firstCell.match(/\((.+)\)/);
       if (timeMatch) meals.Breakfast.time = timeMatch[1];
       headerRow = true;
       continue;
-    } else if (firstCell.toLowerCase().startsWith('lunch')) {
+    } else if (lowerFirst.startsWith('lunch') && (firstCell.includes('(') || firstCell.includes('-'))) {
       currentMeal = 'Lunch';
       const timeMatch = firstCell.match(/(\d.+)/);
       if (timeMatch) meals.Lunch.time = timeMatch[1].trim();
       headerRow = true;
       continue;
-    } else if (firstCell.toLowerCase().startsWith('snack')) {
+    } else if (lowerFirst.startsWith('snack') && (firstCell.includes('(') || firstCell.includes('-'))) {
       currentMeal = 'Snacks';
       const timeMatch = firstCell.match(/(\d.+)/);
       if (timeMatch) meals.Snacks.time = timeMatch[1].trim();
       headerRow = true;
       continue;
-    } else if (firstCell.toLowerCase().startsWith('dinner')) {
+    } else if (lowerFirst.startsWith('dinner') && (firstCell.includes('(') || firstCell.includes('-'))) {
       currentMeal = 'Dinner';
       const timeMatch = firstCell.match(/(\d.+)/);
       if (timeMatch) meals.Dinner.time = timeMatch[1].trim();
@@ -59,7 +62,7 @@ export const fetchAndParseMessMenu = async () => {
     }
 
     // Skip title row and empty meal
-    if (!currentMeal || firstCell === 'MESS MENU - MAY 2026') continue;
+    if (!currentMeal || /^MESS MENU/i.test(firstCell)) continue;
 
     // Parse item rows
     if (row.length > 1 && firstCell) {

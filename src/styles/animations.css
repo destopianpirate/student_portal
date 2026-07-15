@@ -1,0 +1,450 @@
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(12px)
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0)
+  }
+}
+
+@keyframes slideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px)
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0)
+  }
+}
+
+@keyframes slideInLeft {
+  0% {
+    opacity: 0;
+    transform: translate(-30px)
+  }
+  to {
+    opacity: 1;
+    transform: translate(0)
+  }
+}
+
+@keyframes slideInRight {
+  0% {
+    opacity: 0;
+    transform: translate(30px)
+  }
+  to {
+    opacity: 1;
+    transform: translate(0)
+  }
+}
+
+@keyframes scaleIn {
+  0% {
+    opacity: 0;
+    transform: scale(.92)
+  }
+  to {
+    opacity: 1;
+    transform: scale(1)
+  }
+}
+
+@keyframes pulse {
+  0%, to {
+    transform: scale(1)
+  }
+  50% {
+    transform: scale(1.03)
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0
+  }
+  to {
+    background-position: 200% 0
+  }
+}
+
+@keyframes glowPulse {
+  0%, to {
+    box-shadow: 0 0 8px #22c55e40
+  }
+  50% {
+    box-shadow: 0 0 18px #22c55e73
+  }
+}
+
+@keyframes amberGlow {
+  0%, to {
+    box-shadow: 0 0 6px #f59e0b33
+  }
+  50% {
+    box-shadow: 0 0 14px #f59e0b59
+  }
+}
+
+@keyframes floatOrb {
+  0%, to {
+    transform: translate(0)scale(1)
+  }
+  25% {
+    transform: translate(30px, -20px)scale(1.05)
+  }
+  50% {
+    transform: translate(-10px, -40px)scale(.95)
+  }
+  75% {
+    transform: translate(-30px, -10px)scale(1.02)
+  }
+}
+
+@keyframes floatOrb2 {
+  0%, to {
+    transform: translate(0)scale(1)
+  }
+  25% {
+    transform: translate(-25px, 15px)scale(1.08)
+  }
+  50% {
+    transform: translate(15px, 30px)scale(.93)
+  }
+  75% {
+    transform: translate(25px, -15px)scale(1.04)
+  }
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0%
+  }
+  50% {
+    background-position: 100%
+  }
+  to {
+    background-position: 0%
+  }
+}
+
+@keyframes borderGlow {
+  0%, to {
+    border-color: #6366f126
+  }
+  50% {
+    border-color: #6366f166
+  }
+}
+
+@keyframes shineSweep {
+  0% {
+    left: -100%
+  }
+  to {
+    left: 200%
+  }
+}
+
+@keyframes subtleBounce {
+  0%, to {
+    transform: translateY(0)
+  }
+  50% {
+    transform: translateY(-4px)
+  }
+}
+
+@keyframes iconFloat {
+  0%, to {
+    transform: translateY(0)rotate(0)
+  }
+  50% {
+    transform: translateY(-6px)rotate(3deg)
+  }
+}
+
+@keyframes numberGlow {
+  0%, to {
+    text-shadow: 0 0 #0000
+  }
+  50% {
+    text-shadow: 0 0 20px #6366f166
+  }
+}
+
+@keyframes particleDrift {
+  0% {
+    opacity: 0;
+    transform: translateY(0)translate(0)scale(0)
+  }
+  10% {
+    opacity: .6;
+    transform: scale(1)
+  }
+  90% {
+    opacity: .3
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-120px)translate(40px)scale(.5)
+  }
+}
+
+@keyframes ripple {
+  0% {
+    opacity: .5;
+    transform: scale(0)
+  }
+  to {
+    opacity: 0;
+    transform: scale(4)
+  }
+}
+
+@keyframes flash {
+  50% {
+    opacity: 0
+  }
+}
+
+@keyframes pulseNodeSuccess {
+  0% {
+    box-shadow: 0 0 #22c55e66
+  }
+  70% {
+    box-shadow: 0 0 0 6px #22c55e00
+  }
+  to {
+    box-shadow: 0 0 #22c55e00
+  }
+}
+
+@keyframes glowPulseSuccess {
+  0%, to {
+    box-shadow: 0 8px 24px -8px #22c55e1f
+  }
+  50% {
+    box-shadow: 0 8px 30px #22c55e40
+  }
+}
+
+@keyframes glowPulseWarning {
+  0%, to {
+    box-shadow: 0 8px 24px -8px #f59e0b1a
+  }
+  50% {
+    box-shadow: 0 8px 30px #f59e0b33
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg)
+  }
+}
+
+@keyframes aurora-float-1 {
+  0% {
+    transform: translate(0)scale(1)
+  }
+  to {
+    transform: translate(40px, 20px)scale(1.15)
+  }
+}
+
+@keyframes aurora-float-2 {
+  0% {
+    transform: translate(0)scale(1)
+  }
+  to {
+    transform: translate(-30px, -15px)scale(1.1)
+  }
+}
+
+@keyframes wave-bounce {
+  0% {
+    transform: scaleY(.3)
+  }
+  to {
+    transform: scaleY(1)
+  }
+}
+
+@keyframes badge-pulse-green {
+  0% {
+    box-shadow: 0 0 #22c55e33
+  }
+  70% {
+    box-shadow: 0 0 0 6px #22c55e00
+  }
+  to {
+    box-shadow: 0 0 #22c55e00
+  }
+}
+
+@keyframes waveAnimation {
+  0% {
+    transform: rotate(0)
+  }
+  10% {
+    transform: rotate(14deg)
+  }
+  20% {
+    transform: rotate(-8deg)
+  }
+  30% {
+    transform: rotate(14deg)
+  }
+  40% {
+    transform: rotate(-4deg)
+  }
+  50% {
+    transform: rotate(10deg)
+  }
+  60% {
+    transform: rotate(0)
+  }
+  to {
+    transform: rotate(0)
+  }
+}
+
+@keyframes shakeError {
+  10%, 90% {
+    transform: translate(-1px)
+  }
+  20%, 80% {
+    transform: translate(2px)
+  }
+  30%, 50%, 70% {
+    transform: translate(-4px)
+  }
+  40%, 60% {
+    transform: translate(4px)
+  }
+}
+
+@keyframes achievementPop {
+  0% {
+    transform: scale(.8)
+  }
+  50% {
+    transform: scale(1.1)
+  }
+  to {
+    transform: scale(1)
+  }
+}
+
+@keyframes toastTimer {
+  0% {
+    width: 100%
+  }
+  to {
+    width: 0%
+  }
+}
+
+@keyframes badgePulse {
+  0%, to {
+    transform: scale(1)
+  }
+  50% {
+    transform: scale(1.15)
+  }
+}
+
+@keyframes dropdownSlide {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px)
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0)
+  }
+}
+
+@keyframes active-pulse {
+  0% {
+    box-shadow: 0 4px 12px hsla(var(--hue, 220),  85%,  55%,  .25);
+    transform: scale(1)
+  }
+  to {
+    box-shadow: 0 6px 20px hsla(var(--hue, 220),  95%,  65%,  .5);
+    transform: scale(1.01)
+  }
+}
+
+@keyframes live-blink {
+  0%, to {
+    opacity: .4;
+    transform: scale(.8)
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2)
+  }
+}
+
+@keyframes lunch-pulse {
+  0% {
+    transform: scale(1)
+  }
+  to {
+    transform: scale(1.02)
+  }
+}
+
+@keyframes icon-float {
+  0% {
+    transform: translateY(0)
+  }
+  to {
+    transform: translateY(-2px)
+  }
+}
+
+@keyframes tooltip-glow {
+  0% {
+    box-shadow: 0 0 6px #ef444466
+  }
+  to {
+    box-shadow: 0 0 12px #ef4444b3
+  }
+}
+
+@keyframes pointer-dot-pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 6px #ef4444
+  }
+  to {
+    transform: scale(1.3);
+    box-shadow: 0 0 16px #ef4444, 0 0 6px #ef444499
+  }
+}
+
+@keyframes pulse-badge {
+  0% {
+    opacity: .85
+  }
+  to {
+    opacity: 1
+  }
+}
+
+@keyframes modalEnter {
+  0% {
+    opacity: 0;
+    transform: scale(.95)
+  }
+  to {
+    opacity: 1;
+    transform: scale(1)
+  }
+}

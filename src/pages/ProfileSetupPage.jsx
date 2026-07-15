@@ -47,7 +47,16 @@ const ProfileSetupPage = () => {
   const [loading, setLoading] = useState(false);
 
   // Step 1: Basic Info
-  const [name, setName] = useState(userProfile?.name || currentUser?.displayName || '');
+  const [firstName, setFirstName] = useState(() => {
+    if (userProfile?.firstName) return userProfile.firstName;
+    const parts = (userProfile?.name || currentUser?.displayName || '').trim().split(/\s+/);
+    return parts[0] || '';
+  });
+  const [surname, setSurname] = useState(() => {
+    if (userProfile?.surname) return userProfile.surname;
+    const parts = (userProfile?.name || currentUser?.displayName || '').trim().split(/\s+/);
+    return parts.slice(1).join(' ') || '';
+  });
   const [rollNumber, setRollNumber] = useState('');
   const [selectedAvatar, setSelectedAvatar] = useState(AVATAR_SEEDS[0]);
   const [customAvatarUrl, setCustomAvatarUrl] = useState('');
@@ -56,6 +65,8 @@ const ProfileSetupPage = () => {
   const [programme, setProgramme] = useState('');
   const [branch, setBranch] = useState('');
   const [yearOfAdmission, setYearOfAdmission] = useState('');
+  const [hostelName, setHostelName] = useState('');
+  const [roomNumber, setRoomNumber] = useState('');
 
   // Step 3: Email (manual only)
   const [gmail, setGmail] = useState('');
@@ -85,7 +96,7 @@ const ProfileSetupPage = () => {
 
   const handleNext = () => {
     if (step === 1) {
-      if (!name.trim() || !rollNumber.trim()) {
+      if (!firstName.trim() || !surname.trim() || !rollNumber.trim()) {
         setError('Please fill in all fields');
         return;
       }
@@ -105,9 +116,19 @@ const ProfileSetupPage = () => {
       setLoading(true);
       const academic = computeAcademicYear();
       const profileData = {
-        name, rollNumber, avatarUrl: getAvatarUrl(), programme, branch,
-        yearOfAdmission: parseInt(yearOfAdmission), currentYear: academic.year,
-        semester: academic.semester, gmail: signupMethod === 'google' ? currentUser?.email : gmail,
+        firstName: firstName.trim(),
+        surname: surname.trim(),
+        name: `${firstName.trim()} ${surname.trim()}`,
+        rollNumber,
+        avatarUrl: getAvatarUrl(),
+        programme,
+        branch,
+        yearOfAdmission: parseInt(yearOfAdmission),
+        currentYear: academic.year,
+        semester: academic.semester,
+        gmail: signupMethod === 'google' ? currentUser?.email : gmail,
+        hostelName: hostelName,
+        roomNumber: roomNumber,
         profileComplete: true
       };
       try { await saveProfile(profileData); } catch (e) { console.warn('Profile save error:', e); }
@@ -147,9 +168,15 @@ const ProfileSetupPage = () => {
           <div className="setup-step">
             <h2 style={{ marginBottom: '1.5rem' }}>Basic Information</h2>
 
-            <div className="input-group">
-              <User size={18} className="input-icon" />
-              <input className="auth-input" placeholder="Full Name" value={name} onChange={e => setName(e.target.value)} />
+            <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem' }}>
+              <div className="input-group" style={{ flex: 1, marginBottom: 0 }}>
+                <User size={18} className="input-icon" />
+                <input className="auth-input" placeholder="First Name" value={firstName} onChange={e => setFirstName(e.target.value)} />
+              </div>
+              <div className="input-group" style={{ flex: 1, marginBottom: 0 }}>
+                <User size={18} className="input-icon" />
+                <input className="auth-input" placeholder="Surname" value={surname} onChange={e => setSurname(e.target.value)} />
+              </div>
             </div>
 
             <div className="input-group">
@@ -218,6 +245,46 @@ const ProfileSetupPage = () => {
                 </div>
               </div>
             )}
+
+            <label className="field-label" style={{ marginTop: '1rem' }}>Hostel Name</label>
+            <select 
+              className="auth-select" 
+              value={hostelName} 
+              onChange={e => {
+                const val = e.target.value;
+                const prefix = val ? `${val.split(' ')[0]}-` : '';
+                setHostelName(val);
+                setRoomNumber(prefix);
+              }}
+            >
+              <option value="">Select Hostel (Optional)</option>
+              {['Aibaan', 'Beauki', 'Chimair', 'Duven', 'Emiet', 'Firpeal', 'Griwiksh', 'Hiqom', 'Ijokha', 'Jurqia', 'Kyzeel', 'Lekhaag'].map(h => (
+                <option key={h} value={h}>{h}</option>
+              ))}
+            </select>
+
+            <label className="field-label">Room Number</label>
+            <input 
+              className="auth-input"
+              placeholder={hostelName ? `${hostelName.split(' ')[0]}-304` : "Select hostel first"} 
+              disabled={!hostelName}
+              value={roomNumber} 
+              onChange={e => {
+                const inputVal = e.target.value;
+                const prefix = hostelName ? `${hostelName.split(' ')[0]}-` : '';
+                if (!inputVal.startsWith(prefix)) {
+                  setRoomNumber(prefix);
+                  return;
+                }
+                const suffix = inputVal.slice(prefix.length);
+                const cleanSuffix = suffix.replace(/\D/g, '').slice(0, 3);
+                setRoomNumber(prefix + cleanSuffix);
+              }}
+              style={{
+                opacity: hostelName ? 1 : 0.6,
+                cursor: hostelName ? 'text' : 'not-allowed'
+              }}
+            />
           </div>
         )}
 

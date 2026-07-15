@@ -1,11 +1,33 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Eye, MapPin, AlertCircle, Download, ChevronDown, FileSpreadsheet, Image as ImageIcon, File as FileIcon, Search, Trash2, Save, Edit2, Plus, ChevronUp } from 'lucide-react';
+import { Calendar, Eye, MapPin, AlertCircle, Download, ChevronDown, FileSpreadsheet, Image as ImageIcon, File as FileIcon, Search, Trash2, Save, Edit2, Plus, ChevronUp, X, Coffee, Clock, BookOpen, User } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { fetchAndParseTimetable } from '../utils/parser';
 import { exportToExcel } from '../utils/exporter';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
+import { motion, AnimatePresence } from 'framer-motion';
+import confetti from 'canvas-confetti';
+
+const isSlotActive = (timeStr) => {
+  if (!timeStr || typeof timeStr !== 'string') return false;
+  const parseTime = (t) => {
+    if (!t) return 0;
+    const m = t.trim().match(/(\d+):(\d+)/);
+    if (!m) return 0;
+    return parseInt(m[1]) * 60 + parseInt(m[2]);
+  };
+  const parts = timeStr.split(/[-–—]/).map(s => s.trim());
+  if (parts.length < 2) return false;
+  
+  const startMins = parseTime(parts[0]);
+  const endMins = parseTime(parts[1]);
+  
+  const now = new Date();
+  const currentMins = now.getHours() * 60 + now.getMinutes();
+  
+  return currentMins >= startMins && currentMins <= endMins;
+};
 
 const TimetablePage = () => {
   const { currentUser, userProfile, saveTimetable } = useAuth();
@@ -21,6 +43,25 @@ const TimetablePage = () => {
   const [savedCourses, setSavedCourses] = useState([]);
 
   const [isEditing, setIsEditing] = useState(true);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [activeDayTab, setActiveDayTab] = useState('Monday');
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    if (days.length > 0) {
+      const today = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+      if (days.includes(today)) {
+        setActiveDayTab(today);
+      } else {
+        setActiveDayTab(days[0]);
+      }
+    }
+  }, [days]);
   const [selectedIds, setSelectedIds] = useState(new Set());
   const [searchQuery, setSearchQuery] = useState('');
   const [collapsedGroups, setCollapsedGroups] = useState(new Set());
@@ -30,13 +71,20 @@ const TimetablePage = () => {
   const [previewMode, setPreviewMode] = useState(false);
   const timetableRef = useRef(null);
 
+
+
+  const hasInitializedSelectedIds = useRef(false);
+
   // Load per-user saved data
   useEffect(() => {
     try {
+      hasInitializedSelectedIds.current = false;
       const tt = localStorage.getItem(`timetable_${userKey}`);
       const sc = localStorage.getItem(`courses_${userKey}`);
       if (tt) { setSavedTimetable(JSON.parse(tt)); setIsEditing(false); }
+      else { setSavedTimetable(null); setIsEditing(true); }
       if (sc) setSavedCourses(JSON.parse(sc));
+      else setSavedCourses([]);
     } catch { /* ignore */ }
   }, [userKey]);
 
@@ -44,25 +92,49 @@ const TimetablePage = () => {
     const load = async () => {
       try {
         const data = await fetchAndParseTimetable();
-        setCourses(data.courses); setOrderedTimeSlots(data.orderedTimeSlots); setDays(data.days);
-        const src = savedCourses.length > 0 ? savedCourses : userProfile?.selectedCourses;
-        if (src?.length > 0) {
-          const codes = new Set(src.map(c => c.code));
-          const sel = new Set();
-          data.courses.forEach((c, i) => { if (codes.has(c.code)) sel.add(i); });
-          setSelectedIds(sel);
-        }
+        setCourses(data.courses); 
+        setOrderedTimeSlots(data.orderedTimeSlots); 
+        setDays(data.days);
       } catch (e) { console.error(e); }
       finally { setLoading(false); }
     };
     load();
   }, []);
 
-  const toggleCourse = (id) => { const n = new Set(selectedIds); n.has(id) ? n.delete(id) : n.add(id); setSelectedIds(n); };
-  const selectedCourses = useMemo(() => courses.filter((_, i) => selectedIds.has(i)), [courses, selectedIds]);
-  const totalCredits = useMemo(() => selectedCourses.reduce((s, c) => s + (parseFloat(c.credits) || 0), 0), [selectedCourses]);
+  // Sync selectedIds with savedCourses or userProfile.selectedCourses when courses/savedCourses load
+  useEffect(() => {
+    if (courses.length === 0 || hasInitializedSelectedIds.current) return;
+    const src = savedCourses.length > 0 ? savedCourses : userProfile?.selectedCourses;
+    if (src && src.length > 0) {
+      // Merge saved custom slots into the main courses list so edits are preserved in catalog selections
+      const savedSlotsMap = new Map(src.map(c => [c.code, c.slots]));
+      setCourses(prev => prev.map(c => {
+        if (savedSlotsMap.has(c.code)) {
+          return { ...c, slots: savedSlotsMap.get(c.code) };
+        }
+        return c;
+      }));
 
-  const buildGrid = (courseList) => {
+      const codes = new Set(src.map(c => c.code));
+      const sel = new Set();
+      courses.forEach((c, i) => { if (codes.has(c.code)) sel.add(i); });
+      setSelectedIds(sel);
+      hasInitializedSelectedIds.current = true;
+    } else if (savedCourses.length === 0 && !loading) {
+      hasInitializedSelectedIds.current = true;
+    }
+  }, [courses, savedCourses, userProfile, loading]);
+
+  const toggleCourse = (id) => { const n = new Set(selectedIds); n.has(id) ? n.delete(id) : n.add(id); setSelectedIds(n); };
+  const removeCourse = (id) => { const n = new Set(selectedIds); n.delete(id); setSelectedIds(n); };
+
+  const selectedCourses = useMemo(() => courses.filter((_, i) => selectedIds.has(i)), [courses, selectedIds]);
+
+  // displayCourses: what to show in the summary — editing uses live selection, view uses saved
+  const displayCourses = useMemo(() => isEditing ? selectedCourses : savedCourses, [isEditing, selectedCourses, savedCourses]);
+  const displayCredits = useMemo(() => displayCourses.reduce((s, c) => s + (parseFloat(c.credits) || 0), 0), [displayCourses]);
+
+  const buildGrid = useCallback((courseList) => {
     const grid = {};
     courseList.forEach(course => {
       course.slots.forEach(s => {
@@ -72,12 +144,112 @@ const TimetablePage = () => {
       });
     });
     return grid;
-  };
+  }, []);
 
   const activeTimetable = useMemo(() => {
     if (!isEditing && savedTimetable) return savedTimetable;
     return buildGrid(selectedCourses);
-  }, [selectedCourses, isEditing, savedTimetable]);
+  }, [selectedCourses, isEditing, savedTimetable, buildGrid]);
+
+  // States for manual course slots modification modal
+  const [showModifyModal, setShowModifyModal] = useState(false);
+  const [editingCourseCode, setEditingCourseCode] = useState('');
+  const [editingSlots, setEditingSlots] = useState([]);
+
+  const handleOpenModifyModal = () => {
+    const list = isEditing ? selectedCourses : savedCourses;
+    if (list.length > 0) {
+      setEditingCourseCode(list[0].code);
+    } else {
+      setEditingCourseCode('');
+    }
+    setShowModifyModal(true);
+  };
+
+  useEffect(() => {
+    const list = isEditing ? selectedCourses : savedCourses;
+    if (editingCourseCode && list.length > 0) {
+      const course = list.find(c => c.code === editingCourseCode);
+      if (course) {
+        setEditingSlots(JSON.parse(JSON.stringify(course.slots || [])));
+      } else {
+        setEditingSlots([]);
+      }
+    } else {
+      setEditingSlots([]);
+    }
+  }, [editingCourseCode, selectedCourses, savedCourses, isEditing]);
+
+  const handleAddSlot = () => {
+    setEditingSlots(prev => [
+      ...prev,
+      { 
+        type: 'Lecture', 
+        day: days[0] || 'Monday', 
+        time: orderedTimeSlots[0] || '8:30 - 9:50', 
+        venue: '' 
+      }
+    ]);
+  };
+
+  const handleUpdateSlot = (index, field, value) => {
+    setEditingSlots(prev => prev.map((s, i) => {
+      if (i === index) {
+        return { ...s, [field]: value };
+      }
+      return s;
+    }));
+  };
+
+  const handleDeleteSlot = (index) => {
+    setEditingSlots(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSaveCourseSlots = async () => {
+    const targetCourses = isEditing ? [...selectedCourses] : [...savedCourses];
+    const updated = targetCourses.map(c => {
+      if (c.code === editingCourseCode) {
+        return { ...c, slots: editingSlots };
+      }
+      return c;
+    });
+
+    const newGrid = buildGrid(updated);
+
+    if (isEditing) {
+      setCourses(prev => prev.map(c => {
+        if (c.code === editingCourseCode) {
+          return { ...c, slots: editingSlots };
+        }
+        return c;
+      }));
+    } else {
+      setSavedCourses(updated);
+      setSavedTimetable(newGrid);
+      localStorage.setItem(`timetable_${userKey}`, JSON.stringify(newGrid));
+      localStorage.setItem(`courses_${userKey}`, JSON.stringify(updated));
+
+      if (currentUser) {
+        saveTimetable(newGrid, updated).catch(e => console.warn('Firestore:', e.message));
+      }
+      
+      setCourses(prev => prev.map(c => {
+        if (c.code === editingCourseCode) {
+          return { ...c, slots: editingSlots };
+        }
+        return c;
+      }));
+    }
+
+    confetti({
+      particleCount: 120,
+      spread: 80,
+      origin: { y: 0.6 },
+      colors: ['#6366f1', '#f472b6', '#34d399']
+    });
+
+    setShowModifyModal(false);
+  };
 
   const groupedCourses = useMemo(() => {
     const g = {};
@@ -89,7 +261,7 @@ const TimetablePage = () => {
     return g;
   }, [courses, searchQuery]);
 
-  const getColor = (code) => { let h = 0; for (let i = 0; i < code.length; i++) h = code.charCodeAt(i) + ((h << 5) - h); return `hsl(${Math.abs(h) % 360},${65 + Math.abs(h) % 20}%,${85 + Math.abs(h) % 10}%)`; };
+  const getHue = (code) => { let h = 0; for (let i = 0; i < code.length; i++) h = code.charCodeAt(i) + ((h << 5) - h); return Math.abs(h) % 360; };
 
   const handleSave = async () => {
     setSaving(true);
@@ -97,29 +269,47 @@ const TimetablePage = () => {
     const cs = selectedCourses.map(c => ({ code: c.code, title: c.title, credits: c.credits, instructor: c.instructor, slots: c.slots }));
     localStorage.setItem(`timetable_${userKey}`, JSON.stringify(grid));
     localStorage.setItem(`courses_${userKey}`, JSON.stringify(cs));
-    setSavedTimetable(grid); setSavedCourses(cs);
-    if (currentUser) { try { await saveTimetable(grid, cs); } catch (e) { console.warn('Firestore:', e.message); } }
-    setIsEditing(false); setPreviewMode(false); setSaving(false);
+
+    // Update saved state first
+    setSavedTimetable(grid);
+    setSavedCourses(cs);
+
+    // Save to Firestore
+    if (currentUser) {
+      saveTimetable(grid, cs).catch(e => console.warn('Firestore:', e.message));
+    }
+
+    confetti({
+      particleCount: 150,
+      spread: 90,
+      origin: { y: 0.8 },
+      colors: ['#6366f1', '#f472b6', '#34d399']
+    });
+
+    // Then switch view — use setTimeout to ensure React state settles
+    setTimeout(() => {
+      setIsEditing(false);
+      setPreviewMode(false);
+      setSaving(false);
+    }, 50);
   };
 
   const handleExportExcel = () => { exportToExcel(activeTimetable, days, orderedTimeSlots, isEditing ? selectedCourses : savedCourses); setShowExportMenu(false); };
-  const handleExportImage = async () => { if (!timetableRef.current) return; const c = await html2canvas(timetableRef.current, { scale: 2 }); const l = document.createElement('a'); l.download = 'Timetable.png'; l.href = c.toDataURL('image/png'); l.click(); setShowExportMenu(false); };
-  const handleExportPDF = async () => { if (!timetableRef.current) return; const c = await html2canvas(timetableRef.current, { scale: 2 }); const p = new jsPDF('l', 'mm', 'a4'); const w = p.internal.pageSize.getWidth() - 20; p.addImage(c.toDataURL('image/png'), 'PNG', 10, 10, w, (c.height * w) / c.width); p.save('Timetable.pdf'); setShowExportMenu(false); };
+  const handleExportImage = async () => { if (!timetableRef.current) return; const c = await html2canvas(timetableRef.current, { scale: 2, windowWidth: 1200, useCORS: true }); const l = document.createElement('a'); l.download = 'Timetable.png'; l.href = c.toDataURL('image/png'); l.click(); setShowExportMenu(false); };
+  const handleExportPDF = async () => { if (!timetableRef.current) return; const c = await html2canvas(timetableRef.current, { scale: 2, windowWidth: 1200, useCORS: true }); const p = new jsPDF('l', 'mm', 'a4'); const w = p.internal.pageSize.getWidth() - 20; p.addImage(c.toDataURL('image/png'), 'PNG', 10, 10, w, (c.height * w) / c.width); p.save('Timetable.pdf'); setShowExportMenu(false); };
 
   if (loading) return <div className="page-container" style={{ textAlign: 'center', paddingTop: '4rem' }}><div className="loading-spinner" style={{ margin: '0 auto' }} /></div>;
 
-  const displayCourses = isEditing ? selectedCourses : savedCourses;
-
   return (
     <div className="page-container" style={{ paddingBottom: '80px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem', flexWrap: 'wrap', gap: '0.75rem' }}>
         <div>
-          <h2 style={{ margin: 0 }}>{isEditing ? 'Course Selection' : 'Your Timetable'}</h2>
-          <p style={{ color: 'var(--text-muted)', fontSize: '.9rem' }}>{isEditing ? 'Select courses for this semester' : `${displayCourses.length} courses • ${totalCredits} credits`}</p>
+          <h2 style={{ margin: 0, fontSize: 'clamp(1.1rem, 3vw, 1.5rem)' }}>{isEditing ? 'Course Selection' : 'Your Timetable'}</h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: '.85rem' }}>{isEditing ? 'Select courses for this semester' : `${displayCourses.length} courses • ${displayCredits} credits`}</p>
         </div>
-        <div style={{ display: 'flex', gap: '.75rem' }}>
+        <div style={{ display: 'flex', gap: '.5rem', flexWrap: 'wrap' }}>
           {!isEditing ? (
-            <button className="btn btn-outline" onClick={() => setIsEditing(true)}><Edit2 size={16} /> Modify</button>
+            <button className="btn btn-outline" onClick={handleOpenModifyModal}><Edit2 size={16} /> Modify Course</button>
           ) : savedTimetable && (
             <button className="btn btn-outline" onClick={() => { setIsEditing(false); setPreviewMode(false); }}>Cancel</button>
           )}
@@ -136,97 +326,253 @@ const TimetablePage = () => {
         </div>
       </div>
 
-      {isEditing && !previewMode ? (
-        <div className="card">
-          {Object.keys(groupedCourses).map(gn => (
-            <div key={gn} style={{ marginBottom: '2rem' }}>
-              <div onClick={() => { const n = new Set(collapsedGroups); n.has(gn) ? n.delete(gn) : n.add(gn); setCollapsedGroups(n); }}
-                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', marginBottom: '1rem', borderBottom: '2px solid var(--border)', paddingBottom: '.5rem' }}>
-                <h3 style={{ fontSize: '1.1rem', margin: 0 }}>{gn}</h3>
-                {collapsedGroups.has(gn) ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
-              </div>
-              {!collapsedGroups.has(gn) && (
-                <div className="course-list">
-                  {groupedCourses[gn].map(c => (
-                    <div key={c.originalIndex} className={`course-item ${selectedIds.has(c.originalIndex) ? 'selected' : ''}`} onClick={() => toggleCourse(c.originalIndex)}>
-                      <input type="checkbox" checked={selectedIds.has(c.originalIndex)} readOnly />
-                      <div style={{ display: 'flex', flex: 1, gap: '1rem', alignItems: 'center' }}>
-                        <span className="course-code" style={{ minWidth: '80px' }}>{c.code}</span>
-                        <span style={{ minWidth: '50px', color: 'var(--primary)' }}>{c.credits} Cr</span>
-                        <span style={{ flex: 1 }}>{c.title}</span>
-                        <span style={{ minWidth: '120px', textAlign: 'right', fontSize: '.75rem', color: 'var(--text-muted)' }}>{c.instructor}</span>
-                      </div>
+      <AnimatePresence mode="wait">
+        {isEditing && !previewMode ? (
+          <motion.div
+            key="editing"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.25 }}
+          >
+            {/* Selected Courses Chips */}
+            <div className="selected-chips">
+              {selectedCourses.length === 0 ? (
+                <span className="selected-chips-empty"><Plus size={14} /> No courses selected — pick from the list below</span>
+              ) : (
+                selectedCourses.map((c, i) => {
+                  // Find the original index for this course
+                  const origIdx = courses.findIndex(cc => cc.code === c.code && cc.title === c.title);
+                  return (
+                    <div key={c.code + i} className="selected-chip">
+                      <span>{c.code}</span>
+                      <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>({c.credits} Cr)</span>
+                      <button className="chip-remove" onClick={(e) => { e.stopPropagation(); removeCourse(origIdx); }} title="Remove course">
+                        <X size={14} />
+                      </button>
                     </div>
-                  ))}
-                </div>
+                  );
+                })
               )}
             </div>
-          ))}
-        </div>
-      ) : (
-        <div>
-          <div className="timetable-container" ref={timetableRef}>
-            <table className="timetable">
-              <thead><tr><th style={{ width: '120px' }}>Time</th>{days.map(d => <th key={d}>{d}</th>)}</tr></thead>
-              <tbody>
+
+            {/* Course Bucket List */}
+            <div className="card course-bucket-card">
+              {Object.keys(groupedCourses).map(gn => (
+                <div key={gn} style={{ marginBottom: '2rem' }}>
+                  <div onClick={() => { const n = new Set(collapsedGroups); n.has(gn) ? n.delete(gn) : n.add(gn); setCollapsedGroups(n); }}
+                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', marginBottom: '1rem', borderBottom: '2px solid var(--border)', paddingBottom: '.5rem' }}>
+                    <h3 style={{ fontSize: '1.1rem', margin: 0 }}>{gn}</h3>
+                    {collapsedGroups.has(gn) ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
+                  </div>
+                  {!collapsedGroups.has(gn) && (
+                    <div className="course-list">
+                      {groupedCourses[gn].map(c => (
+                        <div key={c.originalIndex} className={`course-item ${selectedIds.has(c.originalIndex) ? 'selected' : ''}`} onClick={() => toggleCourse(c.originalIndex)}>
+                          <input type="checkbox" checked={selectedIds.has(c.originalIndex)} readOnly />
+                          <div style={{ display: 'flex', flex: 1, gap: '1rem', alignItems: 'center' }}>
+                            <span className="course-code" style={{ minWidth: '80px' }}>{c.code}</span>
+                            <span style={{ minWidth: '50px', color: 'var(--primary)' }}>{c.credits} Cr</span>
+                            <span style={{ flex: 1 }}>{c.title}</span>
+                            <span style={{ minWidth: '120px', textAlign: 'right', fontSize: '.75rem', color: 'var(--text-muted)' }}>{c.instructor}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="timetable"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.25 }}
+          >
+            {isMobile && (
+              <div className="timetable-mobile-tabs">
+                {days.map(d => (
+                  <button 
+                    key={d} 
+                    className={`timetable-mobile-tab-btn ${activeDayTab === d ? 'active' : ''}`}
+                    onClick={() => setActiveDayTab(d)}
+                  >
+                    {d.substring(0, 3)}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {isMobile ? (
+              <div className="timetable-mobile-timeline" ref={timetableRef}>
                 {orderedTimeSlots.map(time => {
-                  if (time === "13:00 - 14:00") return <tr key={time}><td className="time-slot-cell">{time}</td><td colSpan={days.length} className="timetable-lunch">Lunch Break</td></tr>;
+                  const isActive = isSlotActive(time);
+                  
+                  if (time === "13:00 - 14:00") {
+                    return (
+                      <div key={time} className={`timetable-mobile-lunch ${isActive ? 'active' : ''}`}>
+                        <Coffee size={14} />
+                        <span>Lunch Break ({time})</span>
+                      </div>
+                    );
+                  }
+                  
+                  const entries = activeTimetable[activeDayTab]?.[time] || [];
+                  if (entries.length === 0) return null;
+                  
                   return (
-                    <tr key={time}>
-                      <td className="time-slot-cell">{time}</td>
-                      {days.map(day => {
-                        const entries = activeTimetable[day]?.[time] || [];
-                        return (
-                          <td key={day} style={{ padding: 0 }}>
-                            {entries.map((e, i) => (
-                              <div key={i} className="timetable-cell" style={{ backgroundColor: getColor(e.code) }}
-                                title={`${e.code}: ${e.title}\n${e.type}\nVenue: ${e.venue || 'N/A'}\nInstructor: ${e.instructor}`}>
-                                <span className="code">{e.code}</span>
-                                <span className="title">{e.title}</span>
-                                <span className="type">{e.type}</span>
-                                {e.venue && <span className="venue"><MapPin size={10} style={{ marginRight: 2 }} />{e.venue}</span>}
+                    <div key={time} className={`timetable-mobile-row ${isActive ? 'active-row' : ''}`}>
+                      <div className="timetable-mobile-time-badge">
+                        <Clock size={12} />
+                        <span>{time}</span>
+                      </div>
+                      <div className="timetable-mobile-cards-list">
+                        {entries.map((e, idx) => (
+                          <div key={idx} className="timetable-mobile-card" style={{ '--hue': getHue(e.code) }}>
+                            <div className="mobile-card-accent" />
+                            <div className="mobile-card-body">
+                              <div className="mobile-card-header">
+                                <span className="mobile-card-code">{e.code}</span>
+                                <span className="mobile-card-type">{e.type}</span>
                               </div>
-                            ))}
-                            {entries.length > 1 && <div className="conflict-warning"><AlertCircle size={12} style={{ marginRight: 4 }} />Conflict!</div>}
-                          </td>
-                        );
-                      })}
-                    </tr>
+                              <h4 className="mobile-card-title">{e.title}</h4>
+                              <div className="mobile-card-meta">
+                                <div className="meta-item">
+                                  <User size={11} />
+                                  <span>{e.instructor || 'N/A'}</span>
+                                </div>
+                                {e.venue && (
+                                  <div className="meta-item">
+                                    <MapPin size={11} />
+                                    <span>{e.venue}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                        {entries.length > 1 && (
+                          <div className="conflict-warning" style={{ marginTop: '0.25rem' }}>
+                            <AlertCircle size={12} style={{ marginRight: 4 }} />Conflict!
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   );
                 })}
-              </tbody>
-            </table>
-          </div>
+                {orderedTimeSlots.filter(t => t !== "13:00 - 14:00" && (activeTimetable[activeDayTab]?.[t] || []).length > 0).length === 0 && (
+                  <div className="timetable-mobile-empty">
+                    <Calendar size={36} />
+                    <p>No classes scheduled for {activeDayTab}</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="timetable-container" ref={timetableRef}>
+                <table className="timetable">
+                  <thead><tr><th style={{ width: '120px' }}>Time</th>{days.map(d => <th key={d}>{d}</th>)}</tr></thead>
+                  <tbody>
+                    {orderedTimeSlots.map(time => {
+                      const isActive = isSlotActive(time);
+                      const rowClass = isActive ? 'active-row' : '';
+                      const slotClass = `time-slot-cell ${isActive ? 'active-slot' : ''}`;
+                      
+                      if (time === "13:00 - 14:00") {
+                        return (
+                          <tr key={time} className={rowClass}>
+                            <td className={slotClass}>
+                              <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                                <Coffee size={12} /> {time}
+                              </span>
+                            </td>
+                            <td colSpan={days.length} className="timetable-lunch">Lunch Break</td>
+                          </tr>
+                        );
+                      }
+                      
+                      return (
+                        <tr key={time} className={rowClass}>
+                          <td className={slotClass}>{time}</td>
+                          {days.map(day => {
+                            const entries = activeTimetable[day]?.[time] || [];
+                            return (
+                              <td key={day} style={{ padding: 0 }}>
+                                {entries.map((e, i) => (
+                                  <div key={i} className="timetable-cell" style={{ '--hue': getHue(e.code) }}>
+                                    
+                                    {/* Timetable hover details card */}
+                                    <div className="timetable-hover-tooltip">
+                                      <div className="tooltip-header">Session Details</div>
+                                      <div className="tooltip-title">{e.title || 'Course Lecture'}</div>
+                                      <div className="tooltip-meta-row">
+                                        <BookOpen size={11} style={{ color: 'var(--primary)' }} />
+                                        <span>Code: {e.code}</span>
+                                      </div>
+                                      <div className="tooltip-meta-row">
+                                        <User size={11} style={{ color: 'var(--primary)' }} />
+                                        <span>Instructor: {e.instructor || 'N/A'}</span>
+                                      </div>
+                                      <div className="tooltip-meta-row">
+                                        <MapPin size={11} style={{ color: 'var(--primary)' }} />
+                                        <span>Venue: {e.venue || 'N/A'}</span>
+                                      </div>
+                                      <div className="tooltip-meta-row">
+                                        <Clock size={11} style={{ color: 'var(--primary)' }} />
+                                        <span>Type: {e.type || 'Lecture'}</span>
+                                      </div>
+                                    </div>
 
-          <div style={{ marginTop: '2rem' }}>
-            <h3>Registered Courses Summary</h3>
-            <div className="courses-table-container">
-              <table className="courses-table">
-                <thead><tr><th>Sr.</th><th>Code</th><th>Name</th><th>Credits</th><th>Instructor</th></tr></thead>
-                <tbody>
-                  {displayCourses.map((c, i) => (
-                    <tr key={i}><td>{i + 1}</td><td style={{ fontWeight: 700, color: 'var(--primary)' }}>{c.code}</td><td>{c.title}</td><td>{c.credits}</td><td>{c.instructor}</td></tr>
-                  ))}
-                  <tr className="total-row"><td colSpan={3} style={{ fontWeight: 700 }}>Total Semester Credits</td><td style={{ fontWeight: 800, color: 'var(--primary)' }}>{displayCourses.reduce((s, c) => s + (parseFloat(c.credits) || 0), 0)}</td><td /></tr>
-                </tbody>
-              </table>
+                                    <span className="code">{e.code}</span>
+                                    <span className="title">{e.title}</span>
+                                    <span className="type">{e.type}</span>
+                                    {e.venue && <span className="venue"><MapPin size={10} style={{ marginRight: 2 }} />{e.venue}</span>}
+                                  </div>
+                                ))}
+                                {entries.length > 1 && <div className="conflict-warning"><AlertCircle size={12} style={{ marginRight: 4 }} />Conflict!</div>}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            <div style={{ marginTop: '2rem' }}>
+              <h3>Registered Courses Summary</h3>
+              <div className="courses-table-container">
+                <table className="courses-table">
+                  <thead><tr><th>Sr.</th><th>Code</th><th>Name</th><th>Credits</th><th>Instructor</th></tr></thead>
+                  <tbody>
+                    {displayCourses.map((c, i) => (
+                      <tr key={i}><td>{i + 1}</td><td style={{ fontWeight: 700, color: 'var(--primary)' }}>{c.code}</td><td>{c.title}</td><td>{c.credits}</td><td>{c.instructor}</td></tr>
+                    ))}
+                    <tr className="total-row"><td colSpan={3} style={{ fontWeight: 700 }}>Total Semester Credits</td><td style={{ fontWeight: 800, color: 'var(--primary)' }}>{displayCredits}</td><td /></tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Bottom Bar */}
       <div className="bottom-navbar">
         <div className="stats-bar">
           <div style={{ display: 'flex', alignItems: 'center' }}>
             <div onClick={() => setShowSelectedList(!showSelectedList)} className="selected-courses-trigger" style={{ display: 'flex', alignItems: 'center', cursor: 'pointer', padding: '.25rem .5rem', borderRadius: '.25rem' }}>
-              <span style={{ fontSize: '.875rem', color: 'var(--text-muted)' }}>Selected:</span>
-              <span style={{ fontWeight: 800, marginLeft: '.5rem' }}>{selectedCourses.length}</span>
+              <span style={{ fontSize: '.875rem', color: 'var(--text-muted)' }}>Courses:</span>
+              <span style={{ fontWeight: 800, marginLeft: '.5rem' }}>{displayCourses.length}</span>
             </div>
-            {showSelectedList && selectedCourses.length > 0 && (
+            {showSelectedList && displayCourses.length > 0 && (
               <div style={{ position: 'absolute', bottom: '70px', left: '2rem', background: 'var(--card-bg)', borderRadius: '.75rem', padding: '1rem', boxShadow: '0 10px 25px -5px rgba(0,0,0,.15)', minWidth: '300px', maxHeight: '300px', overflowY: 'auto', zIndex: 2000, border: '1px solid var(--border)' }}>
                 <h4 style={{ marginBottom: '.5rem' }}>Chosen Courses</h4>
-                {selectedCourses.map((c, i) => (
+                {displayCourses.map((c, i) => (
                   <div key={i} style={{ display: 'flex', fontSize: '.8rem', padding: '.4rem', background: 'var(--input-bg)', borderRadius: '.4rem', marginBottom: '.25rem', gap: '.5rem' }}>
                     <strong>{c.code}</strong><span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.title}</span>
                   </div>
@@ -235,7 +581,7 @@ const TimetablePage = () => {
             )}
             <span style={{ margin: '0 .75rem', color: 'var(--border)' }}>|</span>
             <span style={{ fontSize: '.875rem', color: 'var(--text-muted)' }}>Credits:</span>
-            <span style={{ fontWeight: 800, marginLeft: '.5rem', color: 'var(--primary)' }}>{totalCredits}</span>
+            <span style={{ fontWeight: 800, marginLeft: '.5rem', color: 'var(--primary)' }}>{displayCredits}</span>
             {isEditing && (
               <div style={{ position: 'relative', marginLeft: '1.5rem', width: '200px' }}>
                 <input type="text" placeholder="Search..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} style={{ width: '100%', padding: '.5rem 1rem .5rem 2.2rem', borderRadius: '2rem', border: 'none', background: 'var(--input-bg)', fontSize: '.85rem', outline: 'none', color: 'var(--text)' }} />
@@ -254,7 +600,146 @@ const TimetablePage = () => {
           </div>
         </div>
       </div>
-      <div className="page-footer">Smart Student Portal • Timetable Generator</div>
+      
+      {/* Modify Course slots Modal */}
+      {showModifyModal && (
+        <div className="modal-overlay" onClick={() => setShowModifyModal(false)}>
+          <motion.div 
+            className="modal-content glass-card" 
+            style={{ maxWidth: '640px', width: '90vw', background: 'var(--card-bg)', border: '1px solid var(--border)', boxShadow: '0 20px 40px rgba(0,0,0,0.3)', color: 'var(--text)' }}
+            initial={{ scale: 0.95, opacity: 0 }} 
+            animate={{ scale: 1, opacity: 1 }} 
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="modal-header">
+              <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}><Edit2 size={18} style={{ color: 'var(--primary)' }} /> Modify Course Slots</h3>
+              <button className="modal-close" onClick={() => setShowModifyModal(false)}><X size={18} /></button>
+            </div>
+            
+            <div className="modal-body">
+              {displayCourses.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '2rem 1rem', color: 'var(--text-muted)' }}>
+                  <AlertCircle size={32} style={{ marginBottom: '0.75rem', opacity: 0.5 }} />
+                  <p>No courses selected. Please add courses first using the "Modify Courses" button.</p>
+                </div>
+              ) : (
+                <>
+                  <div className="form-group" style={{ marginBottom: '1.25rem' }}>
+                    <label style={{ fontWeight: 600, fontSize: '0.8rem', color: 'var(--text-muted)' }}>Select Course</label>
+                    <select 
+                      className="form-input" 
+                      value={editingCourseCode} 
+                      onChange={(e) => setEditingCourseCode(e.target.value)}
+                      style={{ width: '100%', fontSize: '0.9rem', padding: '0.65rem' }}
+                    >
+                      {displayCourses.map(c => (
+                        <option key={c.code} value={c.code}>{c.code} — {c.title}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    <div className="slot-edit-header">
+                      <span>Type</span>
+                      <span>Day</span>
+                      <span>Time Slot</span>
+                      <span>Venue</span>
+                      <span style={{ width: '28px' }}></span>
+                    </div>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', maxHeight: '300px', overflowY: 'auto', paddingRight: '0.25rem' }}>
+                      {editingSlots.map((slot, idx) => (
+                        <div key={idx} className="slot-edit-row">
+                          
+                          {/* Slot Type */}
+                          <select 
+                            className="form-input" 
+                            value={slot.type || 'Lecture'} 
+                            onChange={(e) => handleUpdateSlot(idx, 'type', e.target.value)}
+                            style={{ padding: '0.45rem 0.5rem' }}
+                          >
+                            <option value="Lecture">Lecture</option>
+                            <option value="Lab">Lab</option>
+                            <option value="Tutorial">Tutorial</option>
+                            <option value="Practical">Practical</option>
+                          </select>
+
+                          {/* Day */}
+                          <select 
+                            className="form-input" 
+                            value={slot.day || 'Monday'} 
+                            onChange={(e) => handleUpdateSlot(idx, 'day', e.target.value)}
+                            style={{ padding: '0.45rem 0.5rem' }}
+                          >
+                            {days.map(d => <option key={d} value={d}>{d}</option>)}
+                          </select>
+
+                          {/* Time */}
+                          <select 
+                            className="form-input" 
+                            value={slot.time || '8:30 - 9:50'} 
+                            onChange={(e) => handleUpdateSlot(idx, 'time', e.target.value)}
+                            style={{ padding: '0.45rem 0.5rem', fontSize: '0.75rem' }}
+                          >
+                            {orderedTimeSlots.filter(t => t !== "13:00 - 14:00").map(t => (
+                              <option key={t} value={t}>{t}</option>
+                            ))}
+                          </select>
+
+                          {/* Venue */}
+                          <input 
+                            type="text" 
+                            className="form-input" 
+                            value={slot.venue || ''} 
+                            placeholder="Venue" 
+                            onChange={(e) => handleUpdateSlot(idx, 'venue', e.target.value)}
+                            style={{ padding: '0.45rem 0.5rem' }}
+                          />
+
+                          {/* Delete Button */}
+                          <button 
+                            className="btn btn-outline btn-sm" 
+                            onClick={() => handleDeleteSlot(idx)} 
+                            style={{ padding: '0.45rem', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--danger)', borderColor: 'rgba(239, 68, 68, 0.2)', background: 'rgba(239, 68, 68, 0.05)', borderRadius: '6px', border: '1px solid transparent', cursor: 'pointer' }}
+                            title="Remove slot"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </div>
+                      ))}
+
+                      {editingSlots.length === 0 && (
+                        <div style={{ textAlign: 'center', padding: '2rem 1rem', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+                          No slots configured for this course. Click "Add Slot" below to create one.
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: '0.5rem' }}>
+                    <button 
+                      className="btn btn-outline btn-sm" 
+                      onClick={handleAddSlot}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', cursor: 'pointer' }}
+                    >
+                      <Plus size={14} /> Add Slot
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="modal-footer" style={{ borderTop: '1px solid var(--border)', paddingTop: '1rem', marginTop: '1.25rem' }}>
+              <button className="btn btn-outline" onClick={() => setShowModifyModal(false)}>Cancel</button>
+              {displayCourses.length > 0 && (
+                <button className="btn btn-primary" onClick={handleSaveCourseSlots}><Save size={16} /> Save Changes</button>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      <div className="page-footer">built by <a href="https://github.com/destopianpirate" target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>destopianpirate</a> • Timetable Generator</div>
     </div>
   );
 };
