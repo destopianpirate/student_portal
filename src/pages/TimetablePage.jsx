@@ -739,7 +739,7 @@ const TimetablePage = () => {
         </div>
       )}
 
-      <div className="page-footer">built by <a href="https://github.com/destopianpirate" target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>destopianpirate</a> • Timetable Generator</div>
+      <div className="page-footer">Built with ❤️ by <a href="https://github.com/destopianpirate" target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>destopianpirate</a></div>
     </div>
   );
 };

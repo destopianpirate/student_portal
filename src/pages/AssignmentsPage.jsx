@@ -250,7 +250,7 @@ const AssignmentsPage = () => {
         })}
       </motion.div>
 
-      <div className="page-footer">Assignment Manager • built by <a href="https://github.com/destopianpirate" target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>destopianpirate</a></div>
+      <div className="page-footer">Built with ❤️ by <a href="https://github.com/destopianpirate" target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>destopianpirate</a></div>
     </motion.div>
   );
 };

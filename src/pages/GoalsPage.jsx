@@ -317,7 +317,7 @@ const GoalsPage = () => {
         </motion.div>
       )}
 
-      <div className="page-footer">Goals & Progress • built by <a href="https://github.com/destopianpirate" target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>destopianpirate</a></div>
+      <div className="page-footer">Built with ❤️ by <a href="https://github.com/destopianpirate" target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>destopianpirate</a></div>
     </motion.div>
   );
 };

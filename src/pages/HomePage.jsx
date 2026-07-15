@@ -735,7 +735,7 @@ const HomePage = () => {
             <div className="feature-card"><User size={32} style={{ marginBottom: 10 }} /><h3>Profile</h3><p>Manage your academic profile</p></div>
           </div>
         </motion.div>
-        <div className="page-footer">built by <a href="https://github.com/destopianpirate" target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>destopianpirate</a></div>
+        <div className="page-footer">Built with ❤️ by <a href="https://github.com/destopianpirate" target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>destopianpirate</a></div>
       </div>
     );
   }
@@ -1816,7 +1816,7 @@ const HomePage = () => {
         </div>
       )}
 
-      <div className="page-footer">built by <a href="https://github.com/destopianpirate" target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>destopianpirate</a> • Built with ❤️</div>
+      <div className="page-footer">Built with ❤️ by <a href="https://github.com/destopianpirate" target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>destopianpirate</a></div>
     </motion.div>
   );
 };

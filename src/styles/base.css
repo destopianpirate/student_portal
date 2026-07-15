@@ -1853,8 +1853,8 @@ body:after {
   color: var(--text-muted);
   opacity: .5;
   border-top: 1px solid var(--border);
-  margin-top: 2rem;
-  padding: 3rem 0;
+  margin-top: 1rem;
+  padding: 1rem 0;
   font-size: .75rem;
   animation: .8s .5s both fadeIn
 }

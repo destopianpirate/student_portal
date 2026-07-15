@@ -878,7 +878,7 @@ const SettingsPage = ({ darkMode, setDarkMode }) => {
       </motion.div>
 
       <div className="page-footer">
-        <p>built by <a href="https://github.com/destopianpirate" target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>destopianpirate</a> • Version 1.0.0</p>
+        <p>Built with ❤️ by <a href="https://github.com/destopianpirate" target="_blank" rel="noreferrer" style={{ color: 'inherit', textDecoration: 'underline' }}>destopianpirate</a></p>
         <p style={{ marginTop: '.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '.5rem' }}>
           <Info size={14} /> <a href="#" style={{ color: 'var(--text-muted)' }}>Help & Support</a>
         </p>
